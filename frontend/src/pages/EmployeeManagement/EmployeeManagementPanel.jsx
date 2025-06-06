@@ -715,8 +715,13 @@ const EmployeeManagementPanel = () => {
                                   handleDelete(emp._id);
                                 }
                               }}
+                              disabled={loadingDelete === emp._id}
                             >
-                              <RiDeleteBin6Line className="h-5 w-5" />
+                              {loadingDelete === emp._id ? (
+                                <Loader className="h-5 w-5" />
+                              ) : (
+                                <RiDeleteBin6Line className="h-5 w-5" />
+                              )}
                             </button>
                           )}
                         </div>
@@ -1096,7 +1101,7 @@ const EmployeeManagementPanel = () => {
                                 "Are you sure you want to delete this employee?"
                               )
                             ) {
-                              deleteEmployee(emp._id);
+                              handleDelete(emp._id);
                             }
                           }}
                           disabled={loadingDelete === emp._id}
