@@ -403,7 +403,7 @@ const EmployeeManagementPanel = () => {
               {/* Filter Dropdown */}
               <div
                 id="filter-dropdown"
-                className="hidden absolute right-0 mt-1 w-64 bg-white rounded-md shadow-lg z-20 p-3 border"
+                className="hidden absolute left-0 sm:left-auto sm:right-0 mt-1 w-full sm:w-64 bg-white rounded-md shadow-lg z-20 p-3 border"
               >
                 <div className="space-y-3">
                   <div>
