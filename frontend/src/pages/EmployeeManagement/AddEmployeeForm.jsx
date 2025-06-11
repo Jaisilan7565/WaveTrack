@@ -24,7 +24,7 @@ const AddEmployeeForm = ({ handleClose }) => {
   // get userId from Redux store
   const userId = useSelector((state) => state.auth.user?.id);
 
-  // Login Mutation
+  // Add Employee Mutation
   const {
     mutateAsync,
     isPending,
@@ -134,7 +134,7 @@ const AddEmployeeForm = ({ handleClose }) => {
         <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto hide-scrollbar">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold text-gray-900">
-              Add New Employee
+              Employee Registration
             </h3>
             <button
               onClick={handleClose}

@@ -313,7 +313,7 @@ const EmployeeManagementPanel = () => {
   };
 
   const clearFilters = () => {
-    setFilters({ status: "", role: "", department: "" });
+    setFilters({ status: "", role: "" });
     setSearchTerm("");
   };
 
@@ -654,7 +654,8 @@ const EmployeeManagementPanel = () => {
                         </span>
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(emp.createdAt).toLocaleDateString()}
+                        {/* {new Date(emp.createdAt).toLocaleDateString()} */}
+                        {emp.joining_date.split("T")[0]}
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
                         <div className="flex items-center space-x-2">
@@ -1046,7 +1047,8 @@ const EmployeeManagementPanel = () => {
 
                   <div className="pt-2 flex justify-between items-center">
                     <p className="text-xs text-gray-500">
-                      Joined: {new Date(emp.createdAt).toLocaleDateString()}
+                      {/* Joined: {new Date(emp.createdAt).toLocaleDateString()} */}
+                      Joined: {emp.joining_date.split("T")[0]}
                     </p>
                     <div className="flex flex-wrap space-x-3">
                       {emp.status !== "OnProcess" &&

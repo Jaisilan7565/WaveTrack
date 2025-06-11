@@ -11,6 +11,7 @@ require("dotenv").config();
 // Route files
 const authRoutes = require("./routes/authRoutes");
 const employeeRoutes = require("./routes/employeeRoutes");
+const subscriberRoutes = require("./routes/subscriberRoutes");
 const auditRoutes = require("./routes/auditRoutes");
 
 const app = express();
@@ -51,7 +52,8 @@ app.use(helmet());
 // Mount routers
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/employees", employeeRoutes);
-app.use("/api/v1/audit-logs", auditRoutes);
+app.use("/api/v1/subscribers", subscriberRoutes);
+// app.use("/api/v1/audit-logs", auditRoutes);
 
 // Error handler middleware
 app.use(errorHandler);

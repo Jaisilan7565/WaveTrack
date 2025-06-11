@@ -12,6 +12,7 @@ import { useDispatch } from "react-redux";
 import { login } from "../redux/store/authSlice";
 import useAutoLogout from "../hooks/useAutoLogout";
 import { decodeToken, isTokenExpired } from "../utils/jwt";
+import SubscriberManagementPanel from "../pages/SubscriberManagement/SubscriberManagementPanel";
 
 const MainLayout = () => {
   const location = useLocation();
@@ -38,6 +39,7 @@ const MainLayout = () => {
   const paths = [
     { path: "/employee-management", name: "Employee Management" },
     { path: "/dashboard", name: "Dashboard" },
+    { path: "/subscriber-management", name: "Subscriber Management" },
   ];
 
   return (
@@ -60,6 +62,7 @@ const MainLayout = () => {
         </div>
         <div className="flex-1 overflow-y-auto hide-scrollbar">
           <Routes>
+            <Route path="/login" element={<LoginPage />} />
             <Route
               path="/employee-management"
               element={
@@ -68,9 +71,14 @@ const MainLayout = () => {
                 </AuthRoute>
               }
             />
-            <Route path="/login" element={<LoginPage />} />
-            {/* <Route path="/admin-login" element={<AdminLogin />} />
-          <Route path="/dashboard" element={<Dashboard />} /> */}
+            <Route
+              path="/subscriber-management"
+              element={
+                <AuthRoute>
+                  <SubscriberManagementPanel />
+                </AuthRoute>
+              }
+            />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </div>

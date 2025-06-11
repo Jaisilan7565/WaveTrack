@@ -105,6 +105,23 @@ const EmployeeSidebar = ({ sidebarOpen, setSidebarOpen }) => {
           )} */}
 
           {FinancePermission && (
+            <Link to="/subscriber-management">
+              <SidebarItem
+                icon={<Podcast size={30} />}
+                text="Subscribers"
+                // onClick={toggleSubscriberDropdown}
+                onClick={() => setSidebarOpen(false)}
+                isDropdown
+                isOpen={isSubscriberOpen}
+                active={
+                  path === "/subscriber-management" ||
+                  path.startsWith("/subscriber/")
+                }
+              />
+            </Link>
+          )}
+
+          {/* {FinancePermission && (
             <Link to="/subscribers-alert">
               <SidebarItem
                 icon={<AiOutlineAlert size={30} />}
@@ -130,8 +147,7 @@ const EmployeeSidebar = ({ sidebarOpen, setSidebarOpen }) => {
                 onClick={() => setSidebarOpen(false)}
               />
             </Link>
-          )}
-
+          )} 
           {TLStaffPermission && (
             <Link to="/isp-management">
               <SidebarItem
@@ -158,7 +174,7 @@ const EmployeeSidebar = ({ sidebarOpen, setSidebarOpen }) => {
                 onClick={() => setSidebarOpen(false)}
               />
             </Link>
-          )}
+          )} */}
 
           {HRPermission && (
             <Link to="/employee-management">

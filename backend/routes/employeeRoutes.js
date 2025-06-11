@@ -2,12 +2,10 @@ const express = require("express");
 const {
   createEmployee,
   getEmployees,
-  getEmployee,
   updateEmployee,
   deleteEmployee,
   approveEmployee,
   rejectEmployee,
-  getPendingApprovals,
   getEmployeeById,
   inActivateEmployee,
   resetPassword,
@@ -18,15 +16,15 @@ const router = express.Router();
 
 router.use(protect);
 
-// Routes for admins, managers, and HRs
+router.get("/", getEmployees);
+
+router.get("/:id", getEmployeeById);
+
 router.post(
   "/",
   authorize("Admin", "General Manager", "Senior HR", "HR", "Manager"),
   createEmployee
 );
-
-router.get("/", getEmployees);
-router.get("/:id", getEmployeeById);
 
 router.patch(
   "/:id",
@@ -59,24 +57,5 @@ router.patch(
 );
 
 router.delete("/:id", authorize("Admin", "General Manager"), deleteEmployee);
-
-// // Approval routes
-// router.put(
-//   "/:id/approve",
-//   authorize("admin", "general_manager", "senior_hr", "manager"),
-//   approveEmployee
-// );
-
-// router.put(
-//   "/:id/reject",
-//   authorize("admin", "general_manager", "senior_hr", "manager"),
-//   rejectEmployee
-// );
-
-// router.get(
-//   "/pending/approvals",
-//   authorize("admin", "general_manager", "senior_hr", "manager"),
-//   getPendingApprovals
-// );
 
 module.exports = router;

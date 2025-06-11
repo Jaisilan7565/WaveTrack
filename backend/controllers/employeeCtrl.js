@@ -1,10 +1,8 @@
 const Employee = require("../models/Employee");
-// const User = require("../models/User");
 const AuditLog = require("../models/AuditLog");
 const ErrorResponse = require("../utils/errorResponse");
 const bcrypt = require("bcryptjs");
 const asyncHandler = require("express-async-handler");
-const jwt = require("jsonwebtoken");
 
 const employeeController = {
   //Create a new employee
@@ -25,7 +23,7 @@ const employeeController = {
 
       // Check if ID already exists
       const exists = await Employee.findOne({ employee_id });
-      return exists ? generateEmployeeId() : employee_id;
+      return exists ? await generateEmployeeId() : employee_id;
     };
 
     // Check if email already exists
