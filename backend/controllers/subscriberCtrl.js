@@ -4,81 +4,6 @@ const asyncHandler = require("express-async-handler");
 
 const subscriberController = {
   //Create a new subscriber
-  // createSubscriber: asyncHandler(async (req, res, next) => {
-  //   const {
-  //     siteCode,
-  //     siteName,
-  //     siteAddress,
-  //     localContact,
-  //     ispInfo,
-  //     activationDate,
-  //     credentials,
-  //   } = req.body;
-
-  //   // Validate required fields
-  //   if (
-  //     !siteCode ||
-  //     !siteName ||
-  //     !siteAddress ||
-  //     !localContact ||
-  //     !ispInfo ||
-  //     !activationDate ||
-  //     !credentials
-  //   ) {
-  //     return next(new ErrorResponse("Missing required fields", 400));
-  //   }
-
-  //   // Parse dates from string to Date objects
-  //   const parsedSubscriberData = {
-  //     ...req.body,
-  //     ispInfo: {
-  //       ...req.body.ispInfo,
-  //       currentActivationDate: new Date(req.body.ispInfo.currentActivationDate),
-  //       renewalDate: new Date(req.body.ispInfo.renewalDate),
-  //     },
-  //     activationDate: new Date(req.body.activationDate),
-  //   };
-
-  //   // Generate unique subscriber_id (format: SUB-XXXXX)
-  //   const generateSubscriberId = async () => {
-  //     const prefix = "SUB-";
-  //     const randomSuffix = Math.floor(10000 + Math.random() * 90000).toString();
-  //     const subscriber_id = prefix + randomSuffix;
-
-  //     // Check if ID already exists
-  //     const exists = await Subscriber.findOne({ subscriber_id });
-  //     return exists ? await generateSubscriberId() : subscriber_id;
-  //   };
-
-  //   // Check if email already exists
-  //   const existingSiteCode = await Subscriber.findOne({ siteCode });
-  //   if (existingSiteCode) {
-  //     return next(new ErrorResponse("SiteCode already exists", 400));
-  //   }
-
-  //   // Check if contact already exists
-  //   const existingSiteAddress = await Subscriber.findOne({ siteAddress });
-  //   if (existingSiteAddress) {
-  //     return next(new ErrorResponse("Contact number already exists", 400));
-  //   }
-
-  //   // Create new subscriber with unique ID
-  //   const subscriber = await Subscriber.create({
-  //     subscriber_id: await generateSubscriberId(),
-  //     ...parsedSubscriberData,
-  //     created_by: req.user.id,
-  //     status: "Added",
-  //     request_status: "pending",
-  //   });
-
-  //   res.status(201).json({
-  //     success: true,
-  //     data: {
-  //       ...subscriber,
-  //     },
-  //   });
-  // }),
-
   createSubscriber: asyncHandler(async (req, res, next) => {
     const {
       siteCode,
@@ -153,15 +78,8 @@ const subscriberController = {
         return null;
       };
 
-      const currentActivationDate = parseDate(ispInfo.currentActivationDate);
       const renewalDate = parseDate(ispInfo.renewalDate);
       const parsedActivationDate = parseDate(activationDate);
-
-      if (!currentActivationDate) {
-        return next(
-          new ErrorResponse("Invalid ISP activation date format", 400)
-        );
-      }
 
       if (!renewalDate) {
         return next(new ErrorResponse("Invalid ISP renewal date format", 400));
@@ -180,7 +98,7 @@ const subscriberController = {
         localContact,
         ispInfo: {
           ...ispInfo,
-          currentActivationDate,
+          currentActivationDate: parsedActivationDate,
           renewalDate,
         },
         credentials: credentials || {},
@@ -205,6 +123,36 @@ const subscriberController = {
           error.statusCode || 500
         )
       );
+    }
+  }),
+
+  // Get all subscribers
+  getSubscribers: asyncHandler(async (req, res, next) => {
+    try {
+      const { status } = req.query;
+      let query = { isDeleted: false };
+
+      if (status) query.status = status;
+
+      const subscribers = await Subscriber.find(query)
+        .populate({
+          path: "modifiedData.modified_by",
+          select: "employee_id name email contact roles",
+          model: "Employee",
+        })
+        .populate({
+          path: "created_by",
+          select: "employee_id name email contact roles",
+          model: "Employee",
+        });
+
+      res.status(200).json({
+        success: true,
+        count: subscribers.length,
+        data: subscribers,
+      });
+    } catch (err) {
+      next(err);
     }
   }),
 };

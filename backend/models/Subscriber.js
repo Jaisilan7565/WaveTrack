@@ -73,6 +73,10 @@ const subscriberSchema = new mongoose.Schema({
       required: true,
     },
   },
+  activationDate: {
+    type: Date,
+    required: true,
+  },
   credentials: {
     username: {
       type: String,

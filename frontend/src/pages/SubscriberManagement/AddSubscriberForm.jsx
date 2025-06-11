@@ -350,7 +350,7 @@ const AddSubscriberForm = ({ handleClose }) => {
                     value={formik.values.localContact.contact}
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
-                    max={10}
+                    maxLength={10}
                     className={`block w-full rounded-md py-2 px-3.5 shadow-sm border ${
                       formik.touched.localContact?.contact &&
                       formik.errors.localContact?.contact
@@ -420,7 +420,7 @@ const AddSubscriberForm = ({ handleClose }) => {
                     value={formik.values.ispInfo.contact}
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
-                    max={10}
+                    maxLength={10}
                     className={`block w-full rounded-md py-2 px-3.5 shadow-sm border ${
                       formik.touched.ispInfo?.contact &&
                       formik.errors.ispInfo?.contact
@@ -558,7 +558,6 @@ const AddSubscriberForm = ({ handleClose }) => {
                       id="ispInfo.mrc"
                       name="ispInfo.mrc"
                       min="0"
-                      step="0.01"
                       value={formik.values.ispInfo.mrc}
                       onChange={formik.handleChange}
                       onBlur={formik.handleBlur}

@@ -1,20 +1,175 @@
-import React from "react";
-import { FiFilter, FiSearch } from "react-icons/fi";
+import React, { useEffect } from "react";
 import { useState } from "react";
 import AddSubscriberForm from "./AddSubscriberForm";
+import { getSubscribersAPI } from "../../services/subscriberServices";
+import { useQuery } from "@tanstack/react-query";
+import { FiFilter, FiSearch, FiChevronDown, FiChevronUp } from "react-icons/fi";
 
 const SubscriberManagementPanel = () => {
   const [isNewSubscriberFormOpen, setIsNewSubscriberFormOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeFilters, setActiveFilters] = useState(0);
+  const [sortConfig, setSortConfig] = useState({
+    key: "createdAt",
+    direction: "desc",
+  });
   const [filters, setFilters] = useState({
     status: "",
-    role: "",
+  });
+  const [activeFilters, setActiveFilters] = useState(0);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
+
+  const {
+    data: subscribers,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryFn: getSubscribersAPI,
+    queryKey: ["getSubscribers"],
+    refetchOnWindowFocus: true,
   });
 
+  // Filter and sort employees
+  const processedSubscribers = React.useMemo(() => {
+    if (!subscribers?.data) return [];
+
+    let result = [...subscribers.data];
+
+    // Apply search
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      result = result.filter(
+        (sub) =>
+          sub.subscriber_id.toLowerCase().includes(term) ||
+          sub.siteCode.toLowerCase().includes(term) ||
+          sub.siteName.toLowerCase().includes(term) ||
+          sub.siteAddress.toLowerCase().includes(term) ||
+          sub.ispInfo?.broadbandPlan.toLowerCase().includes(term)
+      );
+    }
+
+    // Apply filters
+    if (filters.status) {
+      result = result.filter((sub) => sub.status === filters.status);
+    }
+
+    const getNestedValue = (obj, path) =>
+      path.split(".").reduce((o, k) => o?.[k] ?? "", obj);
+
+    // Apply sorting
+    if (sortConfig.key) {
+      result.sort((a, b) => {
+        // First sort by request_status (pending first)
+        if (a.request_status === "pending" && b.request_status !== "pending") {
+          return -1;
+        }
+        if (a.request_status !== "pending" && b.request_status === "pending") {
+          return 1;
+        }
+
+        if (
+          a.request_status === "rejected" &&
+          b.request_status !== "rejected"
+        ) {
+          return -1;
+        }
+        if (
+          a.request_status !== "rejected" &&
+          b.request_status === "rejected"
+        ) {
+          return 1;
+        }
+
+        const aVal = getNestedValue(a, sortConfig.key);
+        const bVal = getNestedValue(b, sortConfig.key);
+
+        if (typeof aVal === "number" && typeof bVal === "number") {
+          return sortConfig.direction === "asc" ? aVal - bVal : bVal - aVal;
+        }
+        if (typeof aVal === "string" && typeof bVal === "string") {
+          return sortConfig.direction === "asc"
+            ? aVal.localeCompare(bVal)
+            : bVal.localeCompare(aVal);
+        }
+
+        // if (a[sortConfig.key] < b[sortConfig.key]) {
+        //   return sortConfig.direction === "asc" ? -1 : 1;
+        // }
+        // if (a[sortConfig.key] > b[sortConfig.key]) {
+        //   return sortConfig.direction === "asc" ? 1 : -1;
+        // }
+        return 0;
+      });
+    } else {
+      // Default sort: pending first, then by createdAt (newest first)
+      result.sort((a, b) => {
+        // Pending first
+        if (a.request_status === "pending" && b.request_status !== "pending") {
+          return -1;
+        }
+        if (a.request_status !== "pending" && b.request_status === "pending") {
+          return 1;
+        }
+
+        // Then by createdAt (newest first)
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      });
+    }
+
+    return result;
+  }, [subscribers, searchTerm, filters, sortConfig]);
+
+  // Get current items
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = processedSubscribers.slice(
+    indexOfFirstItem,
+    indexOfLastItem
+  );
+  const totalPages = Math.ceil(processedSubscribers.length / itemsPerPage);
+
+  // Change page
+  const paginate = (pageNumber) => {
+    if (pageNumber > 0 && pageNumber <= totalPages) {
+      setCurrentPage(pageNumber);
+    }
+  };
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filters, sortConfig]);
+
+  // Count active filters
+  useEffect(() => {
+    let count = 0;
+    if (filters.status) count++;
+    setActiveFilters(count);
+  }, [filters]);
+
+  const requestSort = (key) => {
+    let direction = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const handleFilterChange = (filterName, value) => {
+    setFilters((prev) => ({ ...prev, [filterName]: value }));
+  };
+
   const clearFilters = () => {
-    setFilters({ status: "", role: "" });
+    setFilters({ status: "" });
     setSearchTerm("");
+  };
+
+  const getSortIcon = (key) => {
+    if (sortConfig.key !== key) return null;
+    return sortConfig.direction === "asc" ? <FiChevronUp /> : <FiChevronDown />;
   };
 
   const handleOpenNewSubscriberForm = () => {
@@ -22,9 +177,39 @@ const SubscriberManagementPanel = () => {
   };
 
   const handleCloseNewSubscriberForm = () => {
-    // refetch();
+    refetch();
     setIsNewSubscriberFormOpen(false);
   };
+
+  const [selectedRows, setSelectedRows] = useState([]);
+
+  const handleSelectRow = (e, id) => {
+    if (e.target.checked) {
+      setSelectedRows([...selectedRows, id]);
+    } else {
+      setSelectedRows(selectedRows.filter((rowId) => rowId !== id));
+    }
+  };
+
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      setSelectedRows(data.map((item) => item.subscriber_id));
+    } else {
+      setSelectedRows([]);
+    }
+  };
+
+  console.log("Subscribers:", subscribers?.data);
+  console.log("Processed Subscribers:", processedSubscribers);
+
+  if (isLoading)
+    return <div className="flex justify-center py-8">Loading...</div>;
+  if (error)
+    return (
+      <div className="text-red-500 text-center py-8">
+        Error: {error.message}
+      </div>
+    );
 
   return (
     <div className="bg-gradient-to-br from-gray-50 to-gray-100 min-h-fit">
@@ -158,7 +343,7 @@ const SubscriberManagementPanel = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-col sm:flex-row justify-between items-center gap-3">
+      <div className="max-w-7xl mx-auto p-4 sm:p-6 flex flex-col gap-2">
         {/* Operation Features - Responsive */}
         <div className="w-full flex flex-col sm:flex-row justify-between gap-3 sm:gap-0">
           {/* Left Button Group */}
@@ -183,6 +368,173 @@ const SubscriberManagementPanel = () => {
               Reject
             </button>
           </div>
+        </div>
+
+        {/* Subscriber List Table */}
+        <div className="hidden sm:block bg-white shadow-xl rounded-xl overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gradient-to-r from-blue-600 to-blue-500">
+              <tr>
+                <th
+                  scope="col"
+                  className="px-4 py-3 text-left text-xs sm:text-sm font-semibold text-white uppercase tracking-wider cursor-pointer"
+                >
+                  <input
+                    type="checkbox"
+                    checked={
+                      selectedRows.length === processedSubscribers.length &&
+                      processedSubscribers.length > 0
+                    }
+                    onChange={handleSelectAll}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                </th>
+                <th
+                  scope="col"
+                  className="px-4 py-3 text-left text-xs sm:text-sm font-semibold text-white uppercase tracking-wider cursor-pointer"
+                  onClick={() => requestSort("subscriber_id")}
+                >
+                  Sub ID {getSortIcon("subscriber_id")}
+                </th>
+                <th
+                  scope="col"
+                  className="px-4 py-3 text-left text-xs sm:text-sm font-semibold text-white uppercase tracking-wider cursor-pointer"
+                  onClick={() => requestSort("siteName")}
+                >
+                  Site Name {getSortIcon("siteName")}
+                </th>
+                <th
+                  scope="col"
+                  className="px-4 py-3 text-left text-xs sm:text-sm font-semibold text-white uppercase tracking-wider cursor-pointer"
+                  onClick={() => requestSort("siteCode")}
+                >
+                  Site Code {getSortIcon("siteCode")}
+                </th>
+                <th
+                  scope="col"
+                  className="px-4 py-3 text-left text-xs sm:text-sm font-semibold text-white uppercase tracking-wider cursor-pointer"
+                  onClick={() => requestSort("siteAddress")}
+                >
+                  Address {getSortIcon("siteAddress")}
+                </th>
+                <th
+                  scope="col"
+                  className="px-4 py-3 text-left text-xs sm:text-sm font-semibold text-white uppercase tracking-wider cursor-pointer"
+                  onClick={() => requestSort("ispInfo.broadbandPlan")}
+                >
+                  Plan {getSortIcon("ispInfo.broadbandPlan")}
+                </th>
+                <th
+                  scope="col"
+                  className="px-4 py-3 text-left text-xs sm:text-sm font-semibold text-white uppercase tracking-wider cursor-pointer"
+                  onClick={() => requestSort("ispInfo.numberOfMonths")}
+                >
+                  Months {getSortIcon("ispInfo.numberOfMonths")}
+                </th>
+                <th
+                  scope="col"
+                  className="px-4 py-3 text-left text-xs sm:text-sm font-semibold text-white uppercase tracking-wider cursor-pointer"
+                  onClick={() => requestSort("ispInfo.mrc")}
+                >
+                  MRC {getSortIcon("ispInfo.mrc")}
+                </th>
+                <th
+                  scope="col"
+                  className="px-4 py-3 text-left text-xs sm:text-sm font-semibold text-white uppercase tracking-wider cursor-pointer"
+                  onClick={() => requestSort("activationDate")}
+                >
+                  Activated {getSortIcon("activationDate")}
+                </th>
+                <th
+                  scope="col"
+                  className="px-4 py-3 text-left text-xs sm:text-sm font-semibold text-white uppercase tracking-wider cursor-pointer"
+                  onClick={() => requestSort("status")}
+                >
+                  Status {getSortIcon("status")}
+                </th>
+                <th
+                  scope="col"
+                  className="px-4 py-3 text-left text-xs sm:text-sm font-semibold text-white uppercase tracking-wider"
+                >
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {processedSubscribers.map((subscriber) => (
+                <tr
+                  key={subscriber.subscriber_id}
+                  className={
+                    selectedRows.includes(subscriber.subscriber_id)
+                      ? "bg-blue-100"
+                      : ""
+                  }
+                >
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <input
+                      type="checkbox"
+                      checked={selectedRows.includes(subscriber.subscriber_id)}
+                      onChange={(e) =>
+                        handleSelectRow(e, subscriber.subscriber_id)
+                      }
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {subscriber.subscriber_id}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {subscriber.siteName}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {subscriber.siteCode}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-500">
+                    {subscriber.siteAddress}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {subscriber.ispInfo.broadbandPlan}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {subscriber.ispInfo.numberOfMonths}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    ₹{subscriber.ispInfo.mrc}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {/* {new Date(subscriber.activationDate).toLocaleDateString()} */}
+                    {subscriber.activationDate?.split("T")[0]}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span
+                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                    ${
+                      subscriber.status === "Active"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-yellow-100 text-yellow-800"
+                    }`}
+                    >
+                      {subscriber.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <button
+                      onClick={() => handleApprove(subscriber.subscriber_id)}
+                      className="text-green-600 hover:text-green-900 mr-2"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      onClick={() => handleReject(subscriber.subscriber_id)}
+                      className="text-red-600 hover:text-red-900"
+                    >
+                      Reject
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

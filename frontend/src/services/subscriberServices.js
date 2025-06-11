@@ -15,3 +15,16 @@ export const createSubscriberAPI = async (subscriberData) => {
     throw error;
   }
 };
+
+export const getSubscribersAPI = async () => {
+  try {
+    const response = await axios.get(
+      `${BASE_URL}/subscribers`,
+      getAuthHeaders()
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching employees:", error);
+    throw error;
+  }
+};

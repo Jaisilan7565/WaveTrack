@@ -106,8 +106,6 @@ const employeeController = {
         select: "employee_id name email contact roles",
         model: "Employee",
       });
-      // .populate("created_by", "name email role")
-      // .populate("modified_by", "name email role");
 
       res.status(200).json({
         success: true,
