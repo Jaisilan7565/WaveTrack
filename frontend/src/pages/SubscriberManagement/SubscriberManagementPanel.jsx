@@ -3,10 +3,21 @@ import { useState } from "react";
 import AddSubscriberForm from "./AddSubscriberForm";
 import { getSubscribersAPI } from "../../services/subscriberServices";
 import { useQuery } from "@tanstack/react-query";
-import { FiFilter, FiSearch, FiChevronDown, FiChevronUp } from "react-icons/fi";
+import {
+  FiFilter,
+  FiSearch,
+  FiChevronDown,
+  FiChevronUp,
+  FiCheck,
+  FiX,
+} from "react-icons/fi";
 
 const SubscriberManagementPanel = () => {
   const [isNewSubscriberFormOpen, setIsNewSubscriberFormOpen] = useState(false);
+
+  const [loadingApprove, setLoadingApprove] = useState(null);
+  const [loadingReject, setLoadingReject] = useState(null);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState({
     key: "createdAt",
@@ -281,33 +292,10 @@ const SubscriberManagementPanel = () => {
                       }
                     >
                       <option value="">All Statuses</option>
+                      <option value="Added">Added</option>
                       <option value="Active">Active</option>
                       <option value="InActive">Inactive</option>
-                      <option value="OnProcess">On Process</option>
                       <option value="Modified">Modified</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Role
-                    </label>
-                    <select
-                      className="w-full border rounded-md p-2 text-sm"
-                      value={filters.role}
-                      onChange={(e) =>
-                        handleFilterChange("role", e.target.value)
-                      }
-                    >
-                      <option value="">All Roles</option>
-                      <option value="Admin">Admin</option>
-                      <option value="General Manager">General Manager</option>
-                      <option value="Manager">Manager</option>
-                      <option value="Senior HR">Senior HR</option>
-                      <option value="HR">HR</option>
-                      <option value="Finance">Finance</option>
-                      <option value="Team Lead">Team Lead</option>
-                      <option value="Staff">Staff</option>
                     </select>
                   </div>
 
@@ -519,22 +507,159 @@ const SubscriberManagementPanel = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button
-                      onClick={() => handleApprove(subscriber.subscriber_id)}
-                      className="text-green-600 hover:text-green-900 mr-2"
+                      className="p-1.5 text-green-600 hover:bg-green-500 hover:text-white rounded-md transition-colors"
+                      title="Approve"
+                      onClick={() =>
+                        handleApprove(
+                          subscriber._id,
+                          subscriber.status,
+                          subscriber
+                        )
+                      }
+                      disabled={loadingApprove === subscriber._id}
                     >
-                      Approve
+                      {loadingApprove === subscriber._id ? (
+                        <Loader className="h-5 w-5" />
+                      ) : (
+                        <FiCheck className="h-5 w-5" />
+                      )}
                     </button>
                     <button
-                      onClick={() => handleReject(subscriber.subscriber_id)}
-                      className="text-red-600 hover:text-red-900"
+                      className="p-1.5 text-red-600 hover:bg-red-500 hover:text-white rounded-md transition-colors"
+                      title="Reject"
+                      onClick={() =>
+                        handleReject(
+                          subscriber._id,
+                          subscriber.status,
+                          subscriber
+                        )
+                      }
+                      disabled={loadingReject === subscriber._id}
                     >
-                      Reject
+                      {loadingReject === subscriber._id ? (
+                        <Loader className="h-5 w-5" />
+                      ) : (
+                        <FiX className="h-5 w-5" />
+                      )}
                     </button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+        {/* Mobile Card View */}
+        <div className="sm:hidden space-y-3">
+          {processedSubscribers.map((subscriber) => (
+            <div
+              key={subscriber.subscriber_id}
+              className={`bg-white p-4 rounded-lg border-2 ${
+                selectedRows.includes(subscriber.subscriber_id)
+                  ? "border-blue-500"
+                  : "border-gray-200"
+              }`}
+            >
+              {/* Header Row */}
+              <div className="flex justify-between items-start mb-3">
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={selectedRows.includes(subscriber.subscriber_id)}
+                    onChange={(e) =>
+                      handleSelectRow(e, subscriber.subscriber_id)
+                    }
+                    className="h-4 w-4 text-blue-600 mr-2"
+                  />
+                  <span className="font-medium">
+                    ID: {subscriber.subscriber_id}
+                  </span>
+                </div>
+                <span
+                  className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+          ${
+            subscriber.status === "Active"
+              ? "bg-green-100 text-green-800"
+              : "bg-yellow-100 text-yellow-800"
+          }`}
+                >
+                  {subscriber.status}
+                </span>
+              </div>
+
+              {/* Main Content */}
+              <div className="space-y-2">
+                <div>
+                  <p className="text-sm text-gray-500">Site</p>
+                  <p className="font-medium">
+                    {subscriber.siteName} ({subscriber.siteCode})
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-sm text-gray-500">Address</p>
+                  <p className="text-gray-700">{subscriber.siteAddress}</p>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 pt-2">
+                  <div>
+                    <p className="text-sm text-gray-500">Plan</p>
+                    <p className="font-medium">
+                      {subscriber.ispInfo.broadbandPlan}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Months</p>
+                    <p className="font-medium">
+                      {subscriber.ispInfo.numberOfMonths}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">MRC</p>
+                    <p className="font-medium">₹{subscriber.ispInfo.mrc}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-sm text-gray-500">Activated</p>
+                  <p className="text-gray-700">
+                    {subscriber.activationDate?.split("T")[0]}
+                  </p>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end space-x-2 mt-3 pt-3 border-t border-gray-100">
+                <button
+                  className="text-green-600 hover:text-green-800 text-sm font-medium flex items-center justify-center"
+                  onClick={() =>
+                    handleApprove(subscriber._id, subscriber.status, subscriber)
+                  }
+                  disabled={loadingApprove === subscriber._id}
+                >
+                  {loadingApprove === subscriber._id ? (
+                    <Loader className="h-4 w-4 mr-1" />
+                  ) : (
+                    <FiCheck className="h-4 w-4 mr-1" />
+                  )}
+                  Approve
+                </button>
+                <button
+                  className="text-red-600 hover:text-red-800 text-sm font-medium flex items-center justify-center"
+                  onClick={() =>
+                    handleReject(subscriber._id, subscriber.status, subscriber)
+                  }
+                  disabled={loadingReject === subscriber._id}
+                >
+                  {loadingReject === subscriber._id ? (
+                    <Loader className="h-4 w-4 mr-1" />
+                  ) : (
+                    <FiX className="h-4 w-4 mr-1" />
+                  )}
+                  Reject
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
