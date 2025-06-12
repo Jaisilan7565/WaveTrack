@@ -11,9 +11,11 @@ import {
   FiCheck,
   FiX,
 } from "react-icons/fi";
+import AddSubscribersExcel from "./AddSubscribersExcel";
 
 const SubscriberManagementPanel = () => {
   const [isNewSubscriberFormOpen, setIsNewSubscriberFormOpen] = useState(false);
+  const [isSubscribersExcelOpen, setIsSubscribersExcelOpen] = useState(false);
 
   const [loadingApprove, setLoadingApprove] = useState(null);
   const [loadingReject, setLoadingReject] = useState(null);
@@ -192,6 +194,15 @@ const SubscriberManagementPanel = () => {
     setIsNewSubscriberFormOpen(false);
   };
 
+  const handleOpenSubscribersExcel = () => {
+    setIsSubscribersExcelOpen(true);
+  };
+
+  const handleCloseSubscribersExcel = () => {
+    refetch();
+    setIsSubscribersExcelOpen(false);
+  };
+
   const [selectedRows, setSelectedRows] = useState([]);
 
   const handleSelectRow = (e, id) => {
@@ -210,9 +221,6 @@ const SubscriberManagementPanel = () => {
     }
   };
 
-  console.log("Subscribers:", subscribers?.data);
-  console.log("Processed Subscribers:", processedSubscribers);
-
   if (isLoading)
     return <div className="flex justify-center py-8">Loading...</div>;
   if (error)
@@ -226,6 +234,10 @@ const SubscriberManagementPanel = () => {
     <div className="bg-gradient-to-br from-gray-50 to-gray-100 min-h-fit">
       {isNewSubscriberFormOpen && (
         <AddSubscriberForm handleClose={handleCloseNewSubscriberForm} />
+      )}
+
+      {isSubscribersExcelOpen && (
+        <AddSubscribersExcel handleClose={handleCloseSubscribersExcel} />
       )}
 
       <div className="sticky top-0 z-10 bg-white shadow-sm">
@@ -336,7 +348,10 @@ const SubscriberManagementPanel = () => {
         <div className="w-full flex flex-col sm:flex-row justify-between gap-3 sm:gap-0">
           {/* Left Button Group */}
           <div className="flex flex-wrap gap-2 sm:gap-3">
-            <button className="flex-1 sm:flex-none whitespace-nowrap px-3 py-2 sm:px-4 sm:py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 text-sm sm:text-base">
+            <button
+              className="flex-1 sm:flex-none whitespace-nowrap px-3 py-2 sm:px-4 sm:py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 text-sm sm:text-base"
+              onClick={handleOpenSubscribersExcel}
+            >
               Import Subscribers
             </button>
             <button className="flex-1 sm:flex-none whitespace-nowrap px-3 py-2 sm:px-4 sm:py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 text-sm sm:text-base">

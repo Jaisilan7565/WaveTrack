@@ -16,6 +16,21 @@ export const createSubscriberAPI = async (subscriberData) => {
   }
 };
 
+export const createBulkSubscribersAPI = async (subscribersData) => {
+  try {
+    const response = await axios.post(
+      `${BASE_URL}/subscribers/bulk`,
+      subscribersData,
+      getAuthHeaders()
+    );
+    // return response.data;
+    return response.data;
+  } catch (error) {
+    console.error("Error creating Bulk Subscribers:", error);
+    throw error;
+  }
+};
+
 export const getSubscribersAPI = async () => {
   try {
     const response = await axios.get(
