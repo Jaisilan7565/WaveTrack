@@ -6,12 +6,15 @@ import { useQuery } from "@tanstack/react-query";
 import {
   FiFilter,
   FiSearch,
+  FiChevronLeft,
+  FiChevronRight,
   FiChevronDown,
   FiChevronUp,
   FiCheck,
   FiX,
 } from "react-icons/fi";
 import AddSubscribersExcel from "./AddSubscribersExcel";
+import NoData from "../../components/NoData";
 
 const SubscriberManagementPanel = () => {
   const [isNewSubscriberFormOpen, setIsNewSubscriberFormOpen] = useState(false);
@@ -27,12 +30,19 @@ const SubscriberManagementPanel = () => {
   });
   const [filters, setFilters] = useState({
     status: "",
+    startDate: "",
+    endDate: "",
   });
   const [activeFilters, setActiveFilters] = useState(0);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
+
+  const handleItemsPerPageChange = (e) => {
+    setItemsPerPage(Number(e.target.value));
+    setCurrentPage(1);
+  };
 
   const {
     data: subscribers,
@@ -67,6 +77,26 @@ const SubscriberManagementPanel = () => {
     // Apply filters
     if (filters.status) {
       result = result.filter((sub) => sub.status === filters.status);
+    }
+
+    // Apply date range filter
+    if (filters.startDate || filters.endDate) {
+      result = result.filter((sub) => {
+        const subDate = new Date(sub.activationDate.split("T")[0]);
+        const startDate = filters.startDate
+          ? new Date(filters.startDate)
+          : null;
+        const endDate = filters.endDate ? new Date(filters.endDate) : null;
+
+        // Set time to midnight for proper comparison
+        if (startDate) startDate.setHours(0, 0, 0, 0);
+        if (endDate) endDate.setHours(23, 59, 59, 999);
+
+        const afterStart = !startDate || subDate >= startDate;
+        const beforeEnd = !endDate || subDate <= endDate;
+
+        return afterStart && beforeEnd;
+      });
     }
 
     const getNestedValue = (obj, path) =>
@@ -160,6 +190,8 @@ const SubscriberManagementPanel = () => {
   useEffect(() => {
     let count = 0;
     if (filters.status) count++;
+    if (filters.startDate) count++;
+    if (filters.endDate) count++;
     setActiveFilters(count);
   }, [filters]);
 
@@ -176,7 +208,7 @@ const SubscriberManagementPanel = () => {
   };
 
   const clearFilters = () => {
-    setFilters({ status: "" });
+    setFilters({ status: "", startDate: "", endDate: "" });
     setSearchTerm("");
   };
 
@@ -215,7 +247,7 @@ const SubscriberManagementPanel = () => {
 
   const handleSelectAll = (e) => {
     if (e.target.checked) {
-      setSelectedRows(data.map((item) => item.subscriber_id));
+      setSelectedRows(processedSubscribers.map((item) => item._id));
     } else {
       setSelectedRows([]);
     }
@@ -287,7 +319,7 @@ const SubscriberManagementPanel = () => {
               </div>
 
               {/* Filter Dropdown */}
-              <div
+              {/* <div
                 id="filter-dropdown"
                 className="hidden absolute left-0 sm:left-auto sm:right-0 mt-1 w-full sm:w-64 bg-white rounded-md shadow-lg z-20 p-3 border"
               >
@@ -311,7 +343,174 @@ const SubscriberManagementPanel = () => {
                     </select>
                   </div>
 
+                  <div className="flex flex-col sm:flex-row sm:space-x-4 space-y-2 sm:space-y-0 items-start sm:items-end">
+                    <div className="w-full sm:w-auto">
+                      <label className="block text-sm font-medium text-gray-700">
+                        From Date
+                      </label>
+                      <input
+                        type="date"
+                        value={filters.startDate}
+                        onChange={(e) =>
+                          handleFilterChange("startDate", e.target.value)
+                        }
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                        max={filters.endDate || undefined} // Prevent selecting start date after end date
+                      />
+                    </div>
+
+                    <div className="w-full sm:w-auto">
+                      <label className="block text-sm font-medium text-gray-700">
+                        To Date
+                      </label>
+                      <input
+                        type="date"
+                        value={filters.endDate}
+                        onChange={(e) =>
+                          handleFilterChange("endDate", e.target.value)
+                        }
+                        min={filters.startDate || undefined} // Ensure end date can't be before start date
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                      />
+                    </div>
+
+                    {(filters.startDate || filters.endDate) && (
+                      <button
+                        onClick={() =>
+                          setFilters({ ...filters, startDate: "", endDate: "" })
+                        }
+                        className="w-full sm:w-auto px-3 py-1.5 text-sm bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
+                      >
+                        Clear Dates
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="w-full max-w-sm">
+                    <label className="block text-sm font-semibold text-gray-800 mb-1">
+                      Items per page:{" "}
+                      <span className="text-blue-600 font-bold">
+                        {itemsPerPage}
+                      </span>
+                    </label>
+                    <input
+                      type="range"
+                      min="5"
+                      max="50"
+                      step="5"
+                      value={itemsPerPage}
+                      onChange={handleItemsPerPageChange}
+                      className="w-full accent-blue-500 cursor-pointer"
+                    />
+                  </div>
+
                   <div className="flex justify-between">
+                    <button
+                      onClick={clearFilters}
+                      className="text-sm text-blue-600 hover:text-blue-800"
+                    >
+                      Clear Filters
+                    </button>
+                    <button
+                      onClick={() =>
+                        document
+                          .getElementById("filter-dropdown")
+                          .classList.add("hidden")
+                      }
+                      className="text-sm bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700"
+                    >
+                      Apply
+                    </button>
+                  </div>
+                </div>
+              </div> */}
+              <div
+                id="filter-dropdown"
+                className="hidden absolute left-0 sm:left-auto sm:right-0 mt-1 w-full sm:w-80 bg-white rounded-md shadow-lg z-20 p-3 border"
+              >
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Status
+                    </label>
+                    <select
+                      className="w-full border rounded-md p-2 text-sm"
+                      value={filters.status}
+                      onChange={(e) =>
+                        handleFilterChange("status", e.target.value)
+                      }
+                    >
+                      <option value="">All Statuses</option>
+                      <option value="Added">Added</option>
+                      <option value="Active">Active</option>
+                      <option value="InActive">Inactive</option>
+                      <option value="Modified">Modified</option>
+                    </select>
+                  </div>
+
+                  {/* Improved Date Range Filter */}
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                          From Date
+                        </label>
+                        <input
+                          type="date"
+                          value={filters.startDate}
+                          onChange={(e) =>
+                            handleFilterChange("startDate", e.target.value)
+                          }
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm p-2"
+                          max={filters.endDate || undefined}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                          To Date
+                        </label>
+                        <input
+                          type="date"
+                          value={filters.endDate}
+                          onChange={(e) =>
+                            handleFilterChange("endDate", e.target.value)
+                          }
+                          min={filters.startDate || undefined}
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm p-2"
+                        />
+                      </div>
+                    </div>
+                    {(filters.startDate || filters.endDate) && (
+                      <button
+                        onClick={() =>
+                          setFilters({ ...filters, startDate: "", endDate: "" })
+                        }
+                        className="w-full text-sm py-1.5 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+                      >
+                        Clear Dates
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="w-full">
+                    <label className="block text-sm font-semibold text-gray-800 mb-1">
+                      Items per page:{" "}
+                      <span className="text-blue-600 font-bold">
+                        {itemsPerPage}
+                      </span>
+                    </label>
+                    <input
+                      type="range"
+                      min="5"
+                      max="50"
+                      step="5"
+                      value={itemsPerPage}
+                      onChange={handleItemsPerPageChange}
+                      className="w-full accent-blue-500 cursor-pointer"
+                    />
+                  </div>
+
+                  <div className="flex justify-between pt-2">
                     <button
                       onClick={clearFilters}
                       className="text-sm text-blue-600 hover:text-blue-800"
@@ -343,9 +542,9 @@ const SubscriberManagementPanel = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto p-4 sm:p-6 flex flex-col gap-2">
+      <div className="max-w-7xl mx-auto p-4 sm:p-6">
         {/* Operation Features - Responsive */}
-        <div className="w-full flex flex-col sm:flex-row justify-between gap-3 sm:gap-0">
+        <div className="w-full flex flex-col mb-2 sm:flex-row justify-between gap-3 sm:gap-0">
           {/* Left Button Group */}
           <div className="flex flex-wrap gap-2 sm:gap-3">
             <button
@@ -464,218 +663,389 @@ const SubscriberManagementPanel = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {processedSubscribers.map((subscriber) => (
-                <tr
-                  key={subscriber.subscriber_id}
-                  className={
-                    selectedRows.includes(subscriber.subscriber_id)
-                      ? "bg-blue-100"
-                      : ""
-                  }
-                >
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <input
-                      type="checkbox"
-                      checked={selectedRows.includes(subscriber.subscriber_id)}
-                      onChange={(e) =>
-                        handleSelectRow(e, subscriber.subscriber_id)
-                      }
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              {currentItems.length === 0 ? (
+                <tr>
+                  <td colSpan="11" className="text-center py-6 text-gray-500">
+                    <NoData
+                      title="No Employees Found"
+                      description="Try adjusting your search or filters"
                     />
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {subscriber.subscriber_id}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {subscriber.siteName}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {subscriber.siteCode}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
-                    {subscriber.siteAddress}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {subscriber.ispInfo.broadbandPlan}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {subscriber.ispInfo.numberOfMonths}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    ₹{subscriber.ispInfo.mrc}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {/* {new Date(subscriber.activationDate).toLocaleDateString()} */}
-                    {subscriber.activationDate?.split("T")[0]}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                </tr>
+              ) : (
+                currentItems.map((subscriber) => (
+                  <tr
+                    key={subscriber.subscriber_id}
+                    className={
+                      selectedRows.includes(subscriber.subscriber_id)
+                        ? "bg-blue-100"
+                        : ""
+                    }
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <input
+                        type="checkbox"
+                        checked={selectedRows.includes(subscriber._id)}
+                        onChange={(e) => handleSelectRow(e, subscriber._id)}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {subscriber.subscriber_id}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {subscriber.siteName}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {subscriber.siteCode}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-500">
+                      {subscriber.siteAddress}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {subscriber.ispInfo.broadbandPlan}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {subscriber.ispInfo.numberOfMonths}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      ₹{subscriber.ispInfo.mrc}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {/* {new Date(subscriber.activationDate).toLocaleDateString()} */}
+                      {subscriber.activationDate?.split("T")[0]}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span
+                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
                     ${
                       subscriber.status === "Active"
                         ? "bg-green-100 text-green-800"
                         : "bg-yellow-100 text-yellow-800"
                     }`}
-                    >
-                      {subscriber.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button
-                      className="p-1.5 text-green-600 hover:bg-green-500 hover:text-white rounded-md transition-colors"
-                      title="Approve"
-                      onClick={() =>
-                        handleApprove(
-                          subscriber._id,
-                          subscriber.status,
-                          subscriber
-                        )
-                      }
-                      disabled={loadingApprove === subscriber._id}
-                    >
-                      {loadingApprove === subscriber._id ? (
-                        <Loader className="h-5 w-5" />
-                      ) : (
-                        <FiCheck className="h-5 w-5" />
-                      )}
-                    </button>
-                    <button
-                      className="p-1.5 text-red-600 hover:bg-red-500 hover:text-white rounded-md transition-colors"
-                      title="Reject"
-                      onClick={() =>
-                        handleReject(
-                          subscriber._id,
-                          subscriber.status,
-                          subscriber
-                        )
-                      }
-                      disabled={loadingReject === subscriber._id}
-                    >
-                      {loadingReject === subscriber._id ? (
-                        <Loader className="h-5 w-5" />
-                      ) : (
-                        <FiX className="h-5 w-5" />
-                      )}
-                    </button>
-                  </td>
-                </tr>
-              ))}
+                      >
+                        {subscriber.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <button
+                        className="p-1.5 text-green-600 hover:bg-green-500 hover:text-white rounded-md transition-colors"
+                        title="Approve"
+                        onClick={() =>
+                          handleApprove(
+                            subscriber._id,
+                            subscriber.status,
+                            subscriber
+                          )
+                        }
+                        disabled={loadingApprove === subscriber._id}
+                      >
+                        {loadingApprove === subscriber._id ? (
+                          <Loader className="h-5 w-5" />
+                        ) : (
+                          <FiCheck className="h-5 w-5" />
+                        )}
+                      </button>
+                      <button
+                        className="p-1.5 text-red-600 hover:bg-red-500 hover:text-white rounded-md transition-colors"
+                        title="Reject"
+                        onClick={() =>
+                          handleReject(
+                            subscriber._id,
+                            subscriber.status,
+                            subscriber
+                          )
+                        }
+                        disabled={loadingReject === subscriber._id}
+                      >
+                        {loadingReject === subscriber._id ? (
+                          <Loader className="h-5 w-5" />
+                        ) : (
+                          <FiX className="h-5 w-5" />
+                        )}
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
+
         {/* Mobile Card View */}
         <div className="sm:hidden space-y-3">
-          {processedSubscribers.map((subscriber) => (
-            <div
-              key={subscriber.subscriber_id}
-              className={`bg-white p-4 rounded-lg border-2 ${
-                selectedRows.includes(subscriber.subscriber_id)
-                  ? "border-blue-500"
-                  : "border-gray-200"
-              }`}
-            >
-              {/* Header Row */}
-              <div className="flex justify-between items-start mb-3">
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={selectedRows.includes(subscriber.subscriber_id)}
-                    onChange={(e) =>
-                      handleSelectRow(e, subscriber.subscriber_id)
-                    }
-                    className="h-4 w-4 text-blue-600 mr-2"
-                  />
-                  <span className="font-medium">
-                    ID: {subscriber.subscriber_id}
-                  </span>
-                </div>
-                <span
-                  className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+          {currentItems.length === 0 ? (
+            <div className="text-center py-6 text-gray-500">
+              <NoData
+                title="No Employees Found"
+                description="Try adjusting your search or filters"
+              />
+            </div>
+          ) : (
+            currentItems.map((subscriber) => (
+              <div
+                key={subscriber.subscriber_id}
+                className={`bg-white p-4 rounded-lg border-2 ${
+                  selectedRows.includes(subscriber.subscriber_id)
+                    ? "border-blue-500"
+                    : "border-gray-200"
+                }`}
+              >
+                {/* Header Row */}
+                <div className="flex justify-between items-start mb-3">
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={selectedRows.includes(subscriber._id)}
+                      onChange={(e) => handleSelectRow(e, subscriber._id)}
+                      className="h-4 w-4 text-blue-600 mr-2"
+                    />
+                    <span className="font-medium">
+                      ID: {subscriber.subscriber_id}
+                    </span>
+                  </div>
+                  <span
+                    className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
           ${
             subscriber.status === "Active"
               ? "bg-green-100 text-green-800"
               : "bg-yellow-100 text-yellow-800"
           }`}
-                >
-                  {subscriber.status}
-                </span>
-              </div>
-
-              {/* Main Content */}
-              <div className="space-y-2">
-                <div>
-                  <p className="text-sm text-gray-500">Site</p>
-                  <p className="font-medium">
-                    {subscriber.siteName} ({subscriber.siteCode})
-                  </p>
+                  >
+                    {subscriber.status}
+                  </span>
                 </div>
 
-                <div>
-                  <p className="text-sm text-gray-500">Address</p>
-                  <p className="text-gray-700">{subscriber.siteAddress}</p>
-                </div>
-
-                <div className="grid grid-cols-3 gap-2 pt-2">
+                {/* Main Content */}
+                <div className="space-y-2">
                   <div>
-                    <p className="text-sm text-gray-500">Plan</p>
+                    <p className="text-sm text-gray-500">Site</p>
                     <p className="font-medium">
-                      {subscriber.ispInfo.broadbandPlan}
+                      {subscriber.siteName} ({subscriber.siteCode})
                     </p>
                   </div>
+
                   <div>
-                    <p className="text-sm text-gray-500">Months</p>
-                    <p className="font-medium">
-                      {subscriber.ispInfo.numberOfMonths}
+                    <p className="text-sm text-gray-500">Address</p>
+                    <p className="text-gray-700">{subscriber.siteAddress}</p>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 pt-2">
+                    <div>
+                      <p className="text-sm text-gray-500">Plan</p>
+                      <p className="font-medium">
+                        {subscriber.ispInfo.broadbandPlan}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Months</p>
+                      <p className="font-medium">
+                        {subscriber.ispInfo.numberOfMonths}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">MRC</p>
+                      <p className="font-medium">₹{subscriber.ispInfo.mrc}</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-sm text-gray-500">Activated</p>
+                    <p className="text-gray-700">
+                      {subscriber.activationDate?.split("T")[0]}
                     </p>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-500">MRC</p>
-                    <p className="font-medium">₹{subscriber.ispInfo.mrc}</p>
-                  </div>
                 </div>
 
-                <div>
-                  <p className="text-sm text-gray-500">Activated</p>
-                  <p className="text-gray-700">
-                    {subscriber.activationDate?.split("T")[0]}
-                  </p>
+                {/* Action Buttons */}
+                <div className="flex justify-end space-x-2 mt-3 pt-3 border-t border-gray-100">
+                  <button
+                    className="text-green-600 hover:text-green-800 text-sm font-medium flex items-center justify-center"
+                    onClick={() =>
+                      handleApprove(
+                        subscriber._id,
+                        subscriber.status,
+                        subscriber
+                      )
+                    }
+                    disabled={loadingApprove === subscriber._id}
+                  >
+                    {loadingApprove === subscriber._id ? (
+                      <Loader className="h-4 w-4 mr-1" />
+                    ) : (
+                      <FiCheck className="h-4 w-4 mr-1" />
+                    )}
+                    Approve
+                  </button>
+                  <button
+                    className="text-red-600 hover:text-red-800 text-sm font-medium flex items-center justify-center"
+                    onClick={() =>
+                      handleReject(
+                        subscriber._id,
+                        subscriber.status,
+                        subscriber
+                      )
+                    }
+                    disabled={loadingReject === subscriber._id}
+                  >
+                    {loadingReject === subscriber._id ? (
+                      <Loader className="h-4 w-4 mr-1" />
+                    ) : (
+                      <FiX className="h-4 w-4 mr-1" />
+                    )}
+                    Reject
+                  </button>
                 </div>
               </div>
+            ))
+          )}
+        </div>
 
-              {/* Action Buttons */}
-              <div className="flex justify-end space-x-2 mt-3 pt-3 border-t border-gray-100">
-                <button
-                  className="text-green-600 hover:text-green-800 text-sm font-medium flex items-center justify-center"
-                  onClick={() =>
-                    handleApprove(subscriber._id, subscriber.status, subscriber)
-                  }
-                  disabled={loadingApprove === subscriber._id}
+        {/* Pagination */}
+        {processedSubscribers.length > 0 && (
+          <div className="mt-6 bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 rounded-b-lg shadow-sm sm:px-6">
+            <div className="flex-1 flex justify-between sm:hidden">
+              <button
+                onClick={() => paginate(currentPage - 1)}
+                disabled={currentPage === 1}
+                className={`relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${
+                  currentPage === 1
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-white text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                Previous
+              </button>
+              <span className="text-sm text-gray-700 mx-4 flex items-center">
+                {/* Page {currentPage} of {totalPages} */}
+                <div>
+                  <p className="text-sm text-gray-700">
+                    Showing{" "}
+                    <span className="font-medium">{indexOfFirstItem + 1}</span>{" "}
+                    to{" "}
+                    <span className="font-medium">
+                      {Math.min(indexOfLastItem, processedSubscribers.length)}
+                    </span>{" "}
+                    of{" "}
+                    <span className="font-medium">
+                      {processedSubscribers.length}
+                    </span>{" "}
+                    results
+                  </p>
+                </div>
+              </span>
+              <button
+                onClick={() => paginate(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className={`relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${
+                  currentPage === totalPages
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-white text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                Next
+              </button>
+            </div>
+
+            <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm text-gray-700">
+                  Showing{" "}
+                  <span className="font-medium">{indexOfFirstItem + 1}</span> to{" "}
+                  <span className="font-medium">
+                    {Math.min(indexOfLastItem, processedSubscribers.length)}
+                  </span>{" "}
+                  of{" "}
+                  <span className="font-medium">
+                    {processedSubscribers.length}
+                  </span>{" "}
+                  results
+                </p>
+              </div>
+              <div>
+                <nav
+                  className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
+                  aria-label="Pagination"
                 >
-                  {loadingApprove === subscriber._id ? (
-                    <Loader className="h-4 w-4 mr-1" />
-                  ) : (
-                    <FiCheck className="h-4 w-4 mr-1" />
-                  )}
-                  Approve
-                </button>
-                <button
-                  className="text-red-600 hover:text-red-800 text-sm font-medium flex items-center justify-center"
-                  onClick={() =>
-                    handleReject(subscriber._id, subscriber.status, subscriber)
-                  }
-                  disabled={loadingReject === subscriber._id}
-                >
-                  {loadingReject === subscriber._id ? (
-                    <Loader className="h-4 w-4 mr-1" />
-                  ) : (
-                    <FiX className="h-4 w-4 mr-1" />
-                  )}
-                  Reject
-                </button>
+                  <button
+                    onClick={() => paginate(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 text-sm font-medium ${
+                      currentPage === 1
+                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                        : "bg-white text-gray-500 hover:bg-gray-50"
+                    }`}
+                  >
+                    <span className="sr-only">Previous</span>
+                    <FiChevronLeft className="h-5 w-5" />
+                  </button>
+
+                  {/* Page numbers */}
+                  {(() => {
+                    const pages = [];
+                    const maxVisiblePages = 5;
+                    let startPage, endPage;
+
+                    if (totalPages <= maxVisiblePages) {
+                      startPage = 1;
+                      endPage = totalPages;
+                    } else {
+                      const maxPagesBeforeCurrent = Math.floor(
+                        maxVisiblePages / 2
+                      );
+                      const maxPagesAfterCurrent =
+                        Math.ceil(maxVisiblePages / 2) - 1;
+
+                      if (currentPage <= maxPagesBeforeCurrent) {
+                        startPage = 1;
+                        endPage = maxVisiblePages;
+                      } else if (
+                        currentPage + maxPagesAfterCurrent >=
+                        totalPages
+                      ) {
+                        startPage = totalPages - maxVisiblePages + 1;
+                        endPage = totalPages;
+                      } else {
+                        startPage = currentPage - maxPagesBeforeCurrent;
+                        endPage = currentPage + maxPagesAfterCurrent;
+                      }
+                    }
+
+                    for (let i = startPage; i <= endPage; i++) {
+                      pages.push(
+                        <button
+                          key={i}
+                          onClick={() => paginate(i)}
+                          className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                            currentPage === i
+                              ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
+                              : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
+                          }`}
+                        >
+                          {i}
+                        </button>
+                      );
+                    }
+                    return pages;
+                  })()}
+
+                  <button
+                    onClick={() => paginate(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 text-sm font-medium ${
+                      currentPage === totalPages
+                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                        : "bg-white text-gray-500 hover:bg-gray-50"
+                    }`}
+                  >
+                    <span className="sr-only">Next</span>
+                    <FiChevronRight className="h-5 w-5" />
+                  </button>
+                </nav>
               </div>
             </div>
-          ))}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
