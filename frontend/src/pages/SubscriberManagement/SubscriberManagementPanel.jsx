@@ -23,6 +23,8 @@ const SubscriberManagementPanel = () => {
   const [loadingApprove, setLoadingApprove] = useState(null);
   const [loadingReject, setLoadingReject] = useState(null);
 
+  const [selectedRows, setSelectedRows] = useState([]);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState({
     key: "createdAt",
@@ -105,6 +107,12 @@ const SubscriberManagementPanel = () => {
     // Apply sorting
     if (sortConfig.key) {
       result.sort((a, b) => {
+        // First sort by selection status (selected rows first)
+        const aSelected = selectedRows.includes(a._id);
+        const bSelected = selectedRows.includes(b._id);
+        if (aSelected && !bSelected) return -1;
+        if (!aSelected && bSelected) return 1;
+
         // First sort by request_status (pending first)
         if (a.request_status === "pending" && b.request_status !== "pending") {
           return -1;
@@ -149,6 +157,12 @@ const SubscriberManagementPanel = () => {
     } else {
       // Default sort: pending first, then by createdAt (newest first)
       result.sort((a, b) => {
+        // First sort by selection status (selected rows first)
+        const aSelected = selectedRows.includes(a._id);
+        const bSelected = selectedRows.includes(b._id);
+        if (aSelected && !bSelected) return -1;
+        if (!aSelected && bSelected) return 1;
+
         // Pending first
         if (a.request_status === "pending" && b.request_status !== "pending") {
           return -1;
@@ -163,7 +177,7 @@ const SubscriberManagementPanel = () => {
     }
 
     return result;
-  }, [subscribers, searchTerm, filters, sortConfig]);
+  }, [subscribers, searchTerm, filters, sortConfig, currentPage]);
 
   // Get current items
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -234,8 +248,6 @@ const SubscriberManagementPanel = () => {
     refetch();
     setIsSubscribersExcelOpen(false);
   };
-
-  const [selectedRows, setSelectedRows] = useState([]);
 
   const handleSelectRow = (e, id) => {
     if (e.target.checked) {
@@ -319,111 +331,6 @@ const SubscriberManagementPanel = () => {
               </div>
 
               {/* Filter Dropdown */}
-              {/* <div
-                id="filter-dropdown"
-                className="hidden absolute left-0 sm:left-auto sm:right-0 mt-1 w-full sm:w-64 bg-white rounded-md shadow-lg z-20 p-3 border"
-              >
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Status
-                    </label>
-                    <select
-                      className="w-full border rounded-md p-2 text-sm"
-                      value={filters.status}
-                      onChange={(e) =>
-                        handleFilterChange("status", e.target.value)
-                      }
-                    >
-                      <option value="">All Statuses</option>
-                      <option value="Added">Added</option>
-                      <option value="Active">Active</option>
-                      <option value="InActive">Inactive</option>
-                      <option value="Modified">Modified</option>
-                    </select>
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row sm:space-x-4 space-y-2 sm:space-y-0 items-start sm:items-end">
-                    <div className="w-full sm:w-auto">
-                      <label className="block text-sm font-medium text-gray-700">
-                        From Date
-                      </label>
-                      <input
-                        type="date"
-                        value={filters.startDate}
-                        onChange={(e) =>
-                          handleFilterChange("startDate", e.target.value)
-                        }
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                        max={filters.endDate || undefined} // Prevent selecting start date after end date
-                      />
-                    </div>
-
-                    <div className="w-full sm:w-auto">
-                      <label className="block text-sm font-medium text-gray-700">
-                        To Date
-                      </label>
-                      <input
-                        type="date"
-                        value={filters.endDate}
-                        onChange={(e) =>
-                          handleFilterChange("endDate", e.target.value)
-                        }
-                        min={filters.startDate || undefined} // Ensure end date can't be before start date
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                      />
-                    </div>
-
-                    {(filters.startDate || filters.endDate) && (
-                      <button
-                        onClick={() =>
-                          setFilters({ ...filters, startDate: "", endDate: "" })
-                        }
-                        className="w-full sm:w-auto px-3 py-1.5 text-sm bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
-                      >
-                        Clear Dates
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="w-full max-w-sm">
-                    <label className="block text-sm font-semibold text-gray-800 mb-1">
-                      Items per page:{" "}
-                      <span className="text-blue-600 font-bold">
-                        {itemsPerPage}
-                      </span>
-                    </label>
-                    <input
-                      type="range"
-                      min="5"
-                      max="50"
-                      step="5"
-                      value={itemsPerPage}
-                      onChange={handleItemsPerPageChange}
-                      className="w-full accent-blue-500 cursor-pointer"
-                    />
-                  </div>
-
-                  <div className="flex justify-between">
-                    <button
-                      onClick={clearFilters}
-                      className="text-sm text-blue-600 hover:text-blue-800"
-                    >
-                      Clear Filters
-                    </button>
-                    <button
-                      onClick={() =>
-                        document
-                          .getElementById("filter-dropdown")
-                          .classList.add("hidden")
-                      }
-                      className="text-sm bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700"
-                    >
-                      Apply
-                    </button>
-                  </div>
-                </div>
-              </div> */}
               <div
                 id="filter-dropdown"
                 className="hidden absolute left-0 sm:left-auto sm:right-0 mt-1 w-full sm:w-80 bg-white rounded-md shadow-lg z-20 p-3 border"
