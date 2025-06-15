@@ -4,6 +4,10 @@ const {
   createSubscriber,
   getSubscribers,
   createBulkSubscribers,
+  rejectSubscriber,
+  approveSubscriber,
+  bulkApproveSubscribers,
+  bulkDeleteSubscribers,
 } = require("../controllers/subscriberCtrl");
 
 const router = express.Router();
@@ -23,6 +27,36 @@ router.post(
   "/bulk",
   authorize("Admin", "General Manager", "Manager", "Finance"),
   createBulkSubscribers
+);
+
+router.patch(
+  "/:id/approve",
+  authorize("Admin", "General Manager", "Manager"),
+  approveSubscriber
+);
+
+router.patch(
+  "/:id/reject",
+  authorize("Admin", "General Manager", "Manager"),
+  rejectSubscriber
+);
+
+router.patch(
+  "/bulk-approve",
+  authorize("Admin", "General Manager", "Manager"),
+  bulkApproveSubscribers
+);
+
+router.patch(
+  "/bulk-reject",
+  authorize("Admin", "General Manager", "Manager"),
+  bulkApproveSubscribers
+);
+
+router.patch(
+  "/bulk-delete",
+  authorize("Admin", "General Manager"),
+  bulkDeleteSubscribers
 );
 
 module.exports = router;

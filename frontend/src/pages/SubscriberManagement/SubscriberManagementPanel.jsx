@@ -1,7 +1,16 @@
 import React, { useEffect } from "react";
 import { useState } from "react";
 import AddSubscriberForm from "./AddSubscriberForm";
-import { getSubscribersAPI } from "../../services/subscriberServices";
+import { Loader } from "lucide-react";
+import * as XLSX from "xlsx";
+import {
+  approveSubscriberAPI,
+  bulkApproveSubscriberAPI,
+  bulkDeleteSubscriberAPI,
+  bulkRejectSubscriberAPI,
+  getSubscribersAPI,
+  rejectSubscriberAPI,
+} from "../../services/subscriberServices";
 import { useQuery } from "@tanstack/react-query";
 import {
   FiFilter,
@@ -15,13 +24,32 @@ import {
 } from "react-icons/fi";
 import AddSubscribersExcel from "./AddSubscribersExcel";
 import NoData from "../../components/NoData";
+import Toast from "../../components/Toast";
+import { hasPermission } from "../../utils/auth";
+import { getUserRoles } from "../../utils/jwt";
 
 const SubscriberManagementPanel = () => {
   const [isNewSubscriberFormOpen, setIsNewSubscriberFormOpen] = useState(false);
   const [isSubscribersExcelOpen, setIsSubscribersExcelOpen] = useState(false);
 
+  const userRoles = getUserRoles();
+  const DecisionMaker = hasPermission(
+    ["Admin", "General Manager", "Manager", "Senior HR"],
+    userRoles
+  );
+
+  const hasDeletePermission = hasPermission(
+    ["Admin", "General Manager"],
+    userRoles
+  );
+
   const [loadingApprove, setLoadingApprove] = useState(null);
   const [loadingReject, setLoadingReject] = useState(null);
+  const [loadingBulkDelete, setloadingBulkDelete] = useState(null);
+
+  const [submissionStatus, setSubmissionStatus] = useState(null);
+
+  const [allSelectedPending, setAllSelectedPending] = useState(false);
 
   const [selectedRows, setSelectedRows] = useState([]);
 
@@ -108,8 +136,8 @@ const SubscriberManagementPanel = () => {
     if (sortConfig.key) {
       result.sort((a, b) => {
         // First sort by selection status (selected rows first)
-        const aSelected = selectedRows.includes(a._id);
-        const bSelected = selectedRows.includes(b._id);
+        const aSelected = selectedRows?.map((row) => row.id).includes(a._id);
+        const bSelected = selectedRows?.map((row) => row.id).includes(b._id);
         if (aSelected && !bSelected) return -1;
         if (!aSelected && bSelected) return 1;
 
@@ -145,21 +173,14 @@ const SubscriberManagementPanel = () => {
             ? aVal.localeCompare(bVal)
             : bVal.localeCompare(aVal);
         }
-
-        // if (a[sortConfig.key] < b[sortConfig.key]) {
-        //   return sortConfig.direction === "asc" ? -1 : 1;
-        // }
-        // if (a[sortConfig.key] > b[sortConfig.key]) {
-        //   return sortConfig.direction === "asc" ? 1 : -1;
-        // }
         return 0;
       });
     } else {
       // Default sort: pending first, then by createdAt (newest first)
       result.sort((a, b) => {
         // First sort by selection status (selected rows first)
-        const aSelected = selectedRows.includes(a._id);
-        const bSelected = selectedRows.includes(b._id);
+        const aSelected = selectedRows?.map((row) => row.id).includes(a._id);
+        const bSelected = selectedRows?.map((row) => row.id).includes(b._id);
         if (aSelected && !bSelected) return -1;
         if (!aSelected && bSelected) return 1;
 
@@ -249,20 +270,483 @@ const SubscriberManagementPanel = () => {
     setIsSubscribersExcelOpen(false);
   };
 
-  const handleSelectRow = (e, id) => {
+  const handleSelectRow = (e, id, status, subscriber) => {
     if (e.target.checked) {
-      setSelectedRows([...selectedRows, id]);
+      setSelectedRows([...selectedRows, { id, status, subscriber }]);
     } else {
-      setSelectedRows(selectedRows.filter((rowId) => rowId !== id));
+      setSelectedRows(selectedRows.filter((row) => row.id !== id));
     }
   };
 
+  // console.log(JSON.stringify(selectedRows));
+
   const handleSelectAll = (e) => {
     if (e.target.checked) {
-      setSelectedRows(processedSubscribers.map((item) => item._id));
+      setSelectedRows(
+        processedSubscribers.map((item) => ({
+          id: item._id,
+          status: item.status,
+          subscriber: item,
+        }))
+      );
     } else {
       setSelectedRows([]);
     }
+  };
+
+  useEffect(() => {
+    const allPending =
+      selectedRows.length > 0 &&
+      selectedRows.every((row) => row.subscriber?.request_status === "pending");
+    setAllSelectedPending(allPending);
+  }, [selectedRows]);
+
+  const handleApprove = async (subscriberId, status, subscriber) => {
+    setLoadingApprove(subscriberId);
+    try {
+      const response = await approveSubscriberAPI(
+        subscriberId,
+        status,
+        subscriber
+      );
+
+      // Refresh the employee list
+      setTimeout(() => {
+        refetch();
+      }, 1000);
+
+      // Show success message
+      setSubmissionStatus({
+        type: "success",
+        message: response?.message ?? "Approved Successfully",
+      });
+    } catch (error) {
+      setSubmissionStatus({
+        type: "error",
+        message:
+          error?.response?.data?.error ??
+          error?.message ??
+          "Failed to Approve Subscriber",
+      });
+    } finally {
+      setLoadingApprove(null);
+    }
+  };
+
+  const handleReject = async (subscriberId, status, subscriber) => {
+    setLoadingReject(subscriberId);
+    try {
+      // Call your API to reject the employee
+      const response = await rejectSubscriberAPI(
+        subscriberId,
+        status,
+        subscriber
+      );
+
+      // Refresh the employee list
+      setTimeout(() => {
+        refetch();
+      }, 1000);
+
+      // Show success message
+      setSubmissionStatus({
+        type: "success",
+        message: response?.message ?? "Rejected Successfully",
+      });
+    } catch (error) {
+      // console.error("Error rejecting employee:", error);
+      setSubmissionStatus({
+        type: "error",
+        message:
+          error?.response?.data?.error ??
+          error?.message ??
+          "Failed to Reject Subscriber",
+      });
+    } finally {
+      setLoadingReject(null);
+    }
+  };
+
+  const handleBulkApprove = async () => {
+    if (!selectedRows.length) return;
+
+    setLoadingApprove("bulk");
+    setSubmissionStatus({
+      type: "info",
+      message: `Processing ${selectedRows.length} subscribers...`,
+    });
+
+    try {
+      // Prepare updates with only necessary fields
+      const updates = selectedRows.map(({ id, status, subscriber }) => {
+        if (status === "Added") {
+          return {
+            id,
+            status: "Active",
+            request_status: "approved",
+          };
+        } else if (status === "InActive") {
+          return {
+            id,
+            status: "InActive",
+            request_status: "approved",
+          };
+        }
+        // } else if (status === "Modified") {
+        //   return {
+        //     id,
+        //     status: "Modified",
+        //     request_status: "approved",
+        //     subscriber,
+        //   };
+        // } else if (status === "Rejected") {
+        //   return {
+        //     id,
+        //     status: "Rejected",
+        //     request_status: "rejected",
+        //     subscriber,
+        //   };
+        // } else {
+        //   return {
+        //     id,
+        //     status,
+        //     request_status: "approved",
+        //     subscriber,
+        //   };
+        // }
+      });
+
+      // Process in batches
+      const batchSize = 10;
+      const results = [];
+      let successful = 0;
+      let failed = 0;
+
+      for (let i = 0; i < updates.length; i += batchSize) {
+        const batch = updates.slice(i, i + batchSize);
+
+        // Update progress
+        setSubmissionStatus((prev) => ({
+          ...prev,
+          progress: Math.floor((i / updates.length) * 100),
+          message: `Processing ${i + 1}-${Math.min(
+            i + batchSize,
+            updates.length
+          )} of ${updates.length}...`,
+        }));
+
+        try {
+          const response = await bulkApproveSubscriberAPI(batch);
+
+          // Track successful updates
+          successful += batch.length;
+          results.push(
+            ...batch.map((update) => ({
+              id: update.id,
+              status: "success",
+              data: update,
+            }))
+          );
+        } catch (error) {
+          // Track failed updates
+          failed += batch.length;
+          results.push(
+            ...batch.map((update) => ({
+              id: update.id,
+              status: "error",
+              error: error.message || "Batch update failed",
+              data: update,
+            }))
+          );
+        }
+      }
+
+      // Prepare final report
+      const errorDetails = results
+        .filter((r) => r.status === "error")
+        .map((r) => `ID ${r.id}: ${r.error}`);
+
+      setSubmissionStatus({
+        type: failed > 0 ? (successful > 0 ? "warning" : "error") : "success",
+        message: `Processed ${updates.length} subscribers: ${successful} succeeded, ${failed} failed`,
+        details: errorDetails,
+      });
+
+      // Refresh data if successful
+      if (failed === 0) {
+        refetch(); // Your data refresh function
+        setSelectedRows([]);
+      }
+    } catch (error) {
+      console.error("Batch patch error:", error);
+      setSubmissionStatus({
+        type: "error",
+        message: error?.response?.data?.message || "Batch status update failed",
+        details: [error.message],
+      });
+    } finally {
+      setLoadingApprove(null);
+    }
+  };
+
+  const handleBulkReject = async () => {
+    if (!selectedRows.length) return;
+
+    setLoadingReject("bulk");
+    setSubmissionStatus({
+      type: "info",
+      message: `Processing ${selectedRows.length} subscribers...`,
+    });
+
+    try {
+      // Prepare updates with only necessary fields
+      const updates = selectedRows.map(({ id, status, subscriber }) => {
+        if (status === "Added") {
+          return {
+            id,
+            status: "Rejected",
+            request_status: "rejected",
+          };
+        } else if (status === "InActive") {
+          return {
+            id,
+            status: "InActive",
+            request_status: "approved",
+          };
+        }
+        // } else if (status === "Modified") {
+        //   return {
+        //     id,
+        //     status: "Modified",
+        //     request_status: "approved",
+        //     subscriber,
+        //   };
+        // } else if (status === "Rejected") {
+        //   return {
+        //     id,
+        //     status: "Rejected",
+        //     request_status: "rejected",
+        //     subscriber,
+        //   };
+        // } else {
+        //   return {
+        //     id,
+        //     status,
+        //     request_status: "approved",
+        //     subscriber,
+        //   };
+        // }
+      });
+
+      // Process in batches
+      const batchSize = 10;
+      const results = [];
+      let successful = 0;
+      let failed = 0;
+
+      for (let i = 0; i < updates.length; i += batchSize) {
+        const batch = updates.slice(i, i + batchSize);
+
+        // Update progress
+        setSubmissionStatus((prev) => ({
+          ...prev,
+          progress: Math.floor((i / updates.length) * 100),
+          message: `Processing ${i + 1}-${Math.min(
+            i + batchSize,
+            updates.length
+          )} of ${updates.length}...`,
+        }));
+
+        try {
+          const response = await bulkRejectSubscriberAPI(batch);
+
+          // Track successful updates
+          successful += batch.length;
+          results.push(
+            ...batch.map((update) => ({
+              id: update.id,
+              status: "success",
+              data: update,
+            }))
+          );
+        } catch (error) {
+          // Track failed updates
+          failed += batch.length;
+          results.push(
+            ...batch.map((update) => ({
+              id: update.id,
+              status: "error",
+              error: error.message || "Batch update failed",
+              data: update,
+            }))
+          );
+        }
+      }
+
+      // Prepare final report
+      const errorDetails = results
+        .filter((r) => r.status === "error")
+        .map((r) => `ID ${r.id}: ${r.error}`);
+
+      setSubmissionStatus({
+        type: failed > 0 ? (successful > 0 ? "warning" : "error") : "success",
+        message: `Processed ${updates.length} subscribers: ${successful} succeeded, ${failed} failed`,
+        details: errorDetails,
+      });
+
+      // Refresh data if successful
+      if (failed === 0) {
+        refetch(); // Your data refresh function
+        setSelectedRows([]);
+      }
+    } catch (error) {
+      console.error("Batch patch error:", error);
+      setSubmissionStatus({
+        type: "error",
+        message: error?.response?.data?.message || "Batch status update failed",
+        details: [error.message],
+      });
+    } finally {
+      setLoadingReject(null);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!selectedRows.length) return;
+
+    setloadingBulkDelete("bulk");
+    setSubmissionStatus({
+      type: "info",
+      message: `Processing ${selectedRows.length} subscribers...`,
+    });
+
+    try {
+      // Prepare updates with only necessary fields
+      const updates = selectedRows.map(({ id }) => {
+        return id;
+      });
+
+      console.log("Bulk delete updates:", updates);
+
+      // Process in batches
+      const batchSize = 10;
+      const results = [];
+      let successful = 0;
+      let failed = 0;
+
+      for (let i = 0; i < updates.length; i += batchSize) {
+        const batch = updates.slice(i, i + batchSize);
+
+        // Update progress
+        setSubmissionStatus((prev) => ({
+          ...prev,
+          progress: Math.floor((i / updates.length) * 100),
+          message: `Processing ${i + 1}-${Math.min(
+            i + batchSize,
+            updates.length
+          )} of ${updates.length}...`,
+        }));
+
+        try {
+          const response = await bulkDeleteSubscriberAPI(batch);
+
+          // Track successful updates
+          successful += batch.length;
+          results.push(
+            ...batch.map((update) => ({
+              id: update.id,
+              status: "success",
+              data: update,
+            }))
+          );
+        } catch (error) {
+          // Track failed updates
+          failed += batch.length;
+          results.push(
+            ...batch.map((update) => ({
+              id: update.id,
+              status: "error",
+              error: error.message || "Batch update failed",
+              data: update,
+            }))
+          );
+        }
+      }
+
+      // Prepare final report
+      const errorDetails = results
+        .filter((r) => r.status === "error")
+        .map((r) => `ID ${r.id}: ${r.error}`);
+
+      setSubmissionStatus({
+        type: failed > 0 ? (successful > 0 ? "warning" : "error") : "success",
+        message: `Processed ${updates.length} subscribers: ${successful} succeeded, ${failed} failed`,
+        details: errorDetails,
+      });
+
+      // Refresh data if successful
+      if (failed === 0) {
+        refetch(); // Your data refresh function
+        setSelectedRows([]);
+      }
+    } catch (error) {
+      console.error("Batch patch error:", error);
+      setSubmissionStatus({
+        type: "error",
+        message: error?.response?.data?.message || "Batch status update failed",
+        details: [error.message],
+      });
+    } finally {
+      setloadingBulkDelete(null);
+    }
+  };
+
+  const exportToExcel = () => {
+    // Determine which data to export
+    const dataToExport =
+      selectedRows.length > 0
+        ? selectedRows.map((row) => row.subscriber)
+        : processedSubscribers;
+
+    if (!dataToExport || dataToExport.length === 0) {
+      alert("No data available to export");
+      return;
+    }
+
+    // Prepare the worksheet data
+    const worksheetData = dataToExport.map((subscriber) => ({
+      "Subscriber ID": subscriber.subscriber_id,
+      "Site Name": subscriber.siteName,
+      "Site Code": subscriber.siteCode,
+      Address: subscriber.siteAddress,
+      "LC Name": subscriber.localContact?.name || "",
+      "LC Contact": subscriber.localContact?.contact || "",
+      "ISP Name": subscriber.ispInfo?.name || "",
+      "ISP Contact": subscriber.ispInfo?.contact || "",
+      Plan: subscriber.ispInfo?.broadbandPlan || "",
+      "MRC (₹)": subscriber.ispInfo?.mrc || "",
+      "OTC (₹)": subscriber.ispInfo?.otc || "",
+      Status: subscriber.status,
+      "Activation Date": subscriber.activationDate?.split("T")[0] || "",
+      "Current Activation Date":
+        subscriber.ispInfo?.currentActivationDate?.split("T")[0] || "",
+      "Renewal Date": subscriber.ispInfo?.renewalDate?.split("T")[0] || "",
+    }));
+
+    // Create workbook and worksheet
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+
+    // Add worksheet to workbook
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Subscribers");
+
+    // Generate Excel file and trigger download
+    const fileName =
+      selectedRows.length > 0
+        ? `Selected_Subscribers_${new Date().toISOString().split("T")[0]}.xlsx`
+        : `All_Subscribers_${new Date().toISOString().split("T")[0]}.xlsx`;
+
+    XLSX.writeFile(workbook, fileName, { compression: true });
   };
 
   if (isLoading)
@@ -285,7 +769,14 @@ const SubscriberManagementPanel = () => {
       )}
 
       <div className="sticky top-0 z-10 bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-col sm:flex-row justify-between items-center gap-3">
+        {submissionStatus && (
+          <Toast
+            type={submissionStatus.type}
+            message={submissionStatus.message}
+            onClose={() => setSubmissionStatus(null)}
+          />
+        )}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-3 flex flex-col sm:flex-row justify-between items-center gap-3">
           <h2 className="text-xl sm:text-2xl font-bold text-gray-800 whitespace-nowrap">
             Subscriber Directory
           </h2>
@@ -352,6 +843,7 @@ const SubscriberManagementPanel = () => {
                       <option value="Active">Active</option>
                       <option value="InActive">Inactive</option>
                       <option value="Modified">Modified</option>
+                      <option value="Rejected">Rejected</option>
                     </select>
                   </div>
 
@@ -401,7 +893,7 @@ const SubscriberManagementPanel = () => {
 
                   <div className="w-full">
                     <label className="block text-sm font-semibold text-gray-800 mb-1">
-                      Items per page:{" "}
+                      Subscribers Per Page:{" "}
                       <span className="text-blue-600 font-bold">
                         {itemsPerPage}
                       </span>
@@ -447,11 +939,8 @@ const SubscriberManagementPanel = () => {
             </button>
           </div>
         </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto p-4 sm:p-6">
-        {/* Operation Features - Responsive */}
-        <div className="w-full flex flex-col mb-2 sm:flex-row justify-between gap-3 sm:gap-0">
+        <div className="w-full flex flex-col px-4 py-2 sm:flex-row justify-between gap-3 sm:gap-0">
           {/* Left Button Group */}
           <div className="flex flex-wrap gap-2 sm:gap-3">
             <button
@@ -460,24 +949,62 @@ const SubscriberManagementPanel = () => {
             >
               Import Subscribers
             </button>
-            <button className="flex-1 sm:flex-none whitespace-nowrap px-3 py-2 sm:px-4 sm:py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 text-sm sm:text-base">
-              Export Subscribers
+            <button
+              className="flex-1 sm:flex-none whitespace-nowrap px-3 py-2 sm:px-4 sm:py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 text-sm sm:text-base"
+              onClick={exportToExcel}
+              disabled={
+                !processedSubscribers || processedSubscribers.length === 0
+              }
+            >
+              {selectedRows.length > 0
+                ? `Export Selected (${selectedRows.length})`
+                : "Export All Subscribers"}
             </button>
-            <button className="flex-1 sm:flex-none whitespace-nowrap px-3 py-2 sm:px-4 sm:py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 text-sm sm:text-base">
-              Delete
-            </button>
+            {hasDeletePermission && selectedRows.length > 0 && (
+              <button
+                className="flex-1 sm:flex-none whitespace-nowrap px-3 py-2 sm:px-4 sm:py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 text-sm sm:text-base"
+                onClick={handleBulkDelete}
+                disabled={loadingBulkDelete === "bulk"}
+              >
+                {selectedRows.length > 0
+                  ? `Delete (${selectedRows.length})`
+                  : "Delete"}
+              </button>
+            )}
           </div>
 
           {/* Right Button Group */}
-          <div className="flex flex-wrap gap-2 sm:gap-3">
-            <button className="flex-1 sm:flex-none whitespace-nowrap px-3 py-2 sm:px-4 sm:py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 text-sm sm:text-base">
-              Approve
-            </button>
-            <button className="flex-1 sm:flex-none whitespace-nowrap px-3 py-2 sm:px-4 sm:py-2 bg-rose-500 hover:bg-rose-600 text-white rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 text-sm sm:text-base">
-              Reject
-            </button>
-          </div>
+          {allSelectedPending && (
+            <div className="flex flex-wrap gap-2 sm:gap-3">
+              <button
+                className="flex-1 sm:flex-none whitespace-nowrap px-3 py-2 sm:px-4 sm:py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 text-sm sm:text-base"
+                onClick={handleBulkApprove}
+                disabled={loadingApprove === "bulk"}
+              >
+                {loadingApprove === "bulk" ? (
+                  <Loader className="h-5 w-5 animate-spin" />
+                ) : (
+                  `Approve (${selectedRows.length})`
+                )}
+              </button>
+              <button
+                className="flex-1 sm:flex-none whitespace-nowrap px-3 py-2 sm:px-4 sm:py-2 bg-rose-500 hover:bg-rose-600 text-white rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 text-sm sm:text-base"
+                onClick={handleBulkReject}
+                disabled={loadingReject === "bulk"}
+              >
+                {loadingReject === "bulk" ? (
+                  <Loader className="h-5 w-5 animate-spin" />
+                ) : (
+                  `Reject (${selectedRows.length})`
+                )}
+              </button>
+            </div>
+          )}
         </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto p-4 sm:p-6">
+        {/* Operation Features - Responsive */}
 
         {/* Subscriber List Table */}
         <div className="hidden sm:block bg-white shadow-xl rounded-xl overflow-x-auto">
@@ -574,7 +1101,7 @@ const SubscriberManagementPanel = () => {
                 <tr>
                   <td colSpan="11" className="text-center py-6 text-gray-500">
                     <NoData
-                      title="No Employees Found"
+                      title="No Subscribers Found"
                       description="Try adjusting your search or filters"
                     />
                   </td>
@@ -584,7 +1111,9 @@ const SubscriberManagementPanel = () => {
                   <tr
                     key={subscriber.subscriber_id}
                     className={
-                      selectedRows.includes(subscriber.subscriber_id)
+                      selectedRows
+                        ?.map((row) => row.id)
+                        .includes(subscriber._id)
                         ? "bg-blue-100"
                         : ""
                     }
@@ -592,8 +1121,17 @@ const SubscriberManagementPanel = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <input
                         type="checkbox"
-                        checked={selectedRows.includes(subscriber._id)}
-                        onChange={(e) => handleSelectRow(e, subscriber._id)}
+                        checked={selectedRows
+                          ?.map((row) => row.id)
+                          .includes(subscriber._id)}
+                        onChange={(e) =>
+                          handleSelectRow(
+                            e,
+                            subscriber._id,
+                            subscriber.status,
+                            subscriber
+                          )
+                        }
                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                       />
                     </td>
@@ -625,52 +1163,67 @@ const SubscriberManagementPanel = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
                         className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                    ${
-                      subscriber.status === "Active"
-                        ? "bg-green-100 text-green-800"
-                        : "bg-yellow-100 text-yellow-800"
-                    }`}
+                   ${
+                     subscriber.status === "Active"
+                       ? "bg-green-100 text-green-800" // Green for active
+                       : subscriber.status === "InActive"
+                       ? "bg-red-100 text-red-800" // Red for inactive
+                       : subscriber.status === "Added"
+                       ? "bg-blue-100 text-blue-800" // Blue for in-process
+                       : subscriber.status === "Rejected"
+                       ? "bg-rose-100 text-rose-800" // Rose/deep pink for rejected
+                       : subscriber.status === "Deleted"
+                       ? "bg-gray-200 text-gray-800" // Gray for deleted
+                       : subscriber.status === "Modified"
+                       ? "bg-amber-100 text-amber-800" // Amber/orange for modified
+                       : "bg-gray-100 text-gray-800" // Default fallback
+                   }`}
                       >
                         {subscriber.status}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button
-                        className="p-1.5 text-green-600 hover:bg-green-500 hover:text-white rounded-md transition-colors"
-                        title="Approve"
-                        onClick={() =>
-                          handleApprove(
-                            subscriber._id,
-                            subscriber.status,
-                            subscriber
-                          )
-                        }
-                        disabled={loadingApprove === subscriber._id}
-                      >
-                        {loadingApprove === subscriber._id ? (
-                          <Loader className="h-5 w-5" />
-                        ) : (
-                          <FiCheck className="h-5 w-5" />
+                      {DecisionMaker &&
+                        subscriber.request_status === "pending" && (
+                          <>
+                            <button
+                              className="p-1.5 text-green-600 hover:bg-green-500 hover:text-white rounded-md transition-colors"
+                              title="Approve"
+                              onClick={() =>
+                                handleApprove(
+                                  subscriber._id,
+                                  subscriber.status,
+                                  subscriber
+                                )
+                              }
+                              disabled={loadingApprove === subscriber._id}
+                            >
+                              {loadingApprove === subscriber._id ? (
+                                <Loader className="h-5 w-5 animate-spin" />
+                              ) : (
+                                <FiCheck className="h-5 w-5" />
+                              )}
+                            </button>
+                            <button
+                              className="p-1.5 text-red-600 hover:bg-red-500 hover:text-white rounded-md transition-colors"
+                              title="Reject"
+                              onClick={() =>
+                                handleReject(
+                                  subscriber._id,
+                                  subscriber.status,
+                                  subscriber
+                                )
+                              }
+                              disabled={loadingReject === subscriber._id}
+                            >
+                              {loadingReject === subscriber._id ? (
+                                <Loader className="h-5 w-5 animate-spin" />
+                              ) : (
+                                <FiX className="h-5 w-5" />
+                              )}
+                            </button>
+                          </>
                         )}
-                      </button>
-                      <button
-                        className="p-1.5 text-red-600 hover:bg-red-500 hover:text-white rounded-md transition-colors"
-                        title="Reject"
-                        onClick={() =>
-                          handleReject(
-                            subscriber._id,
-                            subscriber.status,
-                            subscriber
-                          )
-                        }
-                        disabled={loadingReject === subscriber._id}
-                      >
-                        {loadingReject === subscriber._id ? (
-                          <Loader className="h-5 w-5" />
-                        ) : (
-                          <FiX className="h-5 w-5" />
-                        )}
-                      </button>
                     </td>
                   </tr>
                 ))
@@ -684,7 +1237,7 @@ const SubscriberManagementPanel = () => {
           {currentItems.length === 0 ? (
             <div className="text-center py-6 text-gray-500">
               <NoData
-                title="No Employees Found"
+                title="No Subscribers Found"
                 description="Try adjusting your search or filters"
               />
             </div>
@@ -693,7 +1246,7 @@ const SubscriberManagementPanel = () => {
               <div
                 key={subscriber.subscriber_id}
                 className={`bg-white p-4 rounded-lg border-2 ${
-                  selectedRows.includes(subscriber.subscriber_id)
+                  selectedRows?.map((row) => row.id).includes(subscriber._id)
                     ? "border-blue-500"
                     : "border-gray-200"
                 }`}
@@ -703,8 +1256,17 @@ const SubscriberManagementPanel = () => {
                   <div className="flex items-center">
                     <input
                       type="checkbox"
-                      checked={selectedRows.includes(subscriber._id)}
-                      onChange={(e) => handleSelectRow(e, subscriber._id)}
+                      checked={selectedRows
+                        ?.map((row) => row.id)
+                        .includes(subscriber._id)}
+                      onChange={(e) =>
+                        handleSelectRow(
+                          e,
+                          subscriber._id,
+                          subscriber.status,
+                          subscriber
+                        )
+                      }
                       className="h-4 w-4 text-blue-600 mr-2"
                     />
                     <span className="font-medium">
@@ -715,8 +1277,18 @@ const SubscriberManagementPanel = () => {
                     className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
           ${
             subscriber.status === "Active"
-              ? "bg-green-100 text-green-800"
-              : "bg-yellow-100 text-yellow-800"
+              ? "bg-green-100 text-green-800" // Green for active
+              : subscriber.status === "InActive"
+              ? "bg-red-100 text-red-800" // Red for inactive
+              : subscriber.status === "Added"
+              ? "bg-blue-100 text-blue-800" // Blue for in-process
+              : subscriber.status === "Rejected"
+              ? "bg-rose-100 text-rose-800" // Rose/deep pink for rejected
+              : subscriber.status === "Deleted"
+              ? "bg-gray-200 text-gray-800" // Gray for deleted
+              : subscriber.status === "Modified"
+              ? "bg-amber-100 text-amber-800" // Amber/orange for modified
+              : "bg-gray-100 text-gray-800" // Default fallback
           }`}
                   >
                     {subscriber.status}
@@ -766,42 +1338,46 @@ const SubscriberManagementPanel = () => {
 
                 {/* Action Buttons */}
                 <div className="flex justify-end space-x-2 mt-3 pt-3 border-t border-gray-100">
-                  <button
-                    className="text-green-600 hover:text-green-800 text-sm font-medium flex items-center justify-center"
-                    onClick={() =>
-                      handleApprove(
-                        subscriber._id,
-                        subscriber.status,
-                        subscriber
-                      )
-                    }
-                    disabled={loadingApprove === subscriber._id}
-                  >
-                    {loadingApprove === subscriber._id ? (
-                      <Loader className="h-4 w-4 mr-1" />
-                    ) : (
-                      <FiCheck className="h-4 w-4 mr-1" />
-                    )}
-                    Approve
-                  </button>
-                  <button
-                    className="text-red-600 hover:text-red-800 text-sm font-medium flex items-center justify-center"
-                    onClick={() =>
-                      handleReject(
-                        subscriber._id,
-                        subscriber.status,
-                        subscriber
-                      )
-                    }
-                    disabled={loadingReject === subscriber._id}
-                  >
-                    {loadingReject === subscriber._id ? (
-                      <Loader className="h-4 w-4 mr-1" />
-                    ) : (
-                      <FiX className="h-4 w-4 mr-1" />
-                    )}
-                    Reject
-                  </button>
+                  {DecisionMaker && subscriber.request_status === "pending" && (
+                    <>
+                      <button
+                        className="text-green-600 hover:text-green-800 text-sm font-medium flex items-center justify-center"
+                        onClick={() =>
+                          handleApprove(
+                            subscriber._id,
+                            subscriber.status,
+                            subscriber
+                          )
+                        }
+                        disabled={loadingApprove === subscriber._id}
+                      >
+                        {loadingApprove === subscriber._id ? (
+                          <Loader className="h-4 w-4 mr-1 animate-spin" />
+                        ) : (
+                          <FiCheck className="h-4 w-4 mr-1" />
+                        )}
+                        Approve
+                      </button>
+                      <button
+                        className="text-red-600 hover:text-red-800 text-sm font-medium flex items-center justify-center"
+                        onClick={() =>
+                          handleReject(
+                            subscriber._id,
+                            subscriber.status,
+                            subscriber
+                          )
+                        }
+                        disabled={loadingReject === subscriber._id}
+                      >
+                        {loadingReject === subscriber._id ? (
+                          <Loader className="h-4 w-4 mr-1 animate-spin" />
+                        ) : (
+                          <FiX className="h-4 w-4 mr-1" />
+                        )}
+                        Reject
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             ))

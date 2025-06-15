@@ -321,7 +321,7 @@ const employeeController = {
         req.params.id,
         {
           status: "Deleted",
-          deleted_by_by: req.user.id,
+          deleted_by: req.user.id,
           isDeleted: true,
           updatedAt: Date.now(),
         },

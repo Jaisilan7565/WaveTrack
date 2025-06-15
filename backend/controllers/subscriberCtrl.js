@@ -1,6 +1,7 @@
 const Subscriber = require("../models/Subscriber");
 const ErrorResponse = require("../utils/errorResponse");
 const asyncHandler = require("express-async-handler");
+const mongoose = require("mongoose");
 
 const subscriberController = {
   //Create a new subscriber
@@ -125,171 +126,6 @@ const subscriberController = {
       );
     }
   }),
-
-  // createBulkSubscribers: asyncHandler(async (req, res, next) => {
-  //   const { subscribers } = req.body;
-
-  //   // Validate bulk payload structure
-  //   if (!Array.isArray(subscribers) || subscribers.length === 0) {
-  //     return next(
-  //       new ErrorResponse(
-  //         "Invalid bulk data format - expected array of subscribers",
-  //         400
-  //       )
-  //     );
-  //   }
-
-  //   // Validate each subscriber in parallel
-  //   const validationResults = await Promise.all(
-  //     subscribers.map(async (subscriber, index) => {
-  //       const {
-  //         siteCode,
-  //         siteName,
-  //         siteAddress,
-  //         localContact,
-  //         ispInfo,
-  //         activationDate,
-  //       } = subscriber;
-
-  //       // Check required fields
-  //       const missingFields = [];
-  //       if (!siteName) missingFields.push("siteName");
-  //       if (!siteAddress) missingFields.push("siteAddress");
-  //       if (!localContact?.name) missingFields.push("localContact.name");
-  //       if (!localContact?.contact) missingFields.push("localContact.contact");
-  //       if (!ispInfo?.name) missingFields.push("ispInfo.name");
-  //       if (!ispInfo?.contact) missingFields.push("ispInfo.contact");
-  //       if (!ispInfo?.broadbandPlan)
-  //         missingFields.push("ispInfo.broadbandPlan");
-  //       if (!activationDate) missingFields.push("activationDate");
-
-  //       if (missingFields.length > 0) {
-  //         return {
-  //           index,
-  //           error: `Missing required fields: ${missingFields.join(", ")}`,
-  //           valid: false,
-  //         };
-  //       }
-
-  //       // Check for duplicates in the database
-  //       const [existingSiteCode, existingSiteAddress] = await Promise.all([
-  //         Subscriber.findOne({ siteCode }),
-  //         Subscriber.findOne({ siteAddress }),
-  //       ]);
-
-  //       const duplicates = [];
-  //       if (existingSiteCode) duplicates.push("siteCode");
-  //       if (existingSiteAddress) duplicates.push("siteAddress");
-
-  //       if (duplicates.length > 0) {
-  //         return {
-  //           index,
-  //           error: `Duplicate values found: ${duplicates.join(", ")}`,
-  //           valid: false,
-  //         };
-  //       }
-
-  //       return { index, valid: true };
-  //     })
-  //   );
-
-  //   // Separate valid and invalid subscribers
-  //   const invalidSubscribers = validationResults.filter((r) => !r.valid);
-  //   const validIndices = validationResults
-  //     .filter((r) => r.valid)
-  //     .map((r) => r.index);
-
-  //   if (invalidSubscribers.length === subscribers.length) {
-  //     return next(
-  //       new ErrorResponse("All subscriber records failed validation", 400, {
-  //         validationErrors: invalidSubscribers,
-  //       })
-  //     );
-  //   }
-
-  //   try {
-  //     // Process valid subscribers
-  //     const createdSubscribers = await Promise.all(
-  //       validIndices.map(async (index) => {
-  //         const subscriber = subscribers[index];
-
-  //         // Generate unique subscriber_id
-  //         const generateSubscriberId = async () => {
-  //           const prefix = "SUB-";
-  //           const randomSuffix = Math.floor(
-  //             10000 + Math.random() * 90000
-  //           ).toString();
-  //           const subscriber_id = prefix + randomSuffix;
-  //           const exists = await Subscriber.findOne({ subscriber_id });
-  //           return exists ? await generateSubscriberId() : subscriber_id;
-  //         };
-
-  //         // Parse dates
-  //         const parseDate = (dateString) => {
-  //           if (!dateString) return null;
-  //           if (dateString instanceof Date) return dateString;
-  //           const date = new Date(dateString);
-  //           return isNaN(date.getTime()) ? null : date;
-  //         };
-
-  //         const parsedActivationDate = parseDate(subscriber.activationDate);
-  //         if (!parsedActivationDate) {
-  //           throw new Error(
-  //             `Invalid activation date format for record ${index}`
-  //           );
-  //         }
-
-  //         // Calculate renewal date
-  //         const renewalDate = new Date(parsedActivationDate);
-  //         renewalDate.setMonth(
-  //           renewalDate.getMonth() + (subscriber.ispInfo.numberOfMonths || 1)
-  //         );
-
-  //         // Create subscriber data
-  //         const subscriberData = {
-  //           subscriber_id: await generateSubscriberId(),
-  //           siteCode: subscriber.siteCode,
-  //           siteName: subscriber.siteName,
-  //           siteAddress: subscriber.siteAddress,
-  //           localContact: subscriber.localContact,
-  //           ispInfo: {
-  //             ...subscriber.ispInfo,
-  //             currentActivationDate: parsedActivationDate,
-  //             renewalDate,
-  //           },
-  //           credentials: subscriber.credentials || {},
-  //           activationDate: parsedActivationDate,
-  //           status: "Added",
-  //           request_status: "pending",
-  //           created_by: req.user.id,
-  //         };
-
-  //         return await Subscriber.create(subscriberData);
-  //       })
-  //     );
-
-  //     res.status(201).json({
-  //       success: true,
-  //       data: {
-  //         createdCount: createdSubscribers.length,
-  //         failedCount: invalidSubscribers.length,
-  //         createdSubscribers,
-  //         validationErrors: invalidSubscribers,
-  //       },
-  //     });
-  //   } catch (error) {
-  //     console.error("Bulk subscriber creation error:", error);
-  //     return next(
-  //       new ErrorResponse(
-  //         `Bulk creation partially failed: ${error.message}`,
-  //         500,
-  //         { validationErrors: invalidSubscribers }
-  //       )
-  //     );
-  //   }
-  // }),
-
-  // Get all subscribers
 
   createBulkSubscribers: asyncHandler(async (req, res, next) => {
     const { subscribers } = req.body;
@@ -491,6 +327,274 @@ const subscriberController = {
       });
     } catch (err) {
       next(err);
+    }
+  }),
+
+  //Approve Employee
+  approveSubscriber: asyncHandler(async (req, res, next) => {
+    try {
+      const subscriber = await Subscriber.findById(req.params.id);
+
+      if (!subscriber) {
+        return res.status(404).json({ message: "Subscriber not found" });
+      }
+
+      if (subscriber.request_status !== "pending") {
+        return res.status(400).json({ message: "Request already processed" });
+      }
+
+      const updatedSubscriber = await Subscriber.findByIdAndUpdate(
+        req.params.id,
+        {
+          ...req.body,
+          decision_by: req.user.id,
+          updatedAt: Date.now(),
+        },
+        { new: true, runValidators: true }
+      );
+
+      res.json({
+        success: true,
+        data: updatedSubscriber,
+        message: "Subscriber Approved Successfully",
+      });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  }),
+
+  //Reject Employee
+  rejectSubscriber: asyncHandler(async (req, res, next) => {
+    try {
+      const subscriber = await Subscriber.findById(req.params.id);
+
+      if (!subscriber) {
+        return res.status(404).json({ message: "Subscriber not found" });
+      }
+
+      if (subscriber.request_status !== "pending") {
+        return res.status(400).json({ message: "Request already processed" });
+      }
+
+      const updatedSubscriber = await Subscriber.findByIdAndUpdate(
+        req.params.id,
+        {
+          ...req.body,
+          decision_by: req.user.id,
+          updatedAt: Date.now(),
+        },
+        { new: true, runValidators: true }
+      );
+
+      res.json({
+        success: true,
+        data: updatedSubscriber,
+        message: "Subscriber Rejected Successfully",
+      });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  }),
+
+  // Approve multiple subscribers in bulk
+  bulkApproveSubscribers: asyncHandler(async (req, res, next) => {
+    const subscribersToApprove = req.body;
+
+    // Validate input
+    if (
+      !Array.isArray(subscribersToApprove) ||
+      subscribersToApprove.length === 0
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Updates array is required",
+      });
+    }
+
+    // Validate all IDs
+    const invalidIds = subscribersToApprove.filter(
+      (u) => !mongoose.Types.ObjectId.isValid(u.id)
+    );
+    if (invalidIds.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid subscriber IDs found",
+        invalidIds: invalidIds.map((u) => u.id),
+      });
+    }
+
+    try {
+      // console.log("Bulk approve updates:", updates);
+
+      // Prepare bulk operations
+      const bulkOps = subscribersToApprove.map((update) => ({
+        updateOne: {
+          filter: { _id: new mongoose.Types.ObjectId(update.id) },
+          update: {
+            $set: {
+              status: update.status,
+              request_status: update.request_status,
+              decision_by: req.user.id,
+              updatedAt: Date.now(),
+            },
+          },
+        },
+      }));
+
+      // Execute bulk write
+      const result = await Subscriber.bulkWrite(bulkOps, { ordered: false });
+
+      res.json({
+        success: true,
+        message: "Batch status update successful",
+        stats: {
+          totalRequested: subscribersToApprove.length,
+          matched: result.matchedCount,
+          modified: result.modifiedCount,
+        },
+      });
+    } catch (error) {
+      console.error("Batch update error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to process batch update",
+        error: error.message,
+      });
+    }
+  }),
+
+  // Reject multiple subscribers in bulk
+  bulkRejectSubscribers: asyncHandler(async (req, res, next) => {
+    const subscribersToReject = req.body;
+
+    // Validate input
+    if (
+      !Array.isArray(subscribersToReject) ||
+      subscribersToReject.length === 0
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Updates array is required",
+      });
+    }
+
+    // Validate all IDs
+    const invalidIds = subscribersToReject.filter(
+      (u) => !mongoose.Types.ObjectId.isValid(u.id)
+    );
+    if (invalidIds.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid subscriber IDs found",
+        invalidIds: invalidIds.map((u) => u.id),
+      });
+    }
+
+    try {
+      // console.log("Bulk approve updates:", updates);
+
+      // Prepare bulk operations
+      const bulkOps = subscribersToReject.map((update) => ({
+        updateOne: {
+          filter: { _id: new mongoose.Types.ObjectId(update.id) },
+          update: {
+            $set: {
+              status: update.status,
+              request_status: update.request_status,
+              decision_by: req.user.id,
+              updatedAt: Date.now(),
+            },
+          },
+        },
+      }));
+
+      // Execute bulk write
+      const result = await Subscriber.bulkWrite(bulkOps, { ordered: false });
+
+      res.json({
+        success: true,
+        message: "Batch status update successful",
+        stats: {
+          totalRequested: subscribersToReject.length,
+          matched: result.matchedCount,
+          modified: result.modifiedCount,
+        },
+      });
+    } catch (error) {
+      console.error("Batch update error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to process batch update",
+        error: error.message,
+      });
+    }
+  }),
+
+  // Delete multiple subscribers in bulk
+  bulkDeleteSubscribers: asyncHandler(async (req, res, next) => {
+    const subscribersToDelete = req.body;
+
+    // Validate input
+    if (
+      !Array.isArray(subscribersToDelete) ||
+      subscribersToDelete.length === 0
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Array of subscriber IDs is required",
+      });
+    }
+
+    // Validate all IDs
+    const invalidIds = subscribersToDelete.filter(
+      (id) => !mongoose.Types.ObjectId.isValid(id)
+    );
+    if (invalidIds.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid subscriber IDs found",
+        invalidIds,
+      });
+    }
+
+    try {
+      // Prepare bulk operations for soft delete
+      const bulkOps = subscribersToDelete.map((id) => ({
+        updateOne: {
+          filter: {
+            _id: new mongoose.Types.ObjectId(id),
+            isDeleted: { $ne: true }, // Only update if not already deleted
+          },
+          update: {
+            $set: {
+              status: "Deleted",
+              isDeleted: true,
+              decision_by: req.user.id,
+              updatedAt: Date.now(),
+            },
+          },
+        },
+      }));
+
+      // Execute bulk operation
+      const result = await Subscriber.bulkWrite(bulkOps, { ordered: false });
+
+      res.json({
+        success: true,
+        message: "Bulk soft delete successful",
+        stats: {
+          totalRequested: subscribersToDelete.length,
+          matched: result.matchedCount,
+          modified: result.modifiedCount,
+        },
+      });
+    } catch (error) {
+      console.error("Bulk delete error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to process bulk delete",
+        error: error.message,
+      });
     }
   }),
 };

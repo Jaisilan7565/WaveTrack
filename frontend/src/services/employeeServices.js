@@ -76,7 +76,7 @@ export const approveEmployeeAPI = async (id, status, employee) => {
     );
     return response.data;
   } catch (error) {
-    console.error("Error creating employee:", error);
+    console.error("Error approving employee:", error);
     throw error;
   }
 };
@@ -114,7 +114,7 @@ export const rejectEmployeeAPI = async (id, status, employee) => {
     );
     return response.data;
   } catch (error) {
-    console.error("Error creating employee:", error);
+    console.error("Error rejecting employee:", error);
     throw error;
   }
 };

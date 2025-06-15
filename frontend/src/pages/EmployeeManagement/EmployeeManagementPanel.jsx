@@ -422,6 +422,7 @@ const EmployeeManagementPanel = () => {
                       <option value="InActive">Inactive</option>
                       <option value="OnProcess">On Process</option>
                       <option value="Modified">Modified</option>
+                      <option value="Rejected">Rejected</option>
                     </select>
                   </div>
 
