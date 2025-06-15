@@ -135,7 +135,6 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
-
 # Backend (Node.js)
 /node_modules
 .env
@@ -146,7 +145,6 @@ npm-debug.log*
 # Frontend (React/Vue/etc.)
 /frontend/node_modules
 /frontend/.env
-/frontend/dist
 /frontend/.vite
 /frontend/.next
 /frontend/.svelte-kit
