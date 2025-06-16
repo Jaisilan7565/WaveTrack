@@ -155,9 +155,9 @@ const UpdateEmployeeForm = ({ id, handleClose }) => {
       try {
         const trimmedValues = {
           ...values,
-          name: values.name.trim(),
-          remark: values.remark.trim(),
-          email: values.email.trim().toLowerCase(),
+          name: values?.name.trim(),
+          remark: values?.remark.trim(),
+          email: values?.email.trim().toLowerCase(),
         };
 
         await mutateAsync({ id: employeeData._id, data: trimmedValues })
@@ -195,11 +195,11 @@ const UpdateEmployeeForm = ({ id, handleClose }) => {
   useEffect(() => {
     if (employeeData) {
       formik.setValues({
-        name: employeeData.name || "",
-        email: employeeData.email || "",
-        contact: employeeData.contact || "",
-        roles: employeeData.roles || [],
-        remark: employeeData.remark || "",
+        name: employeeData?.name || "",
+        email: employeeData?.email || "",
+        contact: employeeData?.contact || "",
+        roles: employeeData?.roles || [],
+        remark: employeeData?.remark || "",
       });
     }
     refetch();

@@ -83,11 +83,11 @@ const employeeController = {
       success: true,
       data: {
         employee_id: employee.employee_id,
-        name: employee.name,
-        email: employee.email,
-        roles: employee.roles,
-        joining_date: employee.joining_date,
-        status: employee.status,
+        name: employee?.name,
+        email: employee?.email,
+        roles: employee?.roles,
+        joining_date: employee?.joining_date,
+        status: employee?.status,
       },
     });
   }),

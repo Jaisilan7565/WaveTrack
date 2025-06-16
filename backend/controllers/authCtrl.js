@@ -47,12 +47,12 @@ const authCtrl = {
       // Generate token
       const token = jwt.sign(
         {
-          id: employee._id,
-          employee_id: employee.employee_id,
-          name: employee.name,
-          email: employee.email,
-          contact: employee.contact,
-          roles: employee.roles,
+          id: employee?._id,
+          employee_id: employee?.employee_id,
+          name: employee?.name,
+          email: employee?.email,
+          contact: employee?.contact,
+          roles: employee?.roles,
         },
         process.env.JWT_SECRET,
         {
@@ -66,11 +66,11 @@ const authCtrl = {
         user: {
           // token,
           _id: employee._id,
-          employee_id: employee.employee_id,
-          name: employee.name,
-          email: employee.email,
-          contact: employee.contact,
-          roles: employee.roles,
+          employee_id: employee?.employee_id,
+          name: employee?.name,
+          email: employee?.email,
+          contact: employee?.contact,
+          roles: employee?.roles,
         },
       });
     } catch (err) {

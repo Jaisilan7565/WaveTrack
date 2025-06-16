@@ -68,9 +68,9 @@ const AddEmployeeForm = ({ handleClose }) => {
         // Trim all string values before submission
         const trimmedValues = {
           ...values,
-          name: values.name.trim(),
-          remark: values.remark.trim(),
-          email: values.email.trim().toLowerCase(), // Ensure email is lowercase
+          name: values?.name.trim(),
+          remark: values?.remark.trim(),
+          email: values?.email.trim().toLowerCase(), // Ensure email is lowercase
         };
 
         await mutateAsync(trimmedValues)

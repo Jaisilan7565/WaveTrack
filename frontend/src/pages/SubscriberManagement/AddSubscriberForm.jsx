@@ -316,7 +316,7 @@ const AddSubscriberForm = ({ handleClose }) => {
                     type="text"
                     id="localContact.name"
                     name="localContact.name"
-                    value={formik.values.localContact.name}
+                    value={formik.values.localContact?.name}
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     className={`block w-full rounded-md py-2 px-3.5 shadow-sm border ${
@@ -330,7 +330,7 @@ const AddSubscriberForm = ({ handleClose }) => {
                 {formik.touched.localContact?.name &&
                   formik.errors.localContact?.name && (
                     <p className="mt-1 text-sm text-red-600">
-                      {formik.errors.localContact.name}
+                      {formik.errors.localContact?.name}
                     </p>
                   )}
               </div>

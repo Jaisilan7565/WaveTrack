@@ -25,11 +25,11 @@ export default function Sidebar({ children }) {
                 </div>
                 <div>
                   <h3 className="text-gray-900 font-extrabold">
-                    {employee.name}
+                    {employee?.name}
                   </h3>
 
                   <p className="text-xs text-gray-800 font-bold">
-                    ID: {employee.employee_id}
+                    ID: {employee?.employee_id}
                   </p>
                 </div>
               </div>
@@ -39,7 +39,7 @@ export default function Sidebar({ children }) {
                 <div className="flex items-start">
                   <FiBriefcase className="text-black mr-2 h-4 min-w-4 mt-0.5" />
                   <div className="flex flex-wrap gap-1">
-                    {employee.roles.map((role, index) => (
+                    {employee?.roles.map((role, index) => (
                       <span
                         key={index}
                         className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${

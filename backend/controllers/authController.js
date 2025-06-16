@@ -40,10 +40,10 @@ exports.login = async (req, res, next) => {
       success: true,
       token,
       user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
+        id: user?._id,
+        name: user?.name,
+        email: user?.email,
+        role: user?.role,
       },
     });
   } catch (err) {
@@ -73,8 +73,8 @@ exports.getMe = async (req, res, next) => {
 exports.updateDetails = async (req, res, next) => {
   try {
     const fieldsToUpdate = {
-      name: req.body.name,
-      email: req.body.email,
+      name: req.body?.name,
+      email: req.body?.email,
     };
 
     const user = await User.findByIdAndUpdate(req.user.id, fieldsToUpdate, {

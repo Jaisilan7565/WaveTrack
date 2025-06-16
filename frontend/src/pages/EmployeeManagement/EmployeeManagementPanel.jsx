@@ -205,10 +205,10 @@ const EmployeeManagementPanel = () => {
       const term = searchTerm.toLowerCase();
       result = result.filter(
         (emp) =>
-          emp.name.toLowerCase().includes(term) ||
-          emp.email.toLowerCase().includes(term) ||
-          emp.contact.toLowerCase().includes(term) ||
-          emp.employee_id.toLowerCase().includes(term)
+          emp?.name.toLowerCase().includes(term) ||
+          emp?.email.toLowerCase().includes(term) ||
+          emp?.contact.toLowerCase().includes(term) ||
+          emp?.employee_id.toLowerCase().includes(term)
       );
     }
 
@@ -583,39 +583,41 @@ const EmployeeManagementPanel = () => {
                 </tr>
               ) : (
                 currentItems.map((emp) => (
-                  <React.Fragment key={emp._id}>
+                  <React.Fragment key={emp?._id}>
                     <tr
-                      key={emp._id}
+                      key={emp?._id}
                       className="hover:bg-gray-50 transition-colors"
                     >
                       <td className="px-4 py-3 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">
-                          {emp.employee_id}
+                          {emp?.employee_id}
                         </div>
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
                             <span className="text-blue-600 font-medium">
-                              {emp.name.charAt(0)}
+                              {emp?.name.charAt(0)}
                             </span>
                           </div>
                           <div>
                             <div className="text-sm font-medium text-gray-900">
-                              {emp.name}
+                              {emp?.name}
                             </div>
                           </div>
                         </div>
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{emp.email}</div>
+                        <div className="text-sm text-gray-900">
+                          {emp?.email}
+                        </div>
                         <div className="text-xs text-gray-500">
-                          {emp.contact}
+                          {emp?.contact}
                         </div>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex flex-wrap gap-2 max-w-xs">
-                          {emp.roles.map((role, index) => (
+                          {emp?.roles.map((role, index) => (
                             <span
                               key={index}
                               className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -651,17 +653,17 @@ const EmployeeManagementPanel = () => {
                               : "bg-gray-100 text-gray-800" // Default fallback
                           }`}
                         >
-                          {emp.status}
+                          {emp?.status}
                         </span>
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
                         {/* {new Date(emp.createdAt).toLocaleDateString()} */}
-                        {emp.joining_date.split("T")[0]}
+                        {emp?.joining_date.split("T")[0]}
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
                         <div className="flex items-center space-x-2">
-                          {emp.status !== "OnProcess" &&
-                            emp.request_status !== "pending" && (
+                          {emp?.status !== "OnProcess" &&
+                            emp?.request_status !== "pending" && (
                               <button
                                 className="p-1.5 text-blue-600 hover:bg-blue-500 hover:text-white rounded-md transition-colors"
                                 title="Edit"
@@ -672,13 +674,13 @@ const EmployeeManagementPanel = () => {
                             )}
 
                           {DecisionMaker &&
-                            emp.request_status === "pending" && (
+                            emp?.request_status === "pending" && (
                               <>
                                 <button
                                   className="p-1.5 text-green-600 hover:bg-green-500 hover:text-white rounded-md transition-colors"
                                   title="Approve"
                                   onClick={() =>
-                                    handleApprove(emp._id, emp.status, emp)
+                                    handleApprove(emp?._id, emp?.status, emp)
                                   }
                                   disabled={loadingApprove === emp._id}
                                 >
@@ -860,7 +862,7 @@ const EmployeeManagementPanel = () => {
                                     }
                                   >
                                     Modified by:{" "}
-                                    {emp.modifiedData.modified_by?.name ||
+                                    {emp?.modifiedData?.modified_by?.name ||
                                       "Unknown"}
                                   </span>
                                   <span className="mx-2">•</span>
@@ -975,22 +977,22 @@ const EmployeeManagementPanel = () => {
           ) : (
             currentItems.map((emp) => (
               <div
-                key={emp._id}
+                key={emp?._id}
                 className="bg-white p-4 rounded-lg shadow border border-gray-200"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-center space-x-3">
                     <div className="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
                       <span className="text-blue-600 font-medium">
-                        {emp.name.charAt(0)}
+                        {emp?.name.charAt(0)}
                       </span>
                     </div>
                     <div>
                       <h3 className="text-base font-medium text-gray-900">
-                        {emp.name}
+                        {emp?.name}
                       </h3>
                       <p className="text-xs text-gray-500">
-                        ID: {emp.employee_id}
+                        ID: {emp?.employee_id}
                       </p>
                     </div>
                   </div>
@@ -1011,25 +1013,25 @@ const EmployeeManagementPanel = () => {
                         : "bg-gray-100 text-gray-800" // Default fallback
                     }`}
                   >
-                    {emp.status}
+                    {emp?.status}
                   </span>
                 </div>
 
                 <div className="mt-4 space-y-2">
                   <div>
                     <p className="text-sm font-medium text-gray-700">Email</p>
-                    <p className="text-sm text-gray-900">{emp.email}</p>
+                    <p className="text-sm text-gray-900">{emp?.email}</p>
                   </div>
 
                   <div>
                     <p className="text-sm font-medium text-gray-700">Contact</p>
-                    <p className="text-sm text-gray-500">{emp.contact}</p>
+                    <p className="text-sm text-gray-500">{emp?.contact}</p>
                   </div>
 
                   <div>
                     <p className="text-sm font-medium text-gray-700">Roles</p>
                     <div className="flex flex-wrap gap-2 mt-1">
-                      {emp.roles.map((role, index) => (
+                      {emp?.roles.map((role, index) => (
                         <span
                           key={index}
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -1049,21 +1051,21 @@ const EmployeeManagementPanel = () => {
                   <div className="pt-2 flex justify-between items-center">
                     <p className="text-xs text-gray-500">
                       {/* Joined: {new Date(emp.createdAt).toLocaleDateString()} */}
-                      Joined: {emp.joining_date.split("T")[0]}
+                      Joined: {emp?.joining_date.split("T")[0]}
                     </p>
                     <div className="flex flex-wrap space-x-3">
-                      {emp.status !== "OnProcess" &&
-                        emp.request_status !== "pending" && (
+                      {emp?.status !== "OnProcess" &&
+                        emp?.request_status !== "pending" && (
                           <button
                             className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center justify-center"
-                            onClick={() => handleEdit(emp._id)}
+                            onClick={() => handleEdit(emp?._id)}
                           >
                             <FiEdit className="h-4 w-4 mr-1" />
                             Edit
                           </button>
                         )}
 
-                      {DecisionMaker && emp.request_status === "pending" && (
+                      {DecisionMaker && emp?.request_status === "pending" && (
                         <>
                           <button
                             className="text-green-600 hover:text-green-800 text-sm font-medium flex items-center justify-center"
@@ -1254,7 +1256,7 @@ const EmployeeManagementPanel = () => {
                                 }
                               >
                                 Modified by:{" "}
-                                {emp.modifiedData.modified_by?.name ||
+                                {emp?.modifiedData?.modified_by?.name ||
                                   "Unknown"}
                               </span>
                               <span className="mx-2">•</span>
