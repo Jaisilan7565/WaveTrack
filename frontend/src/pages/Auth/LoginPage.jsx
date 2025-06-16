@@ -51,7 +51,7 @@ const LoginPage = () => {
             message: "Logging In, Please Wait...",
           });
           setTimeout(() => {
-            navigate("/employee-management");
+            navigate("/");
           }, 3000);
         })
         .catch((error) => {

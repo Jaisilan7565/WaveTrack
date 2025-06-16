@@ -72,12 +72,12 @@ const EmployeeSidebar = ({ sidebarOpen, setSidebarOpen }) => {
       >
         {/* ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} */}
         <Sidebar>
-          <Link to="/dashboard">
+          <Link to="/">
             <SidebarItem
               icon={<LayoutDashboard size={30} />}
               text="Dashboard"
               onClick={() => setSidebarOpen(false)}
-              active={path === "/dashboard" || path.startsWith("/dashboard/")}
+              active={path === "/"}
             />
           </Link>
 

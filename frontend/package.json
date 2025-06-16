@@ -12,6 +12,8 @@
   "dependencies": {
     "@heroicons/react": "^2.2.0",
     "@reduxjs/toolkit": "^2.8.2",
+    "@splinetool/react-spline": "^4.0.0",
+    "@splinetool/runtime": "^1.10.7",
     "@tailwindcss/vite": "^4.1.7",
     "@tanstack/react-query": "^5.79.2",
     "@tanstack/react-query-devtools": "^5.79.2",

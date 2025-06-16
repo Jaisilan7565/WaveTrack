@@ -1,7 +1,7 @@
 import { Routes, Route, useLocation } from "react-router-dom";
 import EmployeeSidebar from "./EmployeeSidebar";
 import TopBar from "./TopBar";
-import { useState } from "react";
+import React, { useState } from "react";
 import NotFoundPage from "./NotFoundPage";
 import EmployeeManagementPanel from "../pages/EmployeeManagement/EmployeeManagementPanel";
 import LoginPage from "../pages/Auth/LoginPage";
@@ -13,6 +13,7 @@ import { login } from "../redux/store/authSlice";
 import useAutoLogout from "../hooks/useAutoLogout";
 import { decodeToken, isTokenExpired } from "../utils/jwt";
 import SubscriberManagementPanel from "../pages/SubscriberManagement/SubscriberManagementPanel";
+import MainDashboard from "../pages/Dashboard/MainDashboard";
 
 const MainLayout = () => {
   const location = useLocation();
@@ -31,14 +32,14 @@ const MainLayout = () => {
   // Enable auto-logout
   useAutoLogout();
 
-  const noSidebarRoutes = ["/", "/login"];
+  const noSidebarRoutes = ["/login"];
   const shouldShowSidebar = !noSidebarRoutes.includes(location.pathname);
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const paths = [
     { path: "/employee-management", name: "Employee Management" },
-    { path: "/dashboard", name: "Dashboard" },
+    { path: "/", name: "Dashboard" },
     { path: "/subscriber-management", name: "Subscriber Management" },
   ];
 
@@ -60,9 +61,18 @@ const MainLayout = () => {
             />
           )}
         </div>
+
         <div className="flex-1 overflow-y-auto hide-scrollbar">
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route
+              path="/"
+              element={
+                <AuthRoute>
+                  <MainDashboard />
+                </AuthRoute>
+              }
+            />
             <Route
               path="/employee-management"
               element={
