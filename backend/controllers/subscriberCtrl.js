@@ -597,6 +597,41 @@ const subscriberController = {
       });
     }
   }),
+
+  getSubscriberById: asyncHandler(async (req, res, next) => {
+    try {
+      if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid ID format" });
+      }
+
+      const subscriber = await Subscriber.findById(req.params.id)
+        .populate({
+          path: "created_by",
+          select: "employee_id name email contact roles",
+          model: "Employee",
+        })
+        .populate({
+          path: "decision_by",
+          select: "employee_id name email contact roles",
+          model: "Employee",
+        });
+
+      if (!subscriber) {
+        return res
+          .status(404)
+          .json({ success: false, message: "Subscriber not found" });
+      }
+
+      res.status(200).json({
+        success: true,
+        data: subscriber,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }),
 };
 
 module.exports = subscriberController;

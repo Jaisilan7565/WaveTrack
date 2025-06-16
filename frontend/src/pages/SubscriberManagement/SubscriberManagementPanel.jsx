@@ -27,8 +27,11 @@ import NoData from "../../components/NoData";
 import Toast from "../../components/Toast";
 import { hasPermission } from "../../utils/auth";
 import { getUserRoles } from "../../utils/jwt";
+import { useNavigate } from "react-router-dom";
 
 const SubscriberManagementPanel = () => {
+  const navigate = useNavigate();
+
   const [isNewSubscriberFormOpen, setIsNewSubscriberFormOpen] = useState(false);
   const [isSubscribersExcelOpen, setIsSubscribersExcelOpen] = useState(false);
 
@@ -277,8 +280,6 @@ const SubscriberManagementPanel = () => {
       setSelectedRows(selectedRows.filter((row) => row.id !== id));
     }
   };
-
-  // console.log(JSON.stringify(selectedRows));
 
   const handleSelectAll = (e) => {
     if (e.target.checked) {
@@ -626,8 +627,6 @@ const SubscriberManagementPanel = () => {
         return id;
       });
 
-      console.log("Bulk delete updates:", updates);
-
       // Process in batches
       const batchSize = 10;
       const results = [];
@@ -699,6 +698,10 @@ const SubscriberManagementPanel = () => {
     } finally {
       setloadingBulkDelete(null);
     }
+  };
+
+  const handleRowClick = (id) => {
+    navigate(`/subscriber/${id}`);
   };
 
   const exportToExcel = () => {
@@ -1124,18 +1127,23 @@ const SubscriberManagementPanel = () => {
                         checked={selectedRows
                           ?.map((row) => row.id)
                           .includes(subscriber._id)}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          e.stopPropagation();
                           handleSelectRow(
                             e,
                             subscriber._id,
                             subscriber.status,
                             subscriber
-                          )
-                        }
+                          );
+                        }}
                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        onClick={(e) => e.stopPropagation()}
                       />
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <td
+                      className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 hover:text-blue-600 hover:cursor-pointer hover:underline"
+                      onClick={() => handleRowClick(subscriber._id)}
+                    >
                       {subscriber.subscriber_id}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -1259,18 +1267,26 @@ const SubscriberManagementPanel = () => {
                       checked={selectedRows
                         ?.map((row) => row.id)
                         .includes(subscriber._id)}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        e.stopPropagation();
                         handleSelectRow(
                           e,
                           subscriber._id,
                           subscriber.status,
                           subscriber
-                        )
-                      }
+                        );
+                      }}
                       className="h-4 w-4 text-blue-600 mr-2"
+                      onClick={(e) => e.stopPropagation()}
                     />
                     <span className="font-medium">
-                      ID: {subscriber.subscriber_id}
+                      ID:{" "}
+                      <span
+                        className="text-blue-600 underline"
+                        onClick={() => handleRowClick(subscriber._id)}
+                      >
+                        {subscriber.subscriber_id}
+                      </span>
                     </span>
                   </div>
                   <span

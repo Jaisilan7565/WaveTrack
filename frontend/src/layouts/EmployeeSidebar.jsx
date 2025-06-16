@@ -7,8 +7,6 @@ import { IoTicketSharp } from "react-icons/io5";
 import { MdInventory, MdOutlineAdminPanelSettings } from "react-icons/md";
 import { Podcast } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
-import { useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom";
 import Sidebar, { SidebarItem, DropdownItem } from "./Sidebar";
 import { logoutAPI } from "../services/authServices";
 import { getUserRoles } from "../utils/jwt";
@@ -37,9 +35,6 @@ const EmployeeSidebar = ({ sidebarOpen, setSidebarOpen }) => {
 
   const location = useLocation();
   const path = location.pathname;
-
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
 
   const [isSubscriberOpen, setIsSubscriberOpen] = useState(false);
 

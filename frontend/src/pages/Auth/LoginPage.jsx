@@ -41,11 +41,8 @@ const LoginPage = () => {
     },
     validationSchema,
     onSubmit: async (values) => {
-      console.log("Submitting:", values); // Check payload
       await mutateAsync(values)
         .then((response) => {
-          console.log("Login successful", response);
-
           setSubmissionStatus({
             type: "success",
             message: "Logging In, Please Wait...",

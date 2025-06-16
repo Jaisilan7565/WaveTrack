@@ -14,6 +14,7 @@ import useAutoLogout from "../hooks/useAutoLogout";
 import { decodeToken, isTokenExpired } from "../utils/jwt";
 import SubscriberManagementPanel from "../pages/SubscriberManagement/SubscriberManagementPanel";
 import MainDashboard from "../pages/Dashboard/MainDashboard";
+import Subscriber from "../pages/SubscriberManagement/Subscriber/Subscriber";
 
 const MainLayout = () => {
   const location = useLocation();
@@ -41,6 +42,7 @@ const MainLayout = () => {
     { path: "/employee-management", name: "Employee Management" },
     { path: "/", name: "Dashboard" },
     { path: "/subscriber-management", name: "Subscriber Management" },
+    { path: "subscriber", name: "Subscriber" },
   ];
 
   return (
@@ -57,7 +59,11 @@ const MainLayout = () => {
           {shouldShowSidebar && (
             <TopBar
               onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-              pageTitle={paths.find((p) => p.path === location.pathname)?.name}
+              pageTitle={
+                paths.find((p) => p.path === location.pathname.split("/")[1])
+                  ?.name ??
+                paths.find((p) => p.path === location.pathname)?.name
+              }
             />
           )}
         </div>
@@ -86,6 +92,14 @@ const MainLayout = () => {
               element={
                 <AuthRoute>
                   <SubscriberManagementPanel />
+                </AuthRoute>
+              }
+            />
+            <Route
+              path="/subscriber/:id"
+              element={
+                <AuthRoute>
+                  <Subscriber />
                 </AuthRoute>
               }
             />

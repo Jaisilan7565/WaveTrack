@@ -171,3 +171,16 @@ export const bulkDeleteSubscriberAPI = async (subscribersToDelete) => {
     throw error;
   }
 };
+
+export const getSubscriberByIdAPI = async (id) => {
+  try {
+    const response = await axios.get(
+      `${BASE_URL}/subscribers/${id}`,
+      getAuthHeaders()
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching subscriber:", error);
+    throw error;
+  }
+};

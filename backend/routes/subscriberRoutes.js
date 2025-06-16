@@ -8,6 +8,7 @@ const {
   approveSubscriber,
   bulkApproveSubscribers,
   bulkDeleteSubscribers,
+  getSubscriberById,
 } = require("../controllers/subscriberCtrl");
 
 const router = express.Router();
@@ -15,7 +16,7 @@ const router = express.Router();
 router.use(protect);
 
 router.get("/", getSubscribers);
-// router.get("/:id", getSubscriberById);
+router.get("/:id", getSubscriberById);
 
 router.post(
   "/",
