@@ -1,14 +1,8 @@
-import {
-  FiUser,
-  FiPhone,
-  FiWifi,
-  FiCalendar,
-  FiMapPin,
-  FiDollarSign,
-  FiShield,
-} from "react-icons/fi";
+import { useState } from "react";
+import { FiUser, FiWifi, FiCalendar, FiMapPin, FiEdit } from "react-icons/fi";
+import UpdateSubscriberForm from "../pages/SubscriberManagement/Subscriber/UpdateSubscriberForm";
 
-const SubscriberCard = ({ subscriber }) => {
+const SubscriberCard = ({ subscriber, refetch }) => {
   const formatDate = (dateString) => {
     if (!dateString) return "-";
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -18,8 +12,30 @@ const SubscriberCard = ({ subscriber }) => {
     });
   };
 
+  const [isUpdateSubscriberFormOpen, setIsUpdateSubscriberFormOpen] =
+    useState(false);
+
+  const [selectedSubscriberId, setSelectedSubscriberId] = useState(null);
+
+  const handleEdit = async (id) => {
+    setSelectedSubscriberId(id);
+    setIsUpdateSubscriberFormOpen(true);
+  };
+
+  const handleCloseEdit = () => {
+    refetch();
+    setSelectedSubscriberId(null);
+    setIsUpdateSubscriberFormOpen(false);
+  };
+
   return (
-    <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition duration-300">
+    <div className="bg-white h-fit rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition duration-300">
+      {isUpdateSubscriberFormOpen && (
+        <UpdateSubscriberForm
+          id={selectedSubscriberId}
+          handleClose={handleCloseEdit}
+        />
+      )}
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-400 px-4 py-2 text-white w-full flex items-center justify-between">
         <div>
@@ -34,7 +50,13 @@ const SubscriberCard = ({ subscriber }) => {
           </div>
         </div>
         <div>
-          <button>Edit</button>
+          <button
+            className="p-1.5 text-white-600 hover:bg-white hover:text-blue-500 rounded-md transition-colors"
+            title="Edit"
+            onClick={() => handleEdit(subscriber?._id)}
+          >
+            <FiEdit className="h-5 w-5" />
+          </button>
         </div>
       </div>
 

@@ -3,6 +3,8 @@ import { useParams } from "react-router-dom";
 import { getSubscriberByIdAPI } from "../../../services/subscriberServices";
 import { useQuery } from "@tanstack/react-query";
 import SubscriberCard from "../../../components/SubscriberCard";
+import PaymentEntriesTable from "../../../components/PaymentEntriesTable";
+import { paymentsData } from "../../../constants";
 
 const Subscriber = () => {
   const { id } = useParams();
@@ -18,11 +20,14 @@ const Subscriber = () => {
     enabled: !!id,
   });
 
-  console.log(JSON.stringify(subscriber?.data));
-
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-3">
-      <SubscriberCard subscriber={subscriber?.data} />
+      <SubscriberCard subscriber={subscriber?.data} refetch={refetch} />
+      <div className="col-span-2">
+        <div className="overflow-y-auto hide-scrollbar max-h-[85vh] rounded-2xl">
+          <PaymentEntriesTable payments={paymentsData} />
+        </div>
+      </div>
     </div>
   );
 };

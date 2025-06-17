@@ -21,6 +21,8 @@ import {
   FiChevronUp,
   FiCheck,
   FiX,
+  FiDownload,
+  FiUpload,
 } from "react-icons/fi";
 import AddSubscribersExcel from "./AddSubscribersExcel";
 import NoData from "../../components/NoData";
@@ -947,21 +949,23 @@ const SubscriberManagementPanel = () => {
           {/* Left Button Group */}
           <div className="flex flex-wrap gap-2 sm:gap-3">
             <button
-              className="flex-1 sm:flex-none whitespace-nowrap px-3 py-2 sm:px-4 sm:py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 text-sm sm:text-base"
+              className="flex items-center gap-2 sm:flex-none whitespace-nowrap px-3 py-2 sm:px-4 sm:py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 text-sm sm:text-base"
               onClick={handleOpenSubscribersExcel}
             >
+              <FiDownload />
               Import Subscribers
             </button>
             <button
-              className="flex-1 sm:flex-none whitespace-nowrap px-3 py-2 sm:px-4 sm:py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 text-sm sm:text-base"
+              className="flex items-center gap-2 sm:flex-none whitespace-nowrap px-3 py-2 sm:px-4 sm:py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 text-sm sm:text-base"
               onClick={exportToExcel}
               disabled={
                 !processedSubscribers || processedSubscribers.length === 0
               }
             >
+              <FiUpload />
               {selectedRows.length > 0
                 ? `Export Selected (${selectedRows.length})`
-                : "Export All Subscribers"}
+                : "Export"}
             </button>
             {hasDeletePermission && selectedRows.length > 0 && (
               <button

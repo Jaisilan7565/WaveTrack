@@ -88,6 +88,11 @@ const subscriberSchema = new mongoose.Schema(
         trim: true,
       },
     },
+    remark: {
+      type: String,
+      maxlength: 200,
+      trim: true,
+    },
     status: {
       type: String,
       enum: ["Added", "Active", "InActive", "Rejected", "Deleted", "Modified"],
