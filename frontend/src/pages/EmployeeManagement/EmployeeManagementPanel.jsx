@@ -863,8 +863,10 @@ const EmployeeManagementPanel = () => {
                                     }
                                   >
                                     Modified by:{" "}
-                                    {emp?.modifiedData?.modified_by?.name ||
-                                      "Unknown"}
+                                    <span className="text-blue-500 underline">
+                                      {emp?.modifiedData?.modified_by?.name ||
+                                        "Unknown"}
+                                    </span>
                                   </span>
                                   <span className="mx-2">•</span>
                                   <span>
@@ -1184,8 +1186,10 @@ const EmployeeManagementPanel = () => {
                                 }
                               >
                                 Modified by:{" "}
-                                {emp?.modifiedData?.modified_by?.name ||
-                                  "Unknown"}
+                                <span className="text-blue-500 underline">
+                                  {emp?.modifiedData?.modified_by?.name ||
+                                    "Unknown"}
+                                </span>
                               </span>
                               <span className="mx-2">•</span>
                               <span>

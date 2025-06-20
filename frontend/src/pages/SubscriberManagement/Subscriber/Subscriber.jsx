@@ -21,12 +21,15 @@ const Subscriber = () => {
   });
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-3">
-      <SubscriberCard subscriber={subscriber?.data} refetch={refetch} />
-      <div className="col-span-2">
-        <div className="overflow-y-auto hide-scrollbar max-h-[85vh] rounded-2xl">
-          <PaymentEntriesTable payments={paymentsData} />
-        </div>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-y-4 md:gap-4 p-4 h-[90vh]">
+      {/* Left Column - Subscriber Card */}
+      <div className="col-span-1 md:overflow-y-auto hide-scrollbar rounded-2xl">
+        <SubscriberCard subscriber={subscriber?.data} refetch={refetch} />
+      </div>
+
+      {/* Right Column - Payments Table */}
+      <div className="col-span-2 md:overflow-y-auto hide-scrollbar rounded-2xl">
+        <PaymentEntriesTable payments={paymentsData} />
       </div>
     </div>
   );

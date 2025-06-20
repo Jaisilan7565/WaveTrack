@@ -318,6 +318,11 @@ const subscriberController = {
           path: "created_by",
           select: "employee_id name email contact roles",
           model: "Employee",
+        })
+        .populate({
+          path: "modifiedData.modified_by",
+          select: "employee_id name email contact roles",
+          model: "Employee",
         });
 
       res.status(200).json({
@@ -614,6 +619,11 @@ const subscriberController = {
         })
         .populate({
           path: "decision_by",
+          select: "employee_id name email contact roles",
+          model: "Employee",
+        })
+        .populate({
+          path: "modifiedData.modified_by",
           select: "employee_id name email contact roles",
           model: "Employee",
         });

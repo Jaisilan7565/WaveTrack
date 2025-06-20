@@ -1451,8 +1451,10 @@ const SubscriberManagementPanel = () => {
                                     }
                                   >
                                     Modified by:{" "}
-                                    {subscriber?.modifiedData?.modified_by
-                                      ?.name || "Unknown"}
+                                    <span className="text-blue-500 underline">
+                                      {subscriber?.modifiedData?.modified_by
+                                        ?.name || "Unknown"}
+                                    </span>
                                   </span>
                                   <span className="mx-2">•</span>
                                   <span>
@@ -1786,8 +1788,10 @@ const SubscriberManagementPanel = () => {
                                 }
                               >
                                 Modified by:{" "}
-                                {subscriber?.modifiedData?.modified_by?.name ||
-                                  "Unknown"}
+                                <span className="text-blue-500 underline">
+                                  {subscriber?.modifiedData?.modified_by
+                                    ?.name || "Unknown"}
+                                </span>
                               </span>
                               <span className="mx-2">•</span>
                               <span>
