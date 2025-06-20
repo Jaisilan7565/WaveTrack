@@ -1115,66 +1115,67 @@ const SubscriberManagementPanel = () => {
                 </tr>
               ) : (
                 currentItems.map((subscriber) => (
-                  <tr
-                    key={subscriber.subscriber_id}
-                    className={
-                      selectedRows
-                        ?.map((row) => row.id)
-                        .includes(subscriber._id)
-                        ? "bg-blue-100"
-                        : ""
-                    }
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <input
-                        type="checkbox"
-                        checked={selectedRows
+                  <React.Fragment key={subscriber?._id}>
+                    <tr
+                      key={subscriber.subscriber_id}
+                      className={
+                        selectedRows
                           ?.map((row) => row.id)
-                          .includes(subscriber._id)}
-                        onChange={(e) => {
-                          e.stopPropagation();
-                          handleSelectRow(
-                            e,
-                            subscriber._id,
-                            subscriber.status,
-                            subscriber
-                          );
-                        }}
-                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                    </td>
-                    <td
-                      className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 hover:text-blue-600 hover:cursor-pointer hover:underline"
-                      onClick={() => handleRowClick(subscriber._id)}
+                          .includes(subscriber._id)
+                          ? "bg-blue-100"
+                          : ""
+                      }
                     >
-                      {subscriber.subscriber_id}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {subscriber.siteName}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {subscriber.siteCode}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      {subscriber.siteAddress}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {subscriber.ispInfo.broadbandPlan}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {subscriber.ispInfo.numberOfMonths}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      ₹{subscriber.ispInfo.mrc}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {/* {new Date(subscriber.activationDate).toLocaleDateString()} */}
-                      {subscriber.activationDate?.split("T")[0]}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <input
+                          type="checkbox"
+                          checked={selectedRows
+                            ?.map((row) => row.id)
+                            .includes(subscriber._id)}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            handleSelectRow(
+                              e,
+                              subscriber._id,
+                              subscriber.status,
+                              subscriber
+                            );
+                          }}
+                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      </td>
+                      <td
+                        className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 hover:text-blue-600 hover:cursor-pointer hover:underline"
+                        onClick={() => handleRowClick(subscriber._id)}
+                      >
+                        {subscriber.subscriber_id}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {subscriber.siteName}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {subscriber.siteCode}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500">
+                        {subscriber.siteAddress}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {subscriber.ispInfo.broadbandPlan}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {subscriber.ispInfo.numberOfMonths}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ₹{subscriber.ispInfo.mrc}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {/* {new Date(subscriber.activationDate).toLocaleDateString()} */}
+                        {subscriber.activationDate?.split("T")[0]}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span
+                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
                    ${
                      subscriber.status === "Active"
                        ? "bg-green-100 text-green-800" // Green for active
@@ -1190,54 +1191,55 @@ const SubscriberManagementPanel = () => {
                        ? "bg-amber-100 text-amber-800" // Amber/orange for modified
                        : "bg-gray-100 text-gray-800" // Default fallback
                    }`}
-                      >
-                        {subscriber.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      {DecisionMaker &&
-                        subscriber.request_status === "pending" && (
-                          <>
-                            <button
-                              className="p-1.5 text-green-600 hover:bg-green-500 hover:text-white rounded-md transition-colors"
-                              title="Approve"
-                              onClick={() =>
-                                handleApprove(
-                                  subscriber._id,
-                                  subscriber.status,
-                                  subscriber
-                                )
-                              }
-                              disabled={loadingApprove === subscriber._id}
-                            >
-                              {loadingApprove === subscriber._id ? (
-                                <Loader className="h-5 w-5 animate-spin" />
-                              ) : (
-                                <FiCheck className="h-5 w-5" />
-                              )}
-                            </button>
-                            <button
-                              className="p-1.5 text-red-600 hover:bg-red-500 hover:text-white rounded-md transition-colors"
-                              title="Reject"
-                              onClick={() =>
-                                handleReject(
-                                  subscriber._id,
-                                  subscriber.status,
-                                  subscriber
-                                )
-                              }
-                              disabled={loadingReject === subscriber._id}
-                            >
-                              {loadingReject === subscriber._id ? (
-                                <Loader className="h-5 w-5 animate-spin" />
-                              ) : (
-                                <FiX className="h-5 w-5" />
-                              )}
-                            </button>
-                          </>
-                        )}
-                    </td>
-                  </tr>
+                        >
+                          {subscriber.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        {DecisionMaker &&
+                          subscriber.request_status === "pending" && (
+                            <>
+                              <button
+                                className="p-1.5 text-green-600 hover:bg-green-500 hover:text-white rounded-md transition-colors"
+                                title="Approve"
+                                onClick={() =>
+                                  handleApprove(
+                                    subscriber._id,
+                                    subscriber.status,
+                                    subscriber
+                                  )
+                                }
+                                disabled={loadingApprove === subscriber._id}
+                              >
+                                {loadingApprove === subscriber._id ? (
+                                  <Loader className="h-5 w-5 animate-spin" />
+                                ) : (
+                                  <FiCheck className="h-5 w-5" />
+                                )}
+                              </button>
+                              <button
+                                className="p-1.5 text-red-600 hover:bg-red-500 hover:text-white rounded-md transition-colors"
+                                title="Reject"
+                                onClick={() =>
+                                  handleReject(
+                                    subscriber._id,
+                                    subscriber.status,
+                                    subscriber
+                                  )
+                                }
+                                disabled={loadingReject === subscriber._id}
+                              >
+                                {loadingReject === subscriber._id ? (
+                                  <Loader className="h-5 w-5 animate-spin" />
+                                ) : (
+                                  <FiX className="h-5 w-5" />
+                                )}
+                              </button>
+                            </>
+                          )}
+                      </td>
+                    </tr>
+                  </React.Fragment>
                 ))
               )}
             </tbody>

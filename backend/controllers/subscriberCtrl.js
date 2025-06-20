@@ -632,6 +632,110 @@ const subscriberController = {
       next(err);
     }
   }),
+
+  //Update Subscriber
+  updateSubscriber: asyncHandler(async (req, res, next) => {
+    try {
+      const subscriber = await Subscriber.findById(req.params.id);
+
+      if (!subscriber) {
+        return res.status(404).json({ message: "Subscriber not found" });
+      }
+
+      // // Extract the fields you want to track changes for
+      // const trackedFields = [
+      //   "siteName",
+      //   "siteCode",
+      //   "siteAddress",
+      //   "localContact.name",
+      //   "localContact.contact",
+      //   "ispInfo.name",
+      //   "ispInfo.contact",
+      //   "ispInfo.broadbandPlan",
+      //   "ispInfo.numberOfMonths",
+      //   "ispInfo.otc",
+      //   "ispInfo.mrc",
+      //   "credentials.username",
+      //   "credentials.password",
+      //   "remark",
+      // ];
+
+      // // Prepare previous and current data objects
+      // const previousData = {};
+      // const currentData = {};
+
+      // trackedFields.forEach((field) => {
+      //   previousData[field] = subscriber[field]; // Get old value from DB
+      //   currentData[field] = req.body[field] || subscriber[field]; // New value from request or keep old
+      // });
+      const trackedFields = [
+        "siteName",
+        "siteCode",
+        "siteAddress",
+        "localContact.name",
+        "localContact.contact",
+        "ispInfo.name",
+        "ispInfo.contact",
+        "ispInfo.broadbandPlan",
+        "ispInfo.numberOfMonths",
+        "ispInfo.otc",
+        "ispInfo.mrc",
+        "credentials.username",
+        "credentials.password",
+        "remark",
+      ];
+
+      // Helper function to get nested properties
+      function getNestedValue(obj, path) {
+        return path.split(".").reduce((o, p) => (o || {})[p], obj);
+      }
+
+      // Helper function to check if a value exists (not undefined or empty string)
+      function hasValue(val) {
+        return val !== undefined && val !== "";
+      }
+
+      const previousData = {};
+      const currentData = {};
+
+      trackedFields.forEach((field) => {
+        // Get previous value
+        previousData[field] = getNestedValue(subscriber, field);
+
+        // Get current value - use req.body if it exists and has value, otherwise use previous value
+        const newValue = getNestedValue(req.body, field);
+        currentData[field] = hasValue(newValue)
+          ? newValue
+          : previousData[field];
+      });
+
+      const updatedSubscriber = await Subscriber.findByIdAndUpdate(
+        req.params.id,
+        {
+          // ...req.body,
+          remark: req.body.remark,
+          modifiedData: {
+            previous: previousData,
+            current: currentData,
+            modified_by: req.user.id,
+            modified_at: Date.now(),
+          },
+          updatedAt: Date.now(),
+          request_status: "pending",
+          status: "Modified",
+        },
+        { new: true, runValidators: true }
+      );
+
+      res.json({
+        success: true,
+        data: updatedSubscriber,
+        message: "Subscriber Updated Successfully",
+      });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  }),
 };
 
 module.exports = subscriberController;

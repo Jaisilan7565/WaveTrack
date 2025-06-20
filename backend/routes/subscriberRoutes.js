@@ -9,6 +9,7 @@ const {
   bulkApproveSubscribers,
   bulkDeleteSubscribers,
   getSubscriberById,
+  updateSubscriber,
 } = require("../controllers/subscriberCtrl");
 
 const router = express.Router();
@@ -58,6 +59,12 @@ router.patch(
   "/bulk-delete",
   authorize("Admin", "General Manager"),
   bulkDeleteSubscribers
+);
+
+router.patch(
+  "/:id",
+  authorize("Admin", "General Manager", "Manager", "Finance"),
+  updateSubscriber
 );
 
 module.exports = router;

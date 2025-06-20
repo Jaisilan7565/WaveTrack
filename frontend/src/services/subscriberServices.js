@@ -184,3 +184,17 @@ export const getSubscriberByIdAPI = async (id) => {
     throw error;
   }
 };
+
+export const updateSubscriberAPI = async ({ id, data }) => {
+  try {
+    const response = await axios.patch(
+      `${BASE_URL}/subscribers/${id}`,
+      data,
+      getAuthHeaders()
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating subscriber:", error);
+    throw error;
+  }
+};

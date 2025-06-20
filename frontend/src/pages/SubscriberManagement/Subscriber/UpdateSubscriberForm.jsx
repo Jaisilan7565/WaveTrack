@@ -11,6 +11,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   createSubscriberAPI,
   getSubscriberByIdAPI,
+  updateSubscriberAPI,
 } from "../../../services/subscriberServices";
 import { deepTrim } from "../../../utils/trim";
 import Toast from "../../../components/Toast";
@@ -35,15 +36,15 @@ const UpdateSubscriberForm = ({ id, handleClose }) => {
 
   const subscriberData = fetchedSubscriber?.data;
 
-  // New Subscriber Mutation
+  // Update Mutation
   const {
-    mutateAsync: addSubMutate,
+    mutateAsync: updateSubscriberMutate,
+    isPending,
+    isError,
     isSuccess: updateSubscriberSuccess,
-    isLoading,
-    error,
   } = useMutation({
-    mutationFn: createSubscriberAPI,
-    mutationKey: ["createSubscriber"],
+    mutationFn: updateSubscriberAPI,
+    mutationKey: ["updateSubscriber"],
   });
 
   // Form validation schema
@@ -122,7 +123,7 @@ const UpdateSubscriberForm = ({ id, handleClose }) => {
 
         console.log("New Subscriber Data:", updatedSub);
 
-        await addSubMutate(updatedSub)
+        await updateSubscriberMutate({ id: id, data: updatedSub })
           .then(() => {
             setSubmissionStatus({
               type: "success",
