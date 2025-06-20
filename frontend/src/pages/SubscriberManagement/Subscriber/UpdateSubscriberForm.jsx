@@ -121,8 +121,6 @@ const UpdateSubscriberForm = ({ id, handleClose }) => {
           ...trimmedValues,
         };
 
-        console.log("New Subscriber Data:", updatedSub);
-
         await updateSubscriberMutate({ id: id, data: updatedSub })
           .then(() => {
             setSubmissionStatus({

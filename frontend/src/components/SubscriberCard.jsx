@@ -2,8 +2,27 @@ import { useEffect, useState } from "react";
 import { FiUser, FiWifi, FiCalendar, FiMapPin, FiEdit } from "react-icons/fi";
 import UpdateSubscriberForm from "../pages/SubscriberManagement/Subscriber/UpdateSubscriberForm";
 import UserHoverCard from "./UserHoverCard";
+import {
+  approveSubscriberAPI,
+  rejectSubscriberAPI,
+} from "../services/subscriberServices";
+import Toast from "./Toast";
+import { Loader } from "lucide-react";
+import { getUserRoles } from "../utils/jwt";
+import { hasPermission } from "../utils/auth";
 
 const SubscriberCard = ({ subscriber, refetch }) => {
+  const userRoles = getUserRoles();
+  const DecisionMaker = hasPermission(
+    ["Admin", "General Manager", "Manager", "Senior HR"],
+    userRoles
+  );
+
+  const hasDeletePermission = hasPermission(
+    ["Admin", "General Manager"],
+    userRoles
+  );
+
   const formatDate = (dateString) => {
     if (!dateString) return "-";
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -60,14 +79,13 @@ const SubscriberCard = ({ subscriber, refetch }) => {
     subscriberId: null,
   });
 
-  useEffect(() => {
-    console.log("Hovered User Updated:", hoveredUser);
-  }, [hoveredUser]);
-
   const [isUpdateSubscriberFormOpen, setIsUpdateSubscriberFormOpen] =
     useState(false);
 
   const [selectedSubscriberId, setSelectedSubscriberId] = useState(null);
+  const [loadingApprove, setLoadingApprove] = useState(null);
+  const [loadingReject, setLoadingReject] = useState(null);
+  const [submissionStatus, setSubmissionStatus] = useState(null);
 
   const handleEdit = async (id) => {
     setSelectedSubscriberId(id);
@@ -80,12 +98,85 @@ const SubscriberCard = ({ subscriber, refetch }) => {
     setIsUpdateSubscriberFormOpen(false);
   };
 
+  const handleApprove = async (subscriberId, status, subscriber) => {
+    setLoadingApprove(subscriberId);
+    try {
+      const response = await approveSubscriberAPI(
+        subscriberId,
+        status,
+        subscriber
+      );
+
+      // Refresh the employee list
+      setTimeout(() => {
+        refetch();
+      }, 1000);
+
+      // Show success message
+      setSubmissionStatus({
+        type: "success",
+        message: response?.message ?? "Approved Successfully",
+      });
+    } catch (error) {
+      setSubmissionStatus({
+        type: "error",
+        message:
+          error?.response?.data?.error ??
+          error?.message ??
+          "Failed to Approve Subscriber",
+      });
+    } finally {
+      setLoadingApprove(null);
+    }
+  };
+
+  const handleReject = async (subscriberId, status, subscriber) => {
+    setLoadingReject(subscriberId);
+    try {
+      // Call your API to reject the employee
+      const response = await rejectSubscriberAPI(
+        subscriberId,
+        status,
+        subscriber
+      );
+
+      // Refresh the employee list
+      setTimeout(() => {
+        refetch();
+      }, 1000);
+
+      // Show success message
+      setSubmissionStatus({
+        type: "success",
+        message: response?.message ?? "Rejected Successfully",
+      });
+    } catch (error) {
+      // console.error("Error rejecting employee:", error);
+      setSubmissionStatus({
+        type: "error",
+        message:
+          error?.response?.data?.error ??
+          error?.message ??
+          "Failed to Reject Subscriber",
+      });
+    } finally {
+      setLoadingReject(null);
+    }
+  };
+
   return (
     <div className="bg-white h-fit rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition duration-300">
       {isUpdateSubscriberFormOpen && (
         <UpdateSubscriberForm
           id={selectedSubscriberId}
           handleClose={handleCloseEdit}
+        />
+      )}
+      {submissionStatus && (
+        <Toast
+          type={submissionStatus.type}
+          message={submissionStatus.message}
+          onClose={() => setSubmissionStatus(null)}
         />
       )}
       {/* Header */}
@@ -167,6 +258,14 @@ const SubscriberCard = ({ subscriber, refetch }) => {
                 <span className="font-medium">MRC:</span> ₹{" "}
                 {subscriber?.ispInfo?.mrc}
               </p>
+              <p className="text-sm text-gray-600">
+                <span className="font-medium">Username:</span>
+                {subscriber?.credentials?.username || "—"}
+              </p>
+              <p className="text-sm text-gray-600">
+                <span className="font-medium">Password:</span>
+                {subscriber?.credentials?.password || "—"}
+              </p>
             </div>
           </div>
 
@@ -205,7 +304,7 @@ const SubscriberCard = ({ subscriber, refetch }) => {
               <p className="text-sm text-gray-600">
                 <span className="font-medium">Activation:</span>{" "}
                 {formatDate(
-                  subscriber?.ispInfo?.currentActivationDate.split("T")[0]
+                  subscriber?.ispInfo?.currentActivationDate?.split("T")[0]
                 )}
               </p>
               <p className="text-sm text-gray-600">
@@ -312,33 +411,80 @@ const SubscriberCard = ({ subscriber, refetch }) => {
                         </div>
                         <div className="space-y-1">
                           {Object.entries(subscriber.modifiedData.previous).map(
-                            ([key, value]) => (
-                              <div key={`prev-${key}`} className="text-xs">
-                                <div className="flex items-baseline">
-                                  <span className="inline-block min-w-[60px] text-gray-500 capitalize truncate">
-                                    {getDisplayName(key)}:
-                                  </span>
-                                  <div className="flex-1 ml-1">
-                                    {Array.isArray(value) ? (
-                                      <div className="flex flex-wrap gap-0.5">
-                                        {value.map((item, i) => (
-                                          <span
-                                            key={i}
-                                            className="bg-gray-100 text-gray-700 text-[10px] px-1.5 py-0.5 rounded-full font-semibold break-words"
-                                          >
-                                            {item}
-                                          </span>
-                                        ))}
-                                      </div>
-                                    ) : (
-                                      <span className="text-gray-800 break-words">
-                                        {value}
+                            ([key, value]) => {
+                              // Handle nested objects
+                              if (
+                                typeof value === "object" &&
+                                value !== null &&
+                                !Array.isArray(value)
+                              ) {
+                                return (
+                                  <div key={`prev-${key}`} className="text-xs">
+                                    <div className="flex items-baseline">
+                                      <span className="inline-block min-w-[60px] text-gray-500 capitalize truncate">
+                                        {getDisplayName(key)}:
                                       </span>
-                                    )}
+                                      <div className="flex-1 ml-1">
+                                        {Object.entries(value).map(
+                                          ([nestedKey, nestedValue]) => (
+                                            <div
+                                              key={`prev-nested-${nestedKey}`}
+                                              className="mb-1 last:mb-0"
+                                            >
+                                              <div className="flex items-baseline">
+                                                <span className="inline-block min-w-[40px] text-gray-400 text-[10px] capitalize">
+                                                  {getDisplayName(nestedKey)}:
+                                                </span>
+                                                <span className="text-gray-700 ml-1 break-words">
+                                                  {nestedValue || (
+                                                    <span className="text-gray-400">
+                                                      (empty)
+                                                    </span>
+                                                  )}
+                                                </span>
+                                              </div>
+                                            </div>
+                                          )
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              }
+
+                              // Handle regular values
+                              return (
+                                <div key={`prev-${key}`} className="text-xs">
+                                  <div className="flex items-baseline">
+                                    <span className="inline-block min-w-[60px] text-gray-500 capitalize truncate">
+                                      {getDisplayName(key)}:
+                                    </span>
+                                    <div className="flex-1 ml-1">
+                                      {Array.isArray(value) ? (
+                                        <div className="flex flex-wrap gap-0.5">
+                                          {value.map((item, i) => (
+                                            <span
+                                              key={i}
+                                              className="bg-gray-100 text-gray-700 text-[10px] px-1.5 py-0.5 rounded-full font-semibold break-words"
+                                            >
+                                              {item}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      ) : (
+                                        <span className="text-gray-700 break-words">
+                                          {value || (
+                                            <span className="text-gray-400">
+                                              (empty)
+                                            </span>
+                                          )}
+                                        </span>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                            )
+                              );
+                            }
                           )}
                         </div>
                       </div>
@@ -359,6 +505,62 @@ const SubscriberCard = ({ subscriber, refetch }) => {
                               const hasChanged =
                                 JSON.stringify(value) !==
                                 JSON.stringify(previousValue);
+
+                              // Handle nested objects differently
+                              if (
+                                typeof value === "object" &&
+                                value !== null &&
+                                !Array.isArray(value)
+                              ) {
+                                return (
+                                  <div key={`curr-${key}`} className="text-xs">
+                                    <div className="flex items-baseline">
+                                      <span className="inline-block min-w-[60px] text-blue-600 capitalize truncate">
+                                        {getDisplayName(key)}:
+                                      </span>
+                                      <div className="flex-1 ml-1">
+                                        {Object.entries(value).map(
+                                          ([nestedKey, nestedValue]) => {
+                                            const prevNestedValue =
+                                              previousValue?.[nestedKey];
+                                            const nestedHasChanged =
+                                              JSON.stringify(nestedValue) !==
+                                              JSON.stringify(prevNestedValue);
+
+                                            return (
+                                              <div
+                                                key={`nested-${nestedKey}`}
+                                                className="mb-1 last:mb-0"
+                                              >
+                                                <div className="flex items-baseline">
+                                                  <span className="inline-block min-w-[40px] text-blue-500 text-[10px] capitalize">
+                                                    {getDisplayName(nestedKey)}:
+                                                  </span>
+                                                  <span
+                                                    className={`text-blue-900 ml-1 break-words ${
+                                                      nestedHasChanged
+                                                        ? "bg-green-600 px-1 rounded-md text-white font-semibold"
+                                                        : "text-blue-900"
+                                                    }`}
+                                                  >
+                                                    {nestedValue || (
+                                                      <span className="text-gray-400">
+                                                        (empty)
+                                                      </span>
+                                                    )}
+                                                  </span>
+                                                </div>
+                                              </div>
+                                            );
+                                          }
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              }
+
+                              // Handle regular values
                               return (
                                 <div key={`curr-${key}`} className="text-xs">
                                   <div className="flex items-baseline">
@@ -371,7 +573,7 @@ const SubscriberCard = ({ subscriber, refetch }) => {
                                           {value.map((item, i) => (
                                             <span
                                               key={i}
-                                              className="bg-blue-50 text-blue-900 text-[10px] px-1.5 py-0.5 rounded-full font-semibold "
+                                              className="bg-blue-50 text-blue-900 text-[10px] px-1.5 py-0.5 rounded-full font-semibold"
                                             >
                                               {item}
                                             </span>
@@ -385,7 +587,11 @@ const SubscriberCard = ({ subscriber, refetch }) => {
                                               : "text-blue-900"
                                           }`}
                                         >
-                                          {value}
+                                          {value || (
+                                            <span className="text-gray-400">
+                                              (empty)
+                                            </span>
+                                          )}
                                         </span>
                                       )}
                                     </div>
@@ -442,26 +648,46 @@ const SubscriberCard = ({ subscriber, refetch }) => {
           </div>
         )}
         <div className="grid grid-cols-3 gap-2">
-          <button
-            className="bg-red-500 hover:bg-red-600 text-white font-semibold py-1 px-2 rounded"
-            // onClick={handleDelete}
-          >
-            Delete
-          </button>
+          {hasDeletePermission && (
+            <button
+              className="bg-red-500 hover:bg-red-600 text-white font-semibold py-1 px-2 rounded"
+              // onClick={handleDelete}
+            >
+              Delete
+            </button>
+          )}
 
-          <button
-            className="bg-green-500 hover:bg-green-600 text-white font-semibold py-1 px-2 rounded"
-            // onClick={handleApprove}
-          >
-            Approve
-          </button>
+          {DecisionMaker && subscriber.requestStatus === "pending" && (
+            <>
+              <button
+                className="bg-green-500 hover:bg-green-600 text-white font-semibold py-1 px-2 rounded"
+                onClick={() =>
+                  handleApprove(subscriber._id, subscriber.status, subscriber)
+                }
+                disabled={loadingApprove === subscriber?._id}
+              >
+                {loadingApprove === subscriber?._id ? (
+                  <Loader className="h-5 w-5 animate-spin justify-self-center" />
+                ) : (
+                  "Approve"
+                )}
+              </button>
 
-          <button
-            className="bg-rose-500 hover:bg-rose-600 text-white font-semibold py-1 px-2 rounded"
-            // onClick={handleApprove}
-          >
-            Reject
-          </button>
+              <button
+                className="bg-rose-500 hover:bg-rose-600 text-white font-semibold py-1 px-2 rounded"
+                onClick={() =>
+                  handleReject(subscriber._id, subscriber.status, subscriber)
+                }
+                disabled={loadingReject === subscriber?._id}
+              >
+                {loadingReject === subscriber?._id ? (
+                  <Loader className="h-5 w-5 animate-spin justify-self-center" />
+                ) : (
+                  "Reject"
+                )}
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>

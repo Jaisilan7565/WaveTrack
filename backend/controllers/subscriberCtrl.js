@@ -348,13 +348,41 @@ const subscriberController = {
         return res.status(400).json({ message: "Request already processed" });
       }
 
-      const updatedSubscriber = await Subscriber.findByIdAndUpdate(
-        req.params.id,
-        {
+      let update;
+
+      if (subscriber.status === "Modified") {
+        update = {
+          ...req.body,
+          ispInfo: {
+            ...req.body.ispInfo,
+            currentActivationDate: subscriber.ispInfo.currentActivationDate,
+            renewalDate: subscriber.ispInfo.renewalDate,
+          },
+          activationDate: subscriber.activationDate,
+          decision_by: req.user.id,
+          updatedAt: Date.now(),
+        };
+      } else if (subscriber.status === "Added") {
+        update = {
           ...req.body,
           decision_by: req.user.id,
           updatedAt: Date.now(),
-        },
+        };
+      }
+
+      // if (
+      //   (!update.ispInfo?.currentActivationDate &&
+      //     subscriber.ispInfo?.currentActivationDate) ||
+      //   (!update.ispInfo?.renewalDate && subscriber.ispInfo?.renewalDate)
+      // ) {
+      //   update.ispInfo.currentActivationDate =
+      //     subscriber.ispInfo.currentActivationDate;
+      //   update.ispInfo.renewalDate = subscriber.ispInfo.renewalDate;
+      // }
+
+      const updatedSubscriber = await Subscriber.findByIdAndUpdate(
+        req.params.id,
+        update,
         { new: true, runValidators: true }
       );
 
@@ -652,32 +680,6 @@ const subscriberController = {
         return res.status(404).json({ message: "Subscriber not found" });
       }
 
-      // // Extract the fields you want to track changes for
-      // const trackedFields = [
-      //   "siteName",
-      //   "siteCode",
-      //   "siteAddress",
-      //   "localContact.name",
-      //   "localContact.contact",
-      //   "ispInfo.name",
-      //   "ispInfo.contact",
-      //   "ispInfo.broadbandPlan",
-      //   "ispInfo.numberOfMonths",
-      //   "ispInfo.otc",
-      //   "ispInfo.mrc",
-      //   "credentials.username",
-      //   "credentials.password",
-      //   "remark",
-      // ];
-
-      // // Prepare previous and current data objects
-      // const previousData = {};
-      // const currentData = {};
-
-      // trackedFields.forEach((field) => {
-      //   previousData[field] = subscriber[field]; // Get old value from DB
-      //   currentData[field] = req.body[field] || subscriber[field]; // New value from request or keep old
-      // });
       const trackedFields = [
         "siteName",
         "siteCode",
@@ -704,18 +706,39 @@ const subscriberController = {
         return val !== undefined && val !== "";
       }
 
+      // Helper function to set nested properties
+      function setNestedValue(obj, path, value) {
+        const keys = path.split(".");
+        let current = obj;
+
+        for (let i = 0; i < keys.length; i++) {
+          const key = keys[i];
+
+          if (i === keys.length - 1) {
+            current[key] = value;
+          } else {
+            if (!current[key]) {
+              current[key] = {};
+            }
+            current = current[key];
+          }
+        }
+
+        return obj;
+      }
+
       const previousData = {};
       const currentData = {};
 
       trackedFields.forEach((field) => {
         // Get previous value
-        previousData[field] = getNestedValue(subscriber, field);
+        const prevValue = getNestedValue(subscriber, field);
+        setNestedValue(previousData, field, prevValue);
 
-        // Get current value - use req.body if it exists and has value, otherwise use previous value
+        // Get current value
         const newValue = getNestedValue(req.body, field);
-        currentData[field] = hasValue(newValue)
-          ? newValue
-          : previousData[field];
+        const currentValue = hasValue(newValue) ? newValue : prevValue;
+        setNestedValue(currentData, field, currentValue);
       });
 
       const updatedSubscriber = await Subscriber.findByIdAndUpdate(

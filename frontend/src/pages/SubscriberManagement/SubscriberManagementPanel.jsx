@@ -348,7 +348,11 @@ const SubscriberManagementPanel = () => {
   useEffect(() => {
     const allPending =
       selectedRows.length > 0 &&
-      selectedRows.every((row) => row.subscriber?.request_status === "pending");
+      selectedRows.every(
+        (row) =>
+          row.subscriber?.request_status === "pending" &&
+          row.status !== "Modified"
+      );
     setAllSelectedPending(allPending);
   }, [selectedRows]);
 
@@ -1029,7 +1033,7 @@ const SubscriberManagementPanel = () => {
           </div>
 
           {/* Right Button Group */}
-          {allSelectedPending && (
+          {allSelectedPending && selectedRows.length > 0 && (
             <div className="flex flex-wrap gap-2 sm:gap-3">
               <button
                 className="flex-1 sm:flex-none whitespace-nowrap px-3 py-2 sm:px-4 sm:py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 text-sm sm:text-base"
@@ -1327,40 +1331,92 @@ const SubscriberManagementPanel = () => {
                                     <div className="space-y-3.5">
                                       {Object.entries(
                                         subscriber.modifiedData.previous
-                                      ).map(([key, value]) => (
-                                        <div
-                                          key={`prev-${key}`}
-                                          className="group"
-                                        >
-                                          <div className="font-medium text-gray-600 flex flex-col sm:flex-row gap-1 sm:gap-3">
-                                            <span className="inline-block min-w-[120px] capitalize text-gray-500 group-hover:text-gray-700 transition-colors">
-                                              {getDisplayName(key)}:
-                                            </span>
-                                            <div className="flex-1">
-                                              {Array.isArray(value) ? (
-                                                <div className="flex flex-wrap gap-1.5">
-                                                  {value.map((item, i) => (
-                                                    <span
-                                                      key={i}
-                                                      className="bg-gray-100 text-gray-700 text-xs px-2.5 py-1 rounded-full border border-gray-200"
-                                                    >
-                                                      {item}
-                                                    </span>
-                                                  ))}
-                                                </div>
-                                              ) : (
-                                                <span className="text-gray-800 break-words">
-                                                  {value || (
-                                                    <span className="text-gray-400">
-                                                      (empty)
-                                                    </span>
-                                                  )}
+                                      ).map(([key, value]) => {
+                                        // Handle nested objects
+                                        if (
+                                          typeof value === "object" &&
+                                          value !== null &&
+                                          !Array.isArray(value)
+                                        ) {
+                                          return (
+                                            <div
+                                              key={`prev-${key}`}
+                                              className="group"
+                                            >
+                                              <div className="font-medium text-gray-600 flex flex-col sm:flex-row gap-1 sm:gap-3">
+                                                <span className="inline-block min-w-[120px] capitalize text-gray-500 group-hover:text-gray-700 transition-colors">
+                                                  {getDisplayName(key)}:
                                                 </span>
-                                              )}
+                                                <div className="flex-1">
+                                                  <div className="space-y-2 pl-2 border-l-2 border-gray-400">
+                                                    {Object.entries(value).map(
+                                                      ([
+                                                        nestedKey,
+                                                        nestedValue,
+                                                      ]) => (
+                                                        <div
+                                                          key={`prev-nested-${nestedKey}`}
+                                                          className="flex flex-col sm:flex-row gap-1 sm:gap-3"
+                                                        >
+                                                          <span className="inline-block min-w-[100px] capitalize text-gray-400 text-sm">
+                                                            {getDisplayName(
+                                                              nestedKey
+                                                            )}
+                                                            :
+                                                          </span>
+                                                          <span className="text-gray-700 break-words">
+                                                            {nestedValue || (
+                                                              <span className="text-gray-400">
+                                                                (empty)
+                                                              </span>
+                                                            )}
+                                                          </span>
+                                                        </div>
+                                                      )
+                                                    )}
+                                                  </div>
+                                                </div>
+                                              </div>
+                                            </div>
+                                          );
+                                        }
+
+                                        // Handle regular values
+                                        return (
+                                          <div
+                                            key={`prev-${key}`}
+                                            className="group"
+                                          >
+                                            <div className="font-medium text-gray-600 flex flex-col sm:flex-row gap-1 sm:gap-3">
+                                              <span className="inline-block min-w-[120px] capitalize text-gray-500 group-hover:text-gray-700 transition-colors">
+                                                {getDisplayName(key)}:
+                                              </span>
+                                              <div className="flex-1">
+                                                {Array.isArray(value) ? (
+                                                  <div className="flex flex-wrap gap-1.5">
+                                                    {value.map((item, i) => (
+                                                      <span
+                                                        key={i}
+                                                        className="bg-gray-100 text-gray-700 text-xs px-2.5 py-1 rounded-full border border-gray-200"
+                                                      >
+                                                        {item}
+                                                      </span>
+                                                    ))}
+                                                  </div>
+                                                ) : (
+                                                  <span className="text-gray-800 break-words">
+                                                    {value || (
+                                                      <span className="text-gray-400">
+                                                        (empty)
+                                                      </span>
+                                                    )}
+                                                  </span>
+                                                )}
+                                              </div>
                                             </div>
                                           </div>
-                                        </div>
-                                      ))}
+                                        );
+                                      })}
                                     </div>
                                   </div>
 
@@ -1378,9 +1434,87 @@ const SubscriberManagementPanel = () => {
                                       ).map(([key, value]) => {
                                         const previousValue =
                                           subscriber.modifiedData.previous[key];
+
+                                        // Handle nested objects
+                                        if (
+                                          typeof value === "object" &&
+                                          value !== null &&
+                                          !Array.isArray(value)
+                                        ) {
+                                          return (
+                                            <div
+                                              key={`curr-${key}`}
+                                              className="group"
+                                            >
+                                              <div className="font-medium text-blue-600 flex flex-col sm:flex-row gap-1 sm:gap-3">
+                                                <span className="inline-block min-w-[120px] capitalize text-blue-500 group-hover:text-blue-700 transition-colors">
+                                                  {getDisplayName(key)}:
+                                                </span>
+                                                <div className="flex-1">
+                                                  <div className="space-y-2 pl-2 border-l-2 border-blue-400">
+                                                    {Object.entries(value).map(
+                                                      ([
+                                                        nestedKey,
+                                                        nestedValue,
+                                                      ]) => {
+                                                        const prevNestedValue =
+                                                          previousValue?.[
+                                                            nestedKey
+                                                          ];
+                                                        const nestedHasChanged =
+                                                          JSON.stringify(
+                                                            nestedValue
+                                                          ) !==
+                                                          JSON.stringify(
+                                                            prevNestedValue
+                                                          );
+
+                                                        return (
+                                                          <div
+                                                            key={`curr-nested-${nestedKey}`}
+                                                            className="flex flex-col sm:flex-row gap-1 sm:gap-3"
+                                                          >
+                                                            <span className="inline-block min-w-[100px] capitalize text-blue-400 text-sm">
+                                                              {getDisplayName(
+                                                                nestedKey
+                                                              )}
+                                                              :
+                                                            </span>
+                                                            <span
+                                                              className={`break-words ${
+                                                                nestedHasChanged
+                                                                  ? "bg-green-600 px-2 py-1 rounded-md text-white font-semibold"
+                                                                  : "text-blue-700"
+                                                              }`}
+                                                            >
+                                                              {nestedValue || (
+                                                                <span
+                                                                  className={
+                                                                    nestedHasChanged
+                                                                      ? "bg-green-600 text-white px-2 py-1 rounded-md"
+                                                                      : "text-blue-400"
+                                                                  }
+                                                                >
+                                                                  (empty)
+                                                                </span>
+                                                              )}
+                                                            </span>
+                                                          </div>
+                                                        );
+                                                      }
+                                                    )}
+                                                  </div>
+                                                </div>
+                                              </div>
+                                            </div>
+                                          );
+                                        }
+
+                                        // Handle regular values
                                         const hasChanged =
                                           JSON.stringify(value) !==
                                           JSON.stringify(previousValue);
+
                                         return (
                                           <div
                                             key={`curr-${key}`}
@@ -1393,14 +1527,29 @@ const SubscriberManagementPanel = () => {
                                               <div className="flex-1">
                                                 {Array.isArray(value) ? (
                                                   <div className="flex flex-wrap gap-1.5">
-                                                    {value.map((item, i) => (
-                                                      <span
-                                                        key={i}
-                                                        className="bg-blue-50 text-blue-700 text-xs px-2.5 py-1 rounded-full border border-blue-100"
-                                                      >
-                                                        {item}
-                                                      </span>
-                                                    ))}
+                                                    {value.map((item, i) => {
+                                                      const prevItem =
+                                                        Array.isArray(
+                                                          previousValue
+                                                        )
+                                                          ? previousValue[i]
+                                                          : null;
+                                                      const itemHasChanged =
+                                                        item !== prevItem;
+
+                                                      return (
+                                                        <span
+                                                          key={i}
+                                                          className={`text-xs px-2.5 py-1 rounded-full border ${
+                                                            itemHasChanged
+                                                              ? "bg-green-100 text-green-800 border-green-200"
+                                                              : "bg-blue-50 text-blue-700 border-blue-100"
+                                                          }`}
+                                                        >
+                                                          {item}
+                                                        </span>
+                                                      );
+                                                    })}
                                                   </div>
                                                 ) : (
                                                   <span
@@ -1678,36 +1827,89 @@ const SubscriberManagementPanel = () => {
                                 <div className="space-y-1">
                                   {Object.entries(
                                     subscriber.modifiedData.previous
-                                  ).map(([key, value]) => (
-                                    <div
-                                      key={`prev-${key}`}
-                                      className="text-xs"
-                                    >
-                                      <div className="flex items-baseline">
-                                        <span className="inline-block min-w-[60px] text-gray-500 capitalize truncate">
-                                          {getDisplayName(key)}:
-                                        </span>
-                                        <div className="flex-1 ml-1">
-                                          {Array.isArray(value) ? (
-                                            <div className="flex flex-wrap gap-0.5">
-                                              {value.map((item, i) => (
-                                                <span
-                                                  key={i}
-                                                  className="bg-gray-100 text-gray-700 text-[10px] px-1.5 py-0.5 rounded-full font-semibold break-words"
-                                                >
-                                                  {item}
-                                                </span>
-                                              ))}
-                                            </div>
-                                          ) : (
-                                            <span className="text-gray-800 break-words">
-                                              {value}
+                                  ).map(([key, value]) => {
+                                    // Handle nested objects
+                                    if (
+                                      typeof value === "object" &&
+                                      value !== null &&
+                                      !Array.isArray(value)
+                                    ) {
+                                      return (
+                                        <div
+                                          key={`prev-${key}`}
+                                          className="text-xs"
+                                        >
+                                          <div className="flex items-baseline">
+                                            <span className="inline-block min-w-[60px] text-gray-500 capitalize truncate">
+                                              {getDisplayName(key)}:
                                             </span>
-                                          )}
+                                            <div className="flex-1 ml-1">
+                                              {Object.entries(value).map(
+                                                ([nestedKey, nestedValue]) => (
+                                                  <div
+                                                    key={`prev-nested-${nestedKey}`}
+                                                    className="mb-1 last:mb-0"
+                                                  >
+                                                    <div className="flex items-baseline">
+                                                      <span className="inline-block min-w-[40px] text-gray-400 text-[10px] capitalize">
+                                                        {getDisplayName(
+                                                          nestedKey
+                                                        )}
+                                                        :
+                                                      </span>
+                                                      <span className="text-gray-700 ml-1 break-words">
+                                                        {nestedValue || (
+                                                          <span className="text-gray-400">
+                                                            (empty)
+                                                          </span>
+                                                        )}
+                                                      </span>
+                                                    </div>
+                                                  </div>
+                                                )
+                                              )}
+                                            </div>
+                                          </div>
+                                        </div>
+                                      );
+                                    }
+
+                                    // Handle regular values
+                                    return (
+                                      <div
+                                        key={`prev-${key}`}
+                                        className="text-xs"
+                                      >
+                                        <div className="flex items-baseline">
+                                          <span className="inline-block min-w-[60px] text-gray-500 capitalize truncate">
+                                            {getDisplayName(key)}:
+                                          </span>
+                                          <div className="flex-1 ml-1">
+                                            {Array.isArray(value) ? (
+                                              <div className="flex flex-wrap gap-0.5">
+                                                {value.map((item, i) => (
+                                                  <span
+                                                    key={i}
+                                                    className="bg-gray-100 text-gray-700 text-[10px] px-1.5 py-0.5 rounded-full font-semibold break-words"
+                                                  >
+                                                    {item}
+                                                  </span>
+                                                ))}
+                                              </div>
+                                            ) : (
+                                              <span className="text-gray-700 break-words">
+                                                {value || (
+                                                  <span className="text-gray-400">
+                                                    (empty)
+                                                  </span>
+                                                )}
+                                              </span>
+                                            )}
+                                          </div>
                                         </div>
                                       </div>
-                                    </div>
-                                  ))}
+                                    );
+                                  })}
                                 </div>
                               </div>
 
@@ -1728,6 +1930,72 @@ const SubscriberManagementPanel = () => {
                                     const hasChanged =
                                       JSON.stringify(value) !==
                                       JSON.stringify(previousValue);
+
+                                    // Handle nested objects differently
+                                    if (
+                                      typeof value === "object" &&
+                                      value !== null &&
+                                      !Array.isArray(value)
+                                    ) {
+                                      return (
+                                        <div
+                                          key={`curr-${key}`}
+                                          className="text-xs"
+                                        >
+                                          <div className="flex items-baseline">
+                                            <span className="inline-block min-w-[60px] text-blue-600 capitalize truncate">
+                                              {getDisplayName(key)}:
+                                            </span>
+                                            <div className="flex-1 ml-1">
+                                              {Object.entries(value).map(
+                                                ([nestedKey, nestedValue]) => {
+                                                  const prevNestedValue =
+                                                    previousValue?.[nestedKey];
+                                                  const nestedHasChanged =
+                                                    JSON.stringify(
+                                                      nestedValue
+                                                    ) !==
+                                                    JSON.stringify(
+                                                      prevNestedValue
+                                                    );
+
+                                                  return (
+                                                    <div
+                                                      key={`nested-${nestedKey}`}
+                                                      className="mb-1 last:mb-0"
+                                                    >
+                                                      <div className="flex items-baseline">
+                                                        <span className="inline-block min-w-[40px] text-blue-500 text-[10px] capitalize">
+                                                          {getDisplayName(
+                                                            nestedKey
+                                                          )}
+                                                          :
+                                                        </span>
+                                                        <span
+                                                          className={`text-blue-900 ml-1 break-words ${
+                                                            nestedHasChanged
+                                                              ? "bg-green-600 px-1 rounded-md text-white font-semibold"
+                                                              : "text-blue-900"
+                                                          }`}
+                                                        >
+                                                          {nestedValue || (
+                                                            <span className="text-gray-400">
+                                                              (empty)
+                                                            </span>
+                                                          )}
+                                                        </span>
+                                                      </div>
+                                                    </div>
+                                                  );
+                                                }
+                                              )}
+                                            </div>
+                                          </div>
+                                        </div>
+                                      );
+                                    }
+
+                                    // Handle regular values
                                     return (
                                       <div
                                         key={`curr-${key}`}
@@ -1743,7 +2011,7 @@ const SubscriberManagementPanel = () => {
                                                 {value.map((item, i) => (
                                                   <span
                                                     key={i}
-                                                    className="bg-blue-50 text-blue-900 text-[10px] px-1.5 py-0.5 rounded-full font-semibold "
+                                                    className="bg-blue-50 text-blue-900 text-[10px] px-1.5 py-0.5 rounded-full font-semibold"
                                                   >
                                                     {item}
                                                   </span>
@@ -1757,7 +2025,11 @@ const SubscriberManagementPanel = () => {
                                                     : "text-blue-900"
                                                 }`}
                                               >
-                                                {value}
+                                                {value || (
+                                                  <span className="text-gray-400">
+                                                    (empty)
+                                                  </span>
+                                                )}
                                               </span>
                                             )}
                                           </div>

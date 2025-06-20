@@ -57,17 +57,34 @@ export const approveSubscriberAPI = async (id, status, subscriber) => {
         request_status: "approved",
         status: "InActive",
       };
+    } else if (status === "Modified") {
+      payload = {
+        siteName: subscriber?.modifiedData?.current?.siteName,
+        siteCode: subscriber?.modifiedData?.current?.siteCode,
+        siteAddress: subscriber?.modifiedData?.current?.siteAddress,
+        localContact: {
+          name: subscriber?.modifiedData?.current?.localContact?.name,
+          contact: subscriber?.modifiedData?.current?.localContact?.contact,
+        },
+        ispInfo: {
+          name: subscriber?.modifiedData?.current?.ispInfo?.name,
+          contact: subscriber?.modifiedData?.current?.ispInfo?.contact,
+          broadbandPlan:
+            subscriber?.modifiedData?.current?.ispInfo?.broadbandPlan,
+          numberOfMonths:
+            subscriber?.modifiedData?.current?.ispInfo?.numberOfMonths,
+          otc: subscriber?.modifiedData?.current?.ispInfo?.otc,
+          mrc: subscriber?.modifiedData?.current?.ispInfo?.mrc,
+        },
+        credentials: {
+          username: subscriber?.modifiedData?.current?.credentials?.username,
+          password: subscriber?.modifiedData?.current?.credentials?.password,
+        },
+        request_status: "approved",
+        status: "Active",
+      };
     }
-    // else if (status === "Modified") {
-    //   payload = {
-    //     name: employee?.modifiedData?.current?.name,
-    //     email: employee?.modifiedData?.current?.email,
-    //     contact: employee?.modifiedData?.current?.contact,
-    //     roles: employee?.modifiedData?.current?.roles,
-    //     request_status: "approved",
-    //     status: "Active",
-    //   };
-    // } else if (status === "InActive") {
+    // else if (status === "InActive") {
     //   payload = {
     //     request_status: "approved",
     //     status: "InActive",
@@ -78,6 +95,8 @@ export const approveSubscriberAPI = async (id, status, subscriber) => {
     //     status: "Active",
     //   };
     // }
+
+    console.log(payload);
 
     const response = await axios.patch(
       `${BASE_URL}/subscribers/${id}/approve`,
@@ -99,6 +118,16 @@ export const rejectSubscriberAPI = async (id, status, subscriber) => {
       payload = {
         request_status: "rejected",
         status: "Rejected",
+      };
+    } else if (status === "Modified") {
+      payload = {
+        request_status: "rejected",
+        status: "Rejected",
+      };
+    } else if (status === "InActive") {
+      payload = {
+        request_status: "approved",
+        status: "Active",
       };
     }
     // else if (status === "Modified") {
