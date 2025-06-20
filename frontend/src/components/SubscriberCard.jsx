@@ -193,13 +193,15 @@ const SubscriberCard = ({ subscriber, refetch }) => {
           </div>
         </div>
         <div>
-          <button
-            className="p-1.5 text-white-600 hover:bg-white hover:text-blue-500 rounded-md transition-colors"
-            title="Edit"
-            onClick={() => handleEdit(subscriber?._id)}
-          >
-            <FiEdit className="h-5 w-5" />
-          </button>
+          {subscriber?.request_status !== "pending" && (
+            <button
+              className="p-1.5 text-white-600 hover:bg-white hover:text-blue-500 rounded-md transition-colors"
+              title="Edit"
+              onClick={() => handleEdit(subscriber?._id)}
+            >
+              <FiEdit className="h-5 w-5" />
+            </button>
+          )}
         </div>
       </div>
 
@@ -657,7 +659,7 @@ const SubscriberCard = ({ subscriber, refetch }) => {
             </button>
           )}
 
-          {DecisionMaker && subscriber.requestStatus === "pending" && (
+          {DecisionMaker && subscriber?.request_status === "pending" && (
             <>
               <button
                 className="bg-green-500 hover:bg-green-600 text-white font-semibold py-1 px-2 rounded"
