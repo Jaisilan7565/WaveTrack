@@ -26,6 +26,7 @@ import { hasPermission } from "../../utils/auth";
 import Toast from "../../components/Toast";
 import AddEmployeeForm from "./AddEmployeeForm";
 import UpdateEmployeeForm from "./UpdateEmployeeForm";
+import UserHoverCard from "../../components/UserHoverCard";
 
 const EmployeeManagementPanel = () => {
   const userRoles = getUserRoles();
@@ -876,80 +877,7 @@ const EmployeeManagementPanel = () => {
                                   {hoveredUser?.modifiedBy?._id ===
                                     emp?.modifiedData?.modified_by?._id &&
                                     hoveredUser?.employeeId === emp?._id && (
-                                      <div className="absolute z-50 left-0 bottom-full mb-2 w-56 bg-white shadow-xl rounded-lg border border-gray-100 p-2.5">
-                                        <div className="space-y-1.5">
-                                          {/* Header with name */}
-                                          <div className="font-semibold text-gray-800 text-sm truncate">
-                                            {hoveredUser?.modifiedBy?.name}
-                                          </div>
-
-                                          {/* Compact details grid */}
-                                          <div className="grid grid-cols-12 gap-y-1 text-xs">
-                                            {/* Employee ID */}
-                                            <div className="col-span-4 text-gray-500">
-                                              ID:
-                                            </div>
-                                            <div className="col-span-8 font-medium truncate">
-                                              {hoveredUser?.modifiedBy
-                                                ?.employee_id || "—"}
-                                            </div>
-
-                                            {/* Email */}
-                                            <div className="col-span-4 text-gray-500">
-                                              Email:
-                                            </div>
-                                            <div className="col-span-8 truncate">
-                                              <p className="text-blue-600 hover:underline">
-                                                {hoveredUser?.modifiedBy?.email}
-                                              </p>
-                                            </div>
-
-                                            {/* Contact */}
-                                            <div className="col-span-4 text-gray-500">
-                                              Contact:
-                                            </div>
-                                            <div className="col-span-8 truncate">
-                                              {hoveredUser?.modifiedBy
-                                                ?.contact ? (
-                                                <p className="text-gray-700 hover:underline">
-                                                  {
-                                                    hoveredUser?.modifiedBy
-                                                      ?.contact
-                                                  }
-                                                </p>
-                                              ) : (
-                                                "—"
-                                              )}
-                                            </div>
-                                          </div>
-
-                                          {/* Roles as pills */}
-                                          <div className="pt-1">
-                                            <div className="text-xs text-gray-500 mb-0.5">
-                                              Roles:
-                                            </div>
-                                            <div className="flex flex-wrap gap-1">
-                                              {hoveredUser?.modifiedBy?.roles
-                                                ?.length > 0 ? (
-                                                hoveredUser?.modifiedBy?.roles?.map(
-                                                  (role, index) => (
-                                                    <span
-                                                      key={index}
-                                                      className="bg-blue-50 text-[11px] text-white px-2 py-0.5 rounded-full"
-                                                    >
-                                                      {role}
-                                                    </span>
-                                                  )
-                                                )
-                                              ) : (
-                                                <span className="text-gray-400 text-xs">
-                                                  No roles
-                                                </span>
-                                              )}
-                                            </div>
-                                          </div>
-                                        </div>
-                                      </div>
+                                      <UserHoverCard userData={hoveredUser} />
                                     )}
                                 </div>
                               </div>
@@ -1270,76 +1198,7 @@ const EmployeeManagementPanel = () => {
                               {hoveredUser?.modifiedBy?._id ===
                                 emp?.modifiedData?.modified_by?._id &&
                                 hoveredUser?.employeeId === emp?._id && (
-                                  <div className="absolute z-50 left-0 bottom-full mb-2 w-56 bg-white shadow-xl rounded-lg border border-gray-100 p-2.5">
-                                    <div className="space-y-1.5">
-                                      {/* Header with name */}
-                                      <div className="font-semibold text-gray-800 text-sm truncate">
-                                        {hoveredUser?.modifiedBy?.name}
-                                      </div>
-
-                                      {/* Compact details grid */}
-                                      <div className="grid grid-cols-12 gap-y-1 text-xs">
-                                        {/* Employee ID */}
-                                        <div className="col-span-4 text-gray-500">
-                                          ID:
-                                        </div>
-                                        <div className="col-span-8 font-medium truncate">
-                                          {hoveredUser?.modifiedBy
-                                            ?.employee_id || "—"}
-                                        </div>
-
-                                        {/* Email */}
-                                        <div className="col-span-4 text-gray-500">
-                                          Email:
-                                        </div>
-                                        <div className="col-span-8 truncate">
-                                          <p className="text-blue-600 hover:underline">
-                                            {hoveredUser?.modifiedBy?.email}
-                                          </p>
-                                        </div>
-
-                                        {/* Contact */}
-                                        <div className="col-span-4 text-gray-500">
-                                          Contact:
-                                        </div>
-                                        <div className="col-span-8 truncate">
-                                          {hoveredUser?.modifiedBy?.contact ? (
-                                            <p className="text-gray-700 hover:underline">
-                                              {hoveredUser?.modifiedBy?.contact}
-                                            </p>
-                                          ) : (
-                                            "—"
-                                          )}
-                                        </div>
-                                      </div>
-
-                                      {/* Roles as pills */}
-                                      <div className="pt-1">
-                                        <div className="text-xs text-gray-500 mb-0.5">
-                                          Roles:
-                                        </div>
-                                        <div className="flex flex-wrap gap-1">
-                                          {hoveredUser?.modifiedBy?.roles
-                                            ?.length > 0 ? (
-                                            hoveredUser?.modifiedBy?.roles?.map(
-                                              (role, index) => (
-                                                <span
-                                                  key={index}
-                                                  className="bg-blue-50 text-[11px] text-white px-2 py-0.5 rounded-full"
-                                                >
-                                                  {role}
-                                                </span>
-                                              )
-                                            )
-                                          ) : (
-                                            <span className="text-gray-400 text-xs">
-                                              No roles
-                                            </span>
-                                          )}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
+                                  <UserHoverCard userData={hoveredUser} />
                                 )}
                             </div>
                           </div>

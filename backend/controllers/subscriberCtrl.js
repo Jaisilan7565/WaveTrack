@@ -682,7 +682,6 @@ const subscriberController = {
         "ispInfo.mrc",
         "credentials.username",
         "credentials.password",
-        "remark",
       ];
 
       // Helper function to get nested properties
