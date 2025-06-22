@@ -11,6 +11,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   createSubscriberAPI,
   getSubscriberByIdAPI,
+  suspendSubscriberAPI,
   updateSubscriberAPI,
 } from "../../../services/subscriberServices";
 import { deepTrim } from "../../../utils/trim";
@@ -35,6 +36,36 @@ const UpdateSubscriberForm = ({ id, handleClose }) => {
   });
 
   const subscriberData = fetchedSubscriber?.data;
+
+  //Active and Suspend Mutation
+  const {
+    mutateAsync: suspendSubscriberMutate,
+    isLoading: inSuspendLoading,
+    isSuccess: inSuspendSuccess,
+  } = useMutation({
+    mutationFn: () => suspendSubscriberAPI(id, subscriberData.status),
+    mutationKey: ["suspendSubscriber", id],
+  });
+
+  const handleSuspend = async () => {
+    await suspendSubscriberMutate()
+      .then((response) => {
+        setSubmissionStatus({
+          type: "success",
+          message: response?.message ?? "Subscriber Suspension in Process",
+        });
+        setTimeout(() => handleClose(), 3000);
+      })
+      .catch((error) => {
+        setSubmissionStatus({
+          type: "error",
+          message:
+            error?.response?.data?.error ??
+            error?.message ??
+            "Failed to Suspend Subscriber",
+        });
+      });
+  };
 
   // Update Mutation
   const {
@@ -702,18 +733,21 @@ const UpdateSubscriberForm = ({ id, handleClose }) => {
               {/* Form buttons remain the same */}
               <div className="flex justify-between space-x-3 pt-4 border-t border-gray-200">
                 {(subscriberData.status === "Active" ||
-                  subscriberData.status === "InActive") && (
+                  subscriberData.status === "InActive" ||
+                  subscriberData.status === "Suspended") && (
                   <button
                     type="button"
-                    // onClick={handleInActivate}
-                    // disabled={inActivateSuccess}
+                    onClick={handleSuspend}
+                    disabled={inSuspendSuccess}
                     className={`px-4 py-2.5 rounded-md text-sm font-medium text-amber-100 ${
-                      subscriberData.status === "Active"
+                      subscriberData.status === "Active" ||
+                      subscriberData.status === "InActive"
                         ? "bg-rose-600 hover:bg-rose-700 focus:ring-rose-500"
                         : "bg-green-600 hover:bg-green-700 focus:ring-green-500"
                     } focus:outline-none focus:ring-2 focus:ring-offset-2  disabled:opacity-70 disabled:cursor-not-allowed transition-colors`}
                   >
-                    {subscriberData.status === "Active"
+                    {subscriberData.status === "Active" ||
+                    subscriberData.status === "InActive"
                       ? "Suspend"
                       : "Activate"}
                   </button>

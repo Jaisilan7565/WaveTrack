@@ -10,6 +10,8 @@ const {
   bulkDeleteSubscribers,
   getSubscriberById,
   updateSubscriber,
+  suspendSubscriber,
+  deleteSubscriber,
 } = require("../controllers/subscriberCtrl");
 
 const router = express.Router();
@@ -66,5 +68,13 @@ router.patch(
   authorize("Admin", "General Manager", "Manager", "Finance"),
   updateSubscriber
 );
+
+router.patch(
+  "/:id/suspend",
+  authorize("Admin", "General Manager", "Manager", "Finance"),
+  suspendSubscriber
+);
+
+router.delete("/:id", authorize("Admin", "General Manager"), deleteSubscriber);
 
 module.exports = router;

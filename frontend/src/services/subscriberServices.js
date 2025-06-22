@@ -38,7 +38,7 @@ export const getSubscribersAPI = async () => {
     );
     return response.data;
   } catch (error) {
-    console.error("Error fetching employees:", error);
+    console.error("Error fetching subscribers:", error);
     throw error;
   }
 };
@@ -56,6 +56,11 @@ export const approveSubscriberAPI = async (id, status, subscriber) => {
       payload = {
         request_status: "approved",
         status: "InActive",
+      };
+    } else if (status === "Active") {
+      payload = {
+        request_status: "approved",
+        status: "Active",
       };
     } else if (status === "Modified") {
       payload = {
@@ -82,6 +87,11 @@ export const approveSubscriberAPI = async (id, status, subscriber) => {
         },
         request_status: "approved",
         status: "Active",
+      };
+    } else if (status === "Suspended") {
+      payload = {
+        request_status: "approved",
+        status: "Suspended",
       };
     }
     // else if (status === "InActive") {
@@ -125,6 +135,11 @@ export const rejectSubscriberAPI = async (id, status, subscriber) => {
         status: "Rejected",
       };
     } else if (status === "InActive") {
+      payload = {
+        request_status: "approved",
+        status: "Active",
+      };
+    } else if (status === "Suspended") {
       payload = {
         request_status: "approved",
         status: "Active",
@@ -224,6 +239,51 @@ export const updateSubscriberAPI = async ({ id, data }) => {
     return response.data;
   } catch (error) {
     console.error("Error updating subscriber:", error);
+    throw error;
+  }
+};
+
+export const suspendSubscriberAPI = async (id, status) => {
+  try {
+    let payload;
+    if (status === "Active") {
+      payload = {
+        request_status: "pending",
+        status: "Suspended",
+      };
+    } else if (status === "InActive") {
+      payload = {
+        request_status: "pending",
+        status: "Suspended",
+      };
+    } else if (status === "Suspended") {
+      payload = {
+        request_status: "pending",
+        status: "Active",
+      };
+    }
+
+    const response = await axios.patch(
+      `${BASE_URL}/subscribers/${id}/suspend`,
+      payload,
+      getAuthHeaders()
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating subscriber:", error);
+    throw error;
+  }
+};
+
+export const deleteSubscriberAPI = async (id) => {
+  try {
+    const response = await axios.delete(
+      `${BASE_URL}/subscribers/${id}`,
+      getAuthHeaders()
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting subscriber:", error);
     throw error;
   }
 };

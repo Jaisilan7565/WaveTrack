@@ -95,7 +95,15 @@ const subscriberSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["Added", "Active", "InActive", "Rejected", "Deleted", "Modified"],
+      enum: [
+        "Added",
+        "Active",
+        "InActive",
+        "Rejected",
+        "Deleted",
+        "Modified",
+        "Suspended",
+      ],
       default: "Added",
     },
     request_status: {

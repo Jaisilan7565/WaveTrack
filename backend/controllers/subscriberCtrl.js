@@ -362,7 +362,11 @@ const subscriberController = {
           decision_by: req.user.id,
           updatedAt: Date.now(),
         };
-      } else if (subscriber.status === "Added") {
+      } else if (
+        subscriber.status === "Added" ||
+        subscriber.status === "Suspended" ||
+        subscriber.status === "Active"
+      ) {
         update = {
           ...req.body,
           decision_by: req.user.id,
@@ -763,6 +767,64 @@ const subscriberController = {
         success: true,
         data: updatedSubscriber,
         message: "Subscriber Updated Successfully",
+      });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  }),
+
+  //Suspend Subscriber
+  suspendSubscriber: asyncHandler(async (req, res, next) => {
+    try {
+      const subscriber = await Subscriber.findById(req.params.id);
+
+      if (!subscriber) {
+        return res.status(404).json({ message: "Subscriber not found" });
+      }
+
+      const suspendedSubscriber = await Subscriber.findByIdAndUpdate(
+        req.params.id,
+        {
+          ...req.body,
+          decision_by: req.user.id,
+          updatedAt: Date.now(),
+        },
+        { new: true, runValidators: true }
+      );
+
+      res.json({
+        success: true,
+        data: suspendedSubscriber,
+        message: `Subscriber ${req.body.status} in Process`,
+      });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  }),
+
+  //Delete Subscriber
+  deleteSubscriber: asyncHandler(async (req, res, next) => {
+    try {
+      const subscriber = await Subscriber.findById(req.params.id);
+
+      if (!subscriber) {
+        return res.status(404).json({ message: "Subscriber not found" });
+      }
+
+      await Subscriber.findByIdAndUpdate(
+        req.params.id,
+        {
+          status: "Deleted",
+          deleted_by: req.user.id,
+          isDeleted: true,
+          updatedAt: Date.now(),
+        },
+        { new: true, runValidators: true }
+      );
+
+      res.json({
+        success: true,
+        message: "Subscriber Deleted Successfully",
       });
     } catch (err) {
       res.status(500).json({ message: err.message });

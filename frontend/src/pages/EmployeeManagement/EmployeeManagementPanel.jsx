@@ -81,7 +81,7 @@ const EmployeeManagementPanel = () => {
     refetchOnWindowFocus: true,
   });
 
-  //Reset Password Mutation
+  //Delete Employee Mutation
   const { mutateAsync: deleteEmployee } = useMutation({
     mutationFn: deleteEmployeeAPI,
     mutationKey: ["deleteEmployee"],

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect } from "react";
 import { useState } from "react";
 import AddSubscriberForm from "./AddSubscriberForm";
 import { Loader } from "lucide-react";
@@ -29,11 +29,12 @@ import NoData from "../../components/NoData";
 import Toast from "../../components/Toast";
 import { hasPermission } from "../../utils/auth";
 import { getUserRoles } from "../../utils/jwt";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import UserHoverCard from "../../components/UserHoverCard";
 
 const SubscriberManagementPanel = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [isNewSubscriberFormOpen, setIsNewSubscriberFormOpen] = useState(false);
   const [isSubscribersExcelOpen, setIsSubscribersExcelOpen] = useState(false);
@@ -52,6 +53,7 @@ const SubscriberManagementPanel = () => {
   const [loadingApprove, setLoadingApprove] = useState(null);
   const [loadingReject, setLoadingReject] = useState(null);
   const [loadingBulkDelete, setloadingBulkDelete] = useState(null);
+  const [isManualRefetching, setIsManualRefetching] = useState(false);
 
   const fieldDisplayNames = {
     // Site Information
@@ -137,6 +139,22 @@ const SubscriberManagementPanel = () => {
     queryKey: ["getSubscribers"],
     refetchOnWindowFocus: true,
   });
+
+  // Create a refetch function that we can call when the page is navigated to
+  const forceRefetch = useCallback(async () => {
+    setIsManualRefetching(true);
+    try {
+      await refetch();
+    } finally {
+      setIsManualRefetching(false);
+    }
+  }, [refetch]);
+
+  // Detect when the page is navigated to and refetch
+  useEffect(() => {
+    // This will run whenever the location (route) changes
+    forceRefetch();
+  }, [location.pathname, forceRefetch]);
 
   // Filter and sort employees
   const processedSubscribers = React.useMemo(() => {
@@ -806,6 +824,14 @@ const SubscriberManagementPanel = () => {
     XLSX.writeFile(workbook, fileName, { compression: true });
   };
 
+  if (isManualRefetching) {
+    return (
+      <div className="flex justify-center py-8">
+        <Loader className="animate-spin h-6 w-6 text-blue-600 mx-auto" />
+      </div>
+    );
+  }
+
   if (isLoading)
     return <div className="flex justify-center py-8">Loading...</div>;
   if (error)
@@ -1229,18 +1255,20 @@ const SubscriberManagementPanel = () => {
                         <span
                           className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
                    ${
-                     subscriber.status === "Active"
+                     subscriber?.status === "Active"
                        ? "bg-green-100 text-green-800" // Green for active
-                       : subscriber.status === "InActive"
+                       : subscriber?.status === "InActive"
                        ? "bg-red-100 text-red-800" // Red for inactive
-                       : subscriber.status === "Added"
+                       : subscriber?.status === "Added"
                        ? "bg-blue-100 text-blue-800" // Blue for in-process
-                       : subscriber.status === "Rejected"
+                       : subscriber?.status === "Rejected"
                        ? "bg-rose-100 text-rose-800" // Rose/deep pink for rejected
-                       : subscriber.status === "Deleted"
+                       : subscriber?.status === "Deleted"
                        ? "bg-gray-200 text-gray-800" // Gray for deleted
-                       : subscriber.status === "Modified"
+                       : subscriber?.status === "Modified"
                        ? "bg-amber-100 text-amber-800" // Amber/orange for modified
+                       : subscriber?.status === "Suspended"
+                       ? "bg-purple-200 text-purple-800" // Purple for suspended
                        : "bg-gray-100 text-gray-800" // Default fallback
                    }`}
                         >
@@ -1686,18 +1714,20 @@ const SubscriberManagementPanel = () => {
                   <span
                     className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
           ${
-            subscriber.status === "Active"
+            subscriber?.status === "Active"
               ? "bg-green-100 text-green-800" // Green for active
-              : subscriber.status === "InActive"
+              : subscriber?.status === "InActive"
               ? "bg-red-100 text-red-800" // Red for inactive
-              : subscriber.status === "Added"
+              : subscriber?.status === "Added"
               ? "bg-blue-100 text-blue-800" // Blue for in-process
-              : subscriber.status === "Rejected"
+              : subscriber?.status === "Rejected"
               ? "bg-rose-100 text-rose-800" // Rose/deep pink for rejected
-              : subscriber.status === "Deleted"
+              : subscriber?.status === "Deleted"
               ? "bg-gray-200 text-gray-800" // Gray for deleted
-              : subscriber.status === "Modified"
+              : subscriber?.status === "Modified"
               ? "bg-amber-100 text-amber-800" // Amber/orange for modified
+              : subscriber?.status === "Suspended"
+              ? "bg-purple-200 text-purple-800" // Purple for suspended
               : "bg-gray-100 text-gray-800" // Default fallback
           }`}
                   >

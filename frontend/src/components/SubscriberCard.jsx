@@ -2,14 +2,17 @@ import { useEffect, useState } from "react";
 import { FiUser, FiWifi, FiCalendar, FiMapPin, FiEdit } from "react-icons/fi";
 import UpdateSubscriberForm from "../pages/SubscriberManagement/Subscriber/UpdateSubscriberForm";
 import UserHoverCard from "./UserHoverCard";
+import { useNavigate } from "react-router-dom";
 import {
   approveSubscriberAPI,
+  deleteSubscriberAPI,
   rejectSubscriberAPI,
 } from "../services/subscriberServices";
 import Toast from "./Toast";
 import { Loader } from "lucide-react";
 import { getUserRoles } from "../utils/jwt";
 import { hasPermission } from "../utils/auth";
+import { useMutation } from "@tanstack/react-query";
 
 const SubscriberCard = ({ subscriber, refetch }) => {
   const userRoles = getUserRoles();
@@ -22,6 +25,8 @@ const SubscriberCard = ({ subscriber, refetch }) => {
     ["Admin", "General Manager"],
     userRoles
   );
+
+  const navigate = useNavigate();
 
   const formatDate = (dateString) => {
     if (!dateString) return "-";
@@ -85,6 +90,7 @@ const SubscriberCard = ({ subscriber, refetch }) => {
   const [selectedSubscriberId, setSelectedSubscriberId] = useState(null);
   const [loadingApprove, setLoadingApprove] = useState(null);
   const [loadingReject, setLoadingReject] = useState(null);
+  const [loadingDelete, setLoadingDelete] = useState(null);
   const [submissionStatus, setSubmissionStatus] = useState(null);
 
   const handleEdit = async (id) => {
@@ -161,6 +167,42 @@ const SubscriberCard = ({ subscriber, refetch }) => {
       });
     } finally {
       setLoadingReject(null);
+    }
+  };
+
+  //Delete Employee Mutation
+  const { mutateAsync: deleteSubscriber } = useMutation({
+    mutationFn: deleteSubscriberAPI,
+    mutationKey: ["deleteSubscriber"],
+  });
+
+  const handleDelete = async (subscriberId) => {
+    setLoadingDelete(subscriberId);
+    try {
+      // Call your API to delete the employee
+      const response = await deleteSubscriber(subscriberId);
+
+      // Refresh the subscriber
+      setTimeout(() => {
+        navigate("/subscriber-management");
+      }, 1000);
+
+      // Show success message
+      setSubmissionStatus({
+        type: "success",
+        message: response?.message ?? "Deleted Successfully",
+      });
+    } catch (error) {
+      // console.error("Error deleting employee:", error);
+      setSubmissionStatus({
+        type: "error",
+        message:
+          error?.response?.data?.error ??
+          error?.message ??
+          "Failed to Delete Employee",
+      });
+    } finally {
+      setLoadingDelete(null);
     }
   };
 
@@ -297,6 +339,8 @@ const SubscriberCard = ({ subscriber, refetch }) => {
                       ? "bg-gray-200 text-gray-800" // Gray for deleted
                       : subscriber?.status === "Modified"
                       ? "bg-amber-100 text-amber-800" // Amber/orange for modified
+                      : subscriber?.status === "Suspended"
+                      ? "bg-purple-200 text-purple-800" // Purple for suspended
                       : "bg-gray-100 text-gray-800" // Default fallback
                   }`}
                 >
@@ -653,9 +697,20 @@ const SubscriberCard = ({ subscriber, refetch }) => {
           {hasDeletePermission && (
             <button
               className="bg-red-500 hover:bg-red-600 text-white font-semibold py-1 px-2 rounded"
-              // onClick={handleDelete}
+              onClick={() => {
+                if (
+                  confirm("Are you sure you want to delete this Subscriber?")
+                ) {
+                  handleDelete(subscriber?._id);
+                }
+              }}
+              disabled={loadingDelete === subscriber?._id}
             >
-              Delete
+              {loadingDelete === subscriber?._id ? (
+                <Loader className="h-5 w-5 animate-spin justify-self-center" />
+              ) : (
+                "Delete"
+              )}
             </button>
           )}
 
