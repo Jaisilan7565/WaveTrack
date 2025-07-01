@@ -465,28 +465,6 @@ const SubscriberManagementPanel = () => {
             request_status: "approved",
           };
         }
-        // } else if (status === "Modified") {
-        //   return {
-        //     id,
-        //     status: "Modified",
-        //     request_status: "approved",
-        //     subscriber,
-        //   };
-        // } else if (status === "Rejected") {
-        //   return {
-        //     id,
-        //     status: "Rejected",
-        //     request_status: "rejected",
-        //     subscriber,
-        //   };
-        // } else {
-        //   return {
-        //     id,
-        //     status,
-        //     request_status: "approved",
-        //     subscriber,
-        //   };
-        // }
       });
 
       // Process in batches
@@ -587,28 +565,6 @@ const SubscriberManagementPanel = () => {
             request_status: "approved",
           };
         }
-        // } else if (status === "Modified") {
-        //   return {
-        //     id,
-        //     status: "Modified",
-        //     request_status: "approved",
-        //     subscriber,
-        //   };
-        // } else if (status === "Rejected") {
-        //   return {
-        //     id,
-        //     status: "Rejected",
-        //     request_status: "rejected",
-        //     subscriber,
-        //   };
-        // } else {
-        //   return {
-        //     id,
-        //     status,
-        //     request_status: "approved",
-        //     subscriber,
-        //   };
-        // }
       });
 
       // Process in batches
