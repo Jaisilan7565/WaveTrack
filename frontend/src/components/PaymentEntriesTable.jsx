@@ -15,8 +15,9 @@ import React, { useEffect, useRef, useState } from "react";
 import { getUserRoles } from "../utils/jwt";
 import { hasPermission } from "../utils/auth";
 import NoData from "./NoData";
+import AddPaymentForm from "../pages/SubscriberManagement/Subscriber/Payments/AddPaymentForm";
 
-const PaymentEntriesTable = ({ payments }) => {
+const PaymentEntriesTable = ({ payments, refetch, subscriber }) => {
   const [activeFilters, setActiveFilters] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [loadingApprove, setLoadingApprove] = useState(null);
@@ -30,11 +31,6 @@ const PaymentEntriesTable = ({ payments }) => {
   const userRoles = getUserRoles();
   const DecisionMaker = hasPermission(
     ["Admin", "General Manager", "Manager", "Senior HR"],
-    userRoles
-  );
-
-  const hasDeletePermission = hasPermission(
-    ["Admin", "General Manager"],
     userRoles
   );
 
@@ -217,8 +213,26 @@ const PaymentEntriesTable = ({ payments }) => {
     });
   };
 
+  const [isNewPaymentFormOpen, setIsNewPaymentFormOpen] = useState(false);
+
+  const handleOpenNewPaymentForm = () => {
+    setIsNewPaymentFormOpen(true);
+  };
+
+  const handleCloseNewPaymentForm = () => {
+    refetch();
+    setIsNewPaymentFormOpen(false);
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+      {isNewPaymentFormOpen && (
+        <AddPaymentForm
+          subscriberData={subscriber}
+          handleClose={handleCloseNewPaymentForm}
+        />
+      )}
+
       {/* Table Controls */}
       <div className="sticky top-0 bg-white z-20 p-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center w-full sm:w-auto">
@@ -394,7 +408,10 @@ const PaymentEntriesTable = ({ payments }) => {
             <FiDownload /> <span className="">Export</span>
           </button>
 
-          <button className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+          <button
+            className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            onClick={handleOpenNewPaymentForm}
+          >
             <FiPlus /> <span className="">Add Payment</span>
           </button>
         </div>
@@ -434,7 +451,10 @@ const PaymentEntriesTable = ({ payments }) => {
                     Amount {getSortIcon("amountPaid")}
                   </div>
                 </th>
-                <th className="px-4 py-3 text-left text-xs sm:text-sm font-semibold text-white uppercase tracking-wider">
+                <th
+                  className="px-4 py-3 text-left text-xs sm:text-sm font-semibold text-white uppercase tracking-wider"
+                  onClick={() => requestSort("payment_date")}
+                >
                   <div className="flex items-center">
                     Transaction Date {getSortIcon("payment_date")}
                   </div>

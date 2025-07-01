@@ -2,11 +2,7 @@ import { useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { format, addMonths, parseISO } from "date-fns";
-import {
-  CheckCircleIcon,
-  ExclamationCircleIcon,
-  ArrowPathIcon,
-} from "@heroicons/react/24/outline";
+import { ArrowPathIcon } from "@heroicons/react/24/outline";
 import { useMutation } from "@tanstack/react-query";
 import { createSubscriberAPI } from "../../services/subscriberServices";
 import { deepTrim } from "../../utils/trim";

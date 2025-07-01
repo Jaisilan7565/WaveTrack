@@ -29,7 +29,11 @@ const Subscriber = () => {
 
       {/* Right Column - Payments Table */}
       <div className="col-span-2 md:overflow-y-auto hide-scrollbar rounded-2xl">
-        <PaymentEntriesTable payments={paymentsData} />
+        <PaymentEntriesTable
+          payments={paymentsData}
+          refetch={refetch}
+          subscriber={subscriber?.data}
+        />
       </div>
     </div>
   );
