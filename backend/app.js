@@ -12,6 +12,7 @@ require("dotenv").config();
 const authRoutes = require("./routes/authRoutes");
 const employeeRoutes = require("./routes/employeeRoutes");
 const subscriberRoutes = require("./routes/subscriberRoutes");
+const paymentRoutes = require("./routes/paymentRoutes");
 const auditRoutes = require("./routes/auditRoutes");
 
 const app = express();
@@ -53,6 +54,7 @@ app.use(helmet());
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/employees", employeeRoutes);
 app.use("/api/v1/subscribers", subscriberRoutes);
+app.use("/api/v1/payments", paymentRoutes);
 // app.use("/api/v1/audit-logs", auditRoutes);
 
 // Error handler middleware

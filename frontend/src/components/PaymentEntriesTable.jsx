@@ -10,21 +10,26 @@ import {
   FiX,
   FiChevronLeft,
   FiChevronRight,
+  FiDelete,
+  FiTrash,
 } from "react-icons/fi";
+import { Loader } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import { getUserRoles } from "../utils/jwt";
 import { hasPermission } from "../utils/auth";
 import NoData from "./NoData";
 import AddPaymentForm from "../pages/SubscriberManagement/Subscriber/Payments/AddPaymentForm";
+import UserHoverCard from "./UserHoverCard";
 
 const PaymentEntriesTable = ({ payments, refetch, subscriber }) => {
   const [activeFilters, setActiveFilters] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [loadingApprove, setLoadingApprove] = useState(null);
   const [loadingReject, setLoadingReject] = useState(null);
+  const [loadingDelete, setLoadingDelete] = useState(null);
 
   const [sortConfig, setSortConfig] = useState({
-    key: "payment_date",
+    key: "transactionDate",
     direction: "asc",
   });
 
@@ -34,9 +39,19 @@ const PaymentEntriesTable = ({ payments, refetch, subscriber }) => {
     userRoles
   );
 
+  const hasDeletePermission = hasPermission(
+    ["Admin", "General Manager"],
+    userRoles
+  );
+
+  const [hoveredUser, setHoveredUser] = useState({
+    modifiedBy: null,
+    paymentId: null,
+  });
+
   const [filters, setFilters] = useState({
     status: "",
-    type: "",
+    transactionType: "",
     startDate: "",
     endDate: "",
   });
@@ -54,10 +69,8 @@ const PaymentEntriesTable = ({ payments, refetch, subscriber }) => {
     // Apply search
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      result = result.filter(
-        (payment) =>
-          payment?.payment_id.toLowerCase().includes(term) ||
-          payment?.amountPaid.toLowerCase().includes(term)
+      result = result.filter((payment) =>
+        payment?.transactionId.toLowerCase().includes(term)
       );
     }
 
@@ -65,14 +78,16 @@ const PaymentEntriesTable = ({ payments, refetch, subscriber }) => {
     if (filters.status) {
       result = result.filter((payment) => payment.status === filters.status);
     }
-    if (filters.type) {
-      result = result.filter((payment) => payment.type === filters.type);
+    if (filters.transactionType) {
+      result = result.filter(
+        (payment) => payment.transactionType === filters.transactionType
+      );
     }
 
     // Apply date range filter
     if (filters.startDate || filters.endDate) {
       result = result.filter((payment) => {
-        const transactionDate = new Date(payment.payment_date.split("T")[0]);
+        const transactionDate = new Date(payment.transactionDate.split("T")[0]);
         const startDate = filters.startDate
           ? new Date(filters.startDate)
           : null;
@@ -170,7 +185,7 @@ const PaymentEntriesTable = ({ payments, refetch, subscriber }) => {
   useEffect(() => {
     let count = 0;
     if (filters.status) count++;
-    if (filters.type) count++;
+    if (filters.transactionType) count++;
     if (filters.startDate) count++;
     if (filters.endDate) count++;
     setActiveFilters(count);
@@ -189,11 +204,9 @@ const PaymentEntriesTable = ({ payments, refetch, subscriber }) => {
   };
 
   const clearFilters = () => {
-    setFilters({ status: "", type: "", startDate: "", endDate: "" });
+    setFilters({ status: "", transactionType: "", startDate: "", endDate: "" });
     setSearchTerm("");
   };
-
-  let result = [...payments];
 
   const getSortIcon = (key) => {
     if (sortConfig.key !== key) return null;
@@ -228,8 +241,9 @@ const PaymentEntriesTable = ({ payments, refetch, subscriber }) => {
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
       {isNewPaymentFormOpen && (
         <AddPaymentForm
-          subscriberData={subscriber}
+          subscriber={subscriber}
           handleClose={handleCloseNewPaymentForm}
+          refetch={refetch}
         />
       )}
 
@@ -242,7 +256,7 @@ const PaymentEntriesTable = ({ payments, refetch, subscriber }) => {
             </div>
             <input
               type="text"
-              placeholder="Search payments..."
+              placeholder="Search payments by Id..."
               className="pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -306,8 +320,10 @@ const PaymentEntriesTable = ({ payments, refetch, subscriber }) => {
                   </label>
                   <select
                     className="w-full border rounded-md p-2 text-sm"
-                    value={filters.type}
-                    onChange={(e) => handleFilterChange("type", e.target.value)}
+                    value={filters.transactionType}
+                    onChange={(e) =>
+                      handleFilterChange("transactionType", e.target.value)
+                    }
                   >
                     <option value="">All Types</option>
                     <option value="Income">Income</option>
@@ -426,10 +442,10 @@ const PaymentEntriesTable = ({ payments, refetch, subscriber }) => {
               <tr>
                 <th
                   className="px-4 py-3 text-left text-xs sm:text-sm font-semibold text-white uppercase tracking-wider cursor-pointer"
-                  onClick={() => requestSort("payment_id")}
+                  onClick={() => requestSort("transactionId")}
                 >
                   <div className="flex items-center">
-                    ID {getSortIcon("payment_id")}
+                    ID {getSortIcon("transactionId")}
                   </div>
                 </th>
                 <th className="px-4 py-3 text-left text-xs sm:text-sm font-semibold text-white uppercase tracking-wider">
@@ -437,26 +453,26 @@ const PaymentEntriesTable = ({ payments, refetch, subscriber }) => {
                 </th>
                 <th
                   className="px-4 py-3 text-left text-xs sm:text-sm font-semibold text-white uppercase tracking-wider cursor-pointer"
-                  onClick={() => requestSort("paymentType")}
+                  onClick={() => requestSort("transactionType")}
                 >
                   <div className="flex items-center">
-                    Type {getSortIcon("paymentType")}
+                    Type {getSortIcon("transactionType")}
                   </div>
                 </th>
                 <th
                   className="px-4 py-3 text-left text-xs sm:text-sm font-semibold text-white uppercase tracking-wider cursor-pointer"
-                  onClick={() => requestSort("amountPaid")}
+                  onClick={() => requestSort("amount")}
                 >
                   <div className="flex items-center">
-                    Amount {getSortIcon("amountPaid")}
+                    Amount {getSortIcon("amount")}
                   </div>
                 </th>
                 <th
                   className="px-4 py-3 text-left text-xs sm:text-sm font-semibold text-white uppercase tracking-wider"
-                  onClick={() => requestSort("payment_date")}
+                  onClick={() => requestSort("transactionDate")}
                 >
                   <div className="flex items-center">
-                    Transaction Date {getSortIcon("payment_date")}
+                    Transaction Info {getSortIcon("transactionDate")}
                   </div>
                 </th>
                 <th
@@ -490,8 +506,10 @@ const PaymentEntriesTable = ({ payments, refetch, subscriber }) => {
                       className="hover:bg-gray-200 transition-colors"
                     >
                       <td className="px-4 py-3 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
-                          {payment?.payment_id}
+                        <div className="text-sm text-gray-900">
+                          <span className="font-semibold">
+                            {payment?.transactionId}
+                          </span>
                         </div>
                       </td>
                       <td className="px-0 whitespace-nowrap">
@@ -499,39 +517,66 @@ const PaymentEntriesTable = ({ payments, refetch, subscriber }) => {
                           <div className="px-4 py-3 whitespace-nowrap flex flex-col items-center text-sm text-gray-900">
                             <span>{formatDate(payment?.activationDate)}</span>
                             {"to"}
-                            <span>{formatDate(payment?.renewalDate)}</span>
+                            <span>{formatDate(payment?.expiryDate)}</span>
                           </div>
                         </div>
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
                         <span
                           className={`px-2.5 py-1 rounded-full text-xs font-semibold leading-5 ${
-                            payment?.paymentType === "Income"
+                            payment?.transactionType === "Income"
                               ? "bg-green-100 text-green-800" // Green for Income
-                              : payment?.paymentType === "Expense"
+                              : payment?.transactionType === "Expense"
                               ? "bg-rose-100 text-rose-800" // Rose/deep pink for Expense
                               : "bg-gray-100 text-gray-800" // Default fallback
                           }`}
                         >
-                          {payment?.paymentType}
+                          {payment?.transactionType}
                         </span>
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {payment?.amountPaid}
+                        <div className="text-sm text-gray-900 flex-center flex-col">
+                          <span className="text-gray-900 sm:text-sm">
+                            ₹ {payment?.amount}
+                          </span>
+                          <span>{payment?.transactionMode}</span>
                         </div>
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {formatDate(payment?.payment_date)}
+                        <div className="text-sm text-gray-900 flex-center flex-col relative">
+                          <span>{formatDate(payment?.transactionDate)}</span>
+                          <span
+                            className="underline cursor-pointer text-blue-500"
+                            onMouseEnter={() => {
+                              setHoveredUser({
+                                modifiedBy: payment?.created_by,
+                                paymentId: payment?._id,
+                              });
+                            }}
+                            onMouseLeave={() =>
+                              setHoveredUser({
+                                modifiedBy: null,
+                                paymentId: null,
+                              })
+                            }
+                          >
+                            {payment.created_by.name}
+                          </span>
+                          {/* Hover Card */}
+                          {hoveredUser?.modifiedBy?._id ===
+                            payment?.created_by?._id &&
+                            hoveredUser?.paymentId === payment?._id && (
+                              <UserHoverCard userData={hoveredUser} />
+                            )}
                         </div>
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
                         <span
                           className={`px-2.5 py-1 rounded-full text-xs font-semibold leading-5 ${
-                            payment?.status === "Paid" ||
-                            payment?.status === "Received"
-                              ? "bg-green-100 text-green-800" // Green for Paid / Received
+                            payment?.status === "Paid"
+                              ? "bg-green-100 text-green-800" // Green for Paid
+                              : payment?.status === "Received"
+                              ? "bg-green-800/80 text-green-100" // Yellow for Received
                               : payment?.status === "Refunding"
                               ? "bg-blue-100 text-blue-800" // Blue for Refunding
                               : payment?.status === "Rejected"
@@ -595,6 +640,22 @@ const PaymentEntriesTable = ({ payments, refetch, subscriber }) => {
                                 </button>
                               </>
                             )}
+                          {hasDeletePermission && (
+                            <button
+                              className="p-1.5 text-rose-600 hover:bg-rose-500 hover:text-white rounded-md transition-colors"
+                              title="Delete"
+                              // onClick={() =>
+                              //   handleDelete(emp._id, emp.status, emp)
+                              // }
+                              // disabled={loadingDelete === emp._id}
+                            >
+                              {loadingDelete === payment._id ? (
+                                <Loader className="h-5 w-5" />
+                              ) : (
+                                <FiTrash className="h-5 w-5" />
+                              )}
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

@@ -5,6 +5,10 @@ import { useQuery } from "@tanstack/react-query";
 import SubscriberCard from "../../../components/SubscriberCard";
 import PaymentEntriesTable from "../../../components/PaymentEntriesTable";
 import { paymentsData } from "../../../constants";
+import {
+  getPaymentsAPI,
+  getPaymentsBySubscriberIdAPI,
+} from "../../../services/paymentServices";
 
 const Subscriber = () => {
   const { id } = useParams();
@@ -20,6 +24,21 @@ const Subscriber = () => {
     enabled: !!id,
   });
 
+  const {
+    data: payments,
+    isLoading: paymentsLoading,
+    error: paymentsError,
+    refetch: paymentsRefetch,
+  } = useQuery({
+    queryFn: () => getPaymentsBySubscriberIdAPI(id),
+    queryKey: ["getPaymentsBySubscriberIdAPI", id],
+    refetchOnWindowFocus: true,
+    enabled: !!id,
+  });
+
+  console.log("Subscriber:", subscriber);
+  console.log("Payments:", payments);
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-y-4 md:gap-4 p-4 h-[90vh]">
       {/* Left Column - Subscriber Card */}
@@ -30,8 +49,8 @@ const Subscriber = () => {
       {/* Right Column - Payments Table */}
       <div className="col-span-2 md:overflow-y-auto hide-scrollbar rounded-2xl">
         <PaymentEntriesTable
-          payments={paymentsData}
-          refetch={refetch}
+          payments={payments?.data}
+          refetch={paymentsRefetch}
           subscriber={subscriber?.data}
         />
       </div>

@@ -320,7 +320,7 @@ const subscriberController = {
           model: "Employee",
         })
         .populate({
-          path: "modifiedData.modified_by",
+          path: "decision_by",
           select: "employee_id name email contact roles",
           model: "Employee",
         });
