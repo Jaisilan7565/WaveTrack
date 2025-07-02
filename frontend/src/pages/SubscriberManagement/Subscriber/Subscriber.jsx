@@ -36,9 +36,6 @@ const Subscriber = () => {
     enabled: !!id,
   });
 
-  console.log("Subscriber:", subscriber);
-  console.log("Payments:", payments);
-
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-y-4 md:gap-4 p-4 h-[90vh]">
       {/* Left Column - Subscriber Card */}
@@ -52,6 +49,7 @@ const Subscriber = () => {
           payments={payments?.data}
           refetch={paymentsRefetch}
           subscriber={subscriber?.data}
+          subRefetch={refetch}
         />
       </div>
     </div>

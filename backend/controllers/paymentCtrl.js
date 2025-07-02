@@ -1,4 +1,5 @@
 const Payment = require("../models/Payment");
+const Subscriber = require("../models/Subscriber");
 const ErrorResponse = require("../utils/errorResponse");
 const asyncHandler = require("express-async-handler");
 const mongoose = require("mongoose");
@@ -105,6 +106,27 @@ const paymentController = {
         request_status: "pending",
         created_by: req.user.id,
       };
+
+      if (transactionType === "Expense") {
+        let query = { isDeleted: false, subscriberId: req.body.subscriberId };
+        const payments = await Payment.find(query);
+
+        if (payments.length >= 1) {
+          const subscriber = await Subscriber.findById(req.body.subscriberId);
+          if (!subscriber) throw new Error("Subscriber not found");
+
+          if (parsedActivationDate)
+            subscriber.ispInfo.currentActivationDate = parsedActivationDate;
+          if (parsedExpiryDate)
+            subscriber.ispInfo.renewalDate = parsedExpiryDate;
+
+          subscriber.updatedAt = Date.now();
+          subscriber.request_status = "approved";
+          subscriber.status = "Active";
+
+          await subscriber.save();
+        }
+      }
 
       // Create new payment
       const payment = await Payment.create(paymentData);

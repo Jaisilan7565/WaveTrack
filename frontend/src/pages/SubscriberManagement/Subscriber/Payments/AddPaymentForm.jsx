@@ -10,7 +10,7 @@ import { deepTrim } from "../../../../utils/trim";
 import Toast from "../../../../components/Toast";
 import { createPaymentAPI } from "../../../../services/paymentServices";
 
-const AddPaymentForm = ({ handleClose, subscriber }) => {
+const AddPaymentForm = ({ handleClose, subscriber, paymentsLength }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionStatus, setSubmissionStatus] = useState(null);
 
@@ -42,9 +42,8 @@ const AddPaymentForm = ({ handleClose, subscriber }) => {
     amount: Yup.number()
       .required("Amount is required")
       .min(1, "Amount must be at least 1"),
-    activationDate: Yup.date()
-      .required("Activation date is required")
-      .max(new Date(), "Activation date cannot be in the future"),
+    activationDate: Yup.date().required("Activation date is required"),
+    // .max(new Date(), "Activation date cannot be in the future"),
     expiryDate: Yup.date().required("Expiry date is required"),
   });
 
@@ -112,24 +111,57 @@ const AddPaymentForm = ({ handleClose, subscriber }) => {
   });
 
   const handleTypeChange = (e) => {
-    if (e.target.value === "Expense" && subscriber) {
-      formik.setFieldValue(
-        "activationDate",
-        subscriber?.ispInfo?.currentActivationDate.split("T")[0]
-      );
-      formik.setFieldValue(
-        "expiryDate",
-        subscriber?.ispInfo?.renewalDate.split("T")[0]
-      );
+    const newType = e.target.value;
+    formik.setFieldValue("transactionType", newType);
+
+    if (newType === "Expense" && subscriber) {
+      let activationDate =
+        subscriber?.ispInfo?.currentActivationDate.split("T")[0];
+      let expiryDate = subscriber?.ispInfo?.renewalDate.split("T")[0];
+
+      if (paymentsLength >= 1) {
+        // For subsequent payments, set activation date to 1 day after renewal date
+        const renewalDate = new Date(subscriber?.ispInfo?.renewalDate);
+        renewalDate.setDate(renewalDate.getDate() + 1);
+        activationDate = renewalDate.toISOString().split("T")[0];
+
+        // Calculate expiry date by adding numberOfMonths to activation date
+        const newExpiryDate = new Date(activationDate);
+        newExpiryDate.setMonth(
+          newExpiryDate.getMonth() + subscriber?.ispInfo?.numberOfMonths
+        );
+        expiryDate = newExpiryDate.toISOString().split("T")[0];
+      }
+
+      formik.setFieldValue("activationDate", activationDate);
+      formik.setFieldValue("expiryDate", expiryDate);
       formik.setFieldValue("amount", subscriber?.ispInfo?.mrc);
       formik.setFieldValue("transactionMode", "");
-    } else if (e.target.value === "Income") {
+    } else if (newType === "Income") {
       formik.setFieldValue("activationDate", "");
       formik.setFieldValue("expiryDate", "");
       formik.setFieldValue("amount", "");
       formik.setFieldValue("transactionMode", "");
     }
-    formik.setFieldValue("transactionType", e.target.value);
+  };
+
+  // Handler for manual activation date changes
+  const handleActivationDateChange = (e) => {
+    const newDate = e.target.value;
+    formik.setFieldValue("activationDate", newDate);
+
+    if (formik.values.transactionType === "Expense" && subscriber) {
+      // Calculate expiry date by adding numberOfMonths to the selected date
+      const activationDate = new Date(newDate);
+      const expiryDate = new Date(activationDate);
+      expiryDate.setMonth(
+        activationDate.getMonth() + subscriber?.ispInfo?.numberOfMonths
+      );
+
+      // Format to YYYY-MM-DD (HTML date input format)
+      const formattedExpiryDate = expiryDate.toISOString().split("T")[0];
+      formik.setFieldValue("expiryDate", formattedExpiryDate);
+    }
   };
 
   return (
@@ -250,9 +282,15 @@ const AddPaymentForm = ({ handleClose, subscriber }) => {
                           id="activationDate"
                           name="activationDate"
                           value={formik.values.activationDate}
-                          onChange={formik.handleChange}
+                          onChange={(e) => {
+                            formik.handleChange(e);
+                            handleActivationDateChange(e);
+                          }}
                           onBlur={formik.handleBlur}
-                          disabled={formik.values.transactionType === "Expense"}
+                          disabled={
+                            formik.values.transactionType === "Expense" &&
+                            paymentsLength <= 1
+                          }
                           className={`block w-full rounded-md py-2 px-3.5 shadow-sm border ${
                             formik.touched.activationDate &&
                             formik.errors.activationDate

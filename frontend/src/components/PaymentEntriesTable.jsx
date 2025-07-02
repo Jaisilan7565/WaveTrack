@@ -25,7 +25,7 @@ import {
   rejectPaymentAPI,
 } from "../services/paymentServices";
 
-const PaymentEntriesTable = ({ payments, refetch, subscriber }) => {
+const PaymentEntriesTable = ({ payments, refetch, subscriber, subRefetch }) => {
   const [activeFilters, setActiveFilters] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [loadingApprove, setLoadingApprove] = useState(null);
@@ -33,7 +33,7 @@ const PaymentEntriesTable = ({ payments, refetch, subscriber }) => {
 
   const [sortConfig, setSortConfig] = useState({
     key: "transactionDate",
-    direction: "asc",
+    direction: "dec",
   });
 
   const userRoles = getUserRoles();
@@ -113,18 +113,18 @@ const PaymentEntriesTable = ({ payments, refetch, subscriber }) => {
           return 1;
         }
 
-        if (
-          a.request_status === "rejected" &&
-          b.request_status !== "rejected"
-        ) {
-          return -1;
-        }
-        if (
-          a.request_status !== "rejected" &&
-          b.request_status === "rejected"
-        ) {
-          return 1;
-        }
+        // if (
+        //   a.request_status === "rejected" &&
+        //   b.request_status !== "rejected"
+        // ) {
+        //   return -1;
+        // }
+        // if (
+        //   a.request_status !== "rejected" &&
+        //   b.request_status === "rejected"
+        // ) {
+        //   return 1;
+        // }
 
         if (a[sortConfig.key] < b[sortConfig.key]) {
           return sortConfig.direction === "asc" ? -1 : 1;
@@ -132,7 +132,7 @@ const PaymentEntriesTable = ({ payments, refetch, subscriber }) => {
         if (a[sortConfig.key] > b[sortConfig.key]) {
           return sortConfig.direction === "asc" ? 1 : -1;
         }
-        return 0;
+        return new Date(b.createdAt) - new Date(a.createdAt);
       });
     } else {
       // Default sort: pending first, then by createdAt (newest first)
@@ -232,6 +232,7 @@ const PaymentEntriesTable = ({ payments, refetch, subscriber }) => {
 
   const handleCloseNewPaymentForm = () => {
     refetch();
+    subRefetch();
     setIsNewPaymentFormOpen(false);
   };
 
@@ -297,7 +298,7 @@ const PaymentEntriesTable = ({ payments, refetch, subscriber }) => {
         <AddPaymentForm
           subscriber={subscriber}
           handleClose={handleCloseNewPaymentForm}
-          refetch={refetch}
+          paymentsLength={payments?.length}
         />
       )}
 
