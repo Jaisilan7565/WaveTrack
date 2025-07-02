@@ -40,11 +40,11 @@ const paymentController = {
       );
     }
 
-    // Generate unique transactionId (format: SUB-XXXXX)
+    // Generate unique transactionId (format: TR-XXXXX)
     const generateTransactionId = async () => {
       const prefix = "TR-";
       const randomSuffix = Math.floor(
-        10000 + Math.random() * 9000000000
+        1000000000 + Math.random() * 9000000000
       ).toString();
       const transactionId = prefix + randomSuffix;
 
@@ -210,6 +210,72 @@ const paymentController = {
       });
     } catch (err) {
       next(err);
+    }
+  }),
+
+  //Approve Payment
+  approvePayment: asyncHandler(async (req, res, next) => {
+    try {
+      const payment = await Payment.findById(req.params.id);
+
+      if (!payment) {
+        return res.status(404).json({ message: "Payment not found" });
+      }
+
+      if (payment.request_status !== "pending") {
+        return res.status(400).json({ message: "Payment already processed" });
+      }
+
+      const updatedPayment = await Payment.findByIdAndUpdate(
+        req.params.id,
+        {
+          ...req.body,
+          decision_by: req.user.id,
+          updatedAt: Date.now(),
+        },
+        { new: true, runValidators: true }
+      );
+
+      res.json({
+        success: true,
+        data: updatedPayment,
+        message: "Payment Approved Successfully",
+      });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  }),
+
+  //Reject Payment
+  rejectPayment: asyncHandler(async (req, res, next) => {
+    try {
+      const payment = await Payment.findById(req.params.id);
+
+      if (!payment) {
+        return res.status(404).json({ message: "Payment not found" });
+      }
+
+      if (payment.request_status !== "pending") {
+        return res.status(400).json({ message: "Request already processed" });
+      }
+
+      const updatedPayment = await Payment.findByIdAndUpdate(
+        req.params.id,
+        {
+          ...req.body,
+          decision_by: req.user.id,
+          updatedAt: Date.now(),
+        },
+        { new: true, runValidators: true }
+      );
+
+      res.json({
+        success: true,
+        data: updatedPayment,
+        message: "Payment Rejected Successfully",
+      });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
     }
   }),
 };

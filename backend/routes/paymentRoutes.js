@@ -4,6 +4,8 @@ const {
   createPayment,
   getPayments,
   getPaymentsBySubscriberId,
+  approvePayment,
+  rejectPayment,
 } = require("../controllers/paymentCtrl");
 
 const router = express.Router();
@@ -16,26 +18,26 @@ router.get("/:subId", getPaymentsBySubscriberId);
 
 router.post(
   "/",
-  authorize("Admin", "General Manager", "Finance"),
+  authorize("Admin", "General Manager", "Manager", "Finance"),
   createPayment
+);
+
+router.patch(
+  "/:id/approve",
+  authorize("Admin", "General Manager", "Manager"),
+  approvePayment
+);
+
+router.patch(
+  "/:id/reject",
+  authorize("Admin", "General Manager", "Manager"),
+  rejectPayment
 );
 
 // router.patch(
 //   "/:id",
 //   authorize("Admin", "General Manager", "Senior HR", "HR", "Manager"),
 //   updateEmployee
-// );
-
-// router.patch(
-//   "/:id/approve",
-//   authorize("Admin", "General Manager", "Senior HR", "Manager"),
-//   approveEmployee
-// );
-
-// router.patch(
-//   "/:id/reject",
-//   authorize("Admin", "General Manager", "Senior HR", "Manager"),
-//   rejectEmployee
 // );
 
 // router.patch(

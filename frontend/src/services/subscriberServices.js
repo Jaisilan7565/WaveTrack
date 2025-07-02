@@ -94,17 +94,6 @@ export const approveSubscriberAPI = async (id, status, subscriber) => {
         status: "Suspended",
       };
     }
-    // else if (status === "InActive") {
-    //   payload = {
-    //     request_status: "approved",
-    //     status: "InActive",
-    //   };
-    // } else if (status === "Active") {
-    //   payload = {
-    //     request_status: "approved",
-    //     status: "Active",
-    //   };
-    // }
 
     console.log(payload);
 
@@ -145,22 +134,6 @@ export const rejectSubscriberAPI = async (id, status, subscriber) => {
         status: "Active",
       };
     }
-    // else if (status === "Modified") {
-    //   payload = {
-    //     request_status: "rejected",
-    //     status: "Rejected",
-    //   };
-    // } else if (status === "InActive") {
-    //   payload = {
-    //     request_status: "approved",
-    //     status: "Active",
-    //   };
-    // } else if (status === "Active") {
-    //   payload = {
-    //     request_status: "approved",
-    //     status: "InActive",
-    //   };
-    // }
 
     const response = await axios.patch(
       `${BASE_URL}/subscribers/${id}/reject`,

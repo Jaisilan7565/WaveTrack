@@ -409,7 +409,6 @@ const SubscriberManagementPanel = () => {
   const handleReject = async (subscriberId, status, subscriber) => {
     setLoadingReject(subscriberId);
     try {
-      // Call your API to reject the employee
       const response = await rejectSubscriberAPI(
         subscriberId,
         status,
@@ -427,7 +426,6 @@ const SubscriberManagementPanel = () => {
         message: response?.message ?? "Rejected Successfully",
       });
     } catch (error) {
-      // console.error("Error rejecting employee:", error);
       setSubmissionStatus({
         type: "error",
         message:

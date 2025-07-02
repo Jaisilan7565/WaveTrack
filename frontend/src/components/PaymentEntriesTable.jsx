@@ -20,13 +20,16 @@ import { hasPermission } from "../utils/auth";
 import NoData from "./NoData";
 import AddPaymentForm from "../pages/SubscriberManagement/Subscriber/Payments/AddPaymentForm";
 import UserHoverCard from "./UserHoverCard";
+import {
+  approvePaymentAPI,
+  rejectPaymentAPI,
+} from "../services/paymentServices";
 
 const PaymentEntriesTable = ({ payments, refetch, subscriber }) => {
   const [activeFilters, setActiveFilters] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [loadingApprove, setLoadingApprove] = useState(null);
   const [loadingReject, setLoadingReject] = useState(null);
-  const [loadingDelete, setLoadingDelete] = useState(null);
 
   const [sortConfig, setSortConfig] = useState({
     key: "transactionDate",
@@ -36,11 +39,6 @@ const PaymentEntriesTable = ({ payments, refetch, subscriber }) => {
   const userRoles = getUserRoles();
   const DecisionMaker = hasPermission(
     ["Admin", "General Manager", "Manager", "Senior HR"],
-    userRoles
-  );
-
-  const hasDeletePermission = hasPermission(
-    ["Admin", "General Manager"],
     userRoles
   );
 
@@ -235,6 +233,62 @@ const PaymentEntriesTable = ({ payments, refetch, subscriber }) => {
   const handleCloseNewPaymentForm = () => {
     refetch();
     setIsNewPaymentFormOpen(false);
+  };
+
+  const handleApprove = async (paymentId, status, payment) => {
+    setLoadingApprove(paymentId);
+    try {
+      const response = await approvePaymentAPI(paymentId, status, payment);
+
+      // Refresh the payment list
+      setTimeout(() => {
+        refetch();
+      }, 1000);
+
+      // Show success message
+      setSubmissionStatus({
+        type: "success",
+        message: response?.message ?? "Approved Successfully",
+      });
+    } catch (error) {
+      setSubmissionStatus({
+        type: "error",
+        message:
+          error?.response?.data?.error ??
+          error?.message ??
+          "Failed to Approve Payment",
+      });
+    } finally {
+      setLoadingApprove(null);
+    }
+  };
+
+  const handleReject = async (paymentId, status, payment) => {
+    setLoadingReject(paymentId);
+    try {
+      const response = await rejectPaymentAPI(paymentId, status, payment);
+
+      // Refresh the payment list
+      setTimeout(() => {
+        refetch();
+      }, 1000);
+
+      // Show success message
+      setSubmissionStatus({
+        type: "success",
+        message: response?.message ?? "Rejected Successfully",
+      });
+    } catch (error) {
+      setSubmissionStatus({
+        type: "error",
+        message:
+          error?.response?.data?.error ??
+          error?.message ??
+          "Failed to Reject Payment",
+      });
+    } finally {
+      setLoadingReject(null);
+    }
   };
 
   return (
@@ -609,17 +663,17 @@ const PaymentEntriesTable = ({ payments, refetch, subscriber }) => {
                                 <button
                                   className="p-1.5 text-green-600 hover:bg-green-500 hover:text-white rounded-md transition-colors"
                                   title="Approve"
-                                  // onClick={() =>
-                                  //   handleApprove(
-                                  //     payment?._id,
-                                  //     payment?.status,
-                                  //     payment
-                                  //   )
-                                  // }
-                                  // disabled={loadingApprove === emp._id}
+                                  onClick={() =>
+                                    handleApprove(
+                                      payment?._id,
+                                      payment?.status,
+                                      payment
+                                    )
+                                  }
+                                  disabled={loadingApprove === payment?._id}
                                 >
-                                  {loadingApprove === payment._id ? (
-                                    <Loader className="h-5 w-5" />
+                                  {loadingApprove === payment?._id ? (
+                                    <Loader className="h-5 w-5 animate-spin" />
                                   ) : (
                                     <FiCheck className="h-5 w-5" />
                                   )}
@@ -627,35 +681,23 @@ const PaymentEntriesTable = ({ payments, refetch, subscriber }) => {
                                 <button
                                   className="p-1.5 text-red-600 hover:bg-red-500 hover:text-white rounded-md transition-colors"
                                   title="Reject"
-                                  // onClick={() =>
-                                  //   handleReject(emp._id, emp.status, emp)
-                                  // }
-                                  // disabled={loadingReject === emp._id}
+                                  onClick={() =>
+                                    handleReject(
+                                      payment?._id,
+                                      payment?.status,
+                                      payment
+                                    )
+                                  }
+                                  disabled={loadingReject === payment._id}
                                 >
                                   {loadingReject === payment._id ? (
-                                    <Loader className="h-5 w-5" />
+                                    <Loader className="h-5 w-5 animate-spin" />
                                   ) : (
                                     <FiX className="h-5 w-5" />
                                   )}
                                 </button>
                               </>
                             )}
-                          {hasDeletePermission && (
-                            <button
-                              className="p-1.5 text-rose-600 hover:bg-rose-500 hover:text-white rounded-md transition-colors"
-                              title="Delete"
-                              // onClick={() =>
-                              //   handleDelete(emp._id, emp.status, emp)
-                              // }
-                              // disabled={loadingDelete === emp._id}
-                            >
-                              {loadingDelete === payment._id ? (
-                                <Loader className="h-5 w-5" />
-                              ) : (
-                                <FiTrash className="h-5 w-5" />
-                              )}
-                            </button>
-                          )}
                         </div>
                       </td>
                     </tr>
@@ -825,7 +867,7 @@ const PaymentEntriesTable = ({ payments, refetch, subscriber }) => {
 
       {/* Pagination */}
       {processedPayments.length > 0 && (
-        <div className="mt-6 bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 rounded-b-lg shadow-sm sm:px-6">
+        <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 rounded-b-lg shadow-sm sm:px-6">
           <div className="flex-1 flex justify-between sm:hidden">
             <button
               onClick={() => paginate(currentPage - 1)}

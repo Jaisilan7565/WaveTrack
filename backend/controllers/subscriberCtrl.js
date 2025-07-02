@@ -335,7 +335,7 @@ const subscriberController = {
     }
   }),
 
-  //Approve Employee
+  //Approve Subscriber
   approveSubscriber: asyncHandler(async (req, res, next) => {
     try {
       const subscriber = await Subscriber.findById(req.params.id);
@@ -400,7 +400,7 @@ const subscriberController = {
     }
   }),
 
-  //Reject Employee
+  //Reject Subscriber
   rejectSubscriber: asyncHandler(async (req, res, next) => {
     try {
       const subscriber = await Subscriber.findById(req.params.id);
