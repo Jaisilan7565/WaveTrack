@@ -529,7 +529,7 @@ const PaymentEntriesTable = ({ payments, refetch, subscriber, subRefetch }) => {
 
                 <div className="w-full">
                   <label className="block text-sm font-semibold text-gray-800 mb-1">
-                    Subscribers Per Page:{" "}
+                    Payments Per Page:{" "}
                     <span className="text-blue-600 font-bold">
                       {itemsPerPage}
                     </span>

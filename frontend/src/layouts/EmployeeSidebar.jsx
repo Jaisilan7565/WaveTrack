@@ -4,6 +4,7 @@ import { GoOrganization } from "react-icons/go";
 import { FaUsers } from "react-icons/fa";
 import { AiOutlineAlert } from "react-icons/ai";
 import { IoTicketSharp } from "react-icons/io5";
+import { HiDocumentCurrencyRupee } from "react-icons/hi2";
 import { MdInventory, MdOutlineAdminPanelSettings } from "react-icons/md";
 import { Podcast } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
@@ -142,7 +143,7 @@ const EmployeeSidebar = ({ sidebarOpen, setSidebarOpen }) => {
                 onClick={() => setSidebarOpen(false)}
               />
             </Link>
-          )} 
+          )}
           {TLStaffPermission && (
             <Link to="/isp-management">
               <SidebarItem
@@ -185,11 +186,13 @@ const EmployeeSidebar = ({ sidebarOpen, setSidebarOpen }) => {
             </Link>
           )}
 
-          <Link to="/tickets">
+          <Link to="/all-payments">
             <SidebarItem
-              icon={<IoTicketSharp size={30} />}
-              text="Ticket Management"
-              active={path === "/tickets" || path.startsWith("/tickets")}
+              icon={<HiDocumentCurrencyRupee size={30} />}
+              text="Payment Records"
+              active={
+                path === "/all-payments" || path.startsWith("/all-payments")
+              }
               onClick={() => setSidebarOpen(false)}
             />
           </Link>

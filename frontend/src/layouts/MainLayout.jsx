@@ -15,6 +15,7 @@ import { decodeToken, isTokenExpired } from "../utils/jwt";
 import SubscriberManagementPanel from "../pages/SubscriberManagement/SubscriberManagementPanel";
 import MainDashboard from "../pages/Dashboard/MainDashboard";
 import Subscriber from "../pages/SubscriberManagement/Subscriber/Subscriber";
+import AllPaymentsPanel from "../pages/AllPayments/AllPaymentsPanel";
 
 const MainLayout = () => {
   const location = useLocation();
@@ -43,6 +44,7 @@ const MainLayout = () => {
     { path: "/", name: "Dashboard" },
     { path: "/subscriber-management", name: "Subscriber Management" },
     { path: "subscriber", name: "Subscriber" },
+    { path: "/all-payments", name: "All Payments" },
   ];
 
   return (
@@ -100,6 +102,14 @@ const MainLayout = () => {
               element={
                 <AuthRoute>
                   <Subscriber />
+                </AuthRoute>
+              }
+            />
+            <Route
+              path="/all-payments"
+              element={
+                <AuthRoute>
+                  <AllPaymentsPanel />
                 </AuthRoute>
               }
             />
