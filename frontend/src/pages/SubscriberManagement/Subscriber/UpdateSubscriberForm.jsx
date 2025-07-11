@@ -188,7 +188,7 @@ const UpdateSubscriberForm = ({ id, handleClose }) => {
     },
   });
 
-  // Pre-fill form when employee data loads
+  // Pre-fill form when subscriber data loads
   useEffect(() => {
     if (subscriberData) {
       formik.setValues({

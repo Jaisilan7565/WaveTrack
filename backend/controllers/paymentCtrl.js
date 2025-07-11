@@ -187,6 +187,140 @@ const paymentController = {
     }
   }),
 
+  getPaymentById: asyncHandler(async (req, res, next) => {
+    try {
+      if (!mongoose.Types.ObjectId.isValid(req.params.paymentId)) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid ID format" });
+      }
+
+      const payment = await Payment.findById(req.params.paymentId)
+        .populate({
+          path: "subscriberId",
+          select: "siteName siteCode siteAddress",
+          model: "Subscriber",
+        })
+        .populate({
+          path: "created_by",
+          select: "employee_id name email contact roles",
+          model: "Employee",
+        })
+        .populate({
+          path: "decision_by",
+          select: "employee_id name email contact roles",
+          model: "Employee",
+        })
+        .populate({
+          path: "modifiedData.modified_by",
+          select: "employee_id name email contact roles",
+          model: "Employee",
+        });
+
+      if (!payment) {
+        return res
+          .status(404)
+          .json({ success: false, message: "Payment not found" });
+      }
+
+      res.status(200).json({
+        success: true,
+        data: payment,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }),
+
+  //Update Payment
+  updatePayment: asyncHandler(async (req, res, next) => {
+    try {
+      const payment = await Payment.findById(req.params.id);
+
+      if (!payment) {
+        return res.status(404).json({ message: "Payment not found" });
+      }
+
+      const trackedFields = [
+        "transactionMode",
+        "amount",
+        "activationDate",
+        "expiryDate",
+      ];
+
+      // Helper function to get nested properties
+      function getNestedValue(obj, path) {
+        return path.split(".").reduce((o, p) => (o || {})[p], obj);
+      }
+
+      // Helper function to check if a value exists (not undefined or empty string)
+      function hasValue(val) {
+        return val !== undefined && val !== "";
+      }
+
+      // Helper function to set nested properties
+      function setNestedValue(obj, path, value) {
+        const keys = path.split(".");
+        let current = obj;
+
+        for (let i = 0; i < keys.length; i++) {
+          const key = keys[i];
+
+          if (i === keys.length - 1) {
+            current[key] = value;
+          } else {
+            if (!current[key]) {
+              current[key] = {};
+            }
+            current = current[key];
+          }
+        }
+
+        return obj;
+      }
+
+      const previousData = {};
+      const currentData = {};
+
+      trackedFields.forEach((field) => {
+        // Get previous value
+        const prevValue = getNestedValue(payment, field);
+        setNestedValue(previousData, field, prevValue);
+
+        // Get current value
+        const newValue = getNestedValue(req.body, field);
+        const currentValue = hasValue(newValue) ? newValue : prevValue;
+        setNestedValue(currentData, field, currentValue);
+      });
+
+      const updatedPayment = await Payment.findByIdAndUpdate(
+        req.params.id,
+        {
+          // ...req.body,
+          remark: req.body.remark,
+          modifiedData: {
+            previous: previousData,
+            current: currentData,
+            modified_by: req.user.id,
+            modified_at: Date.now(),
+          },
+          updatedAt: Date.now(),
+          request_status: "pending",
+          status: "Modified",
+        },
+        { new: true, runValidators: true }
+      );
+
+      res.json({
+        success: true,
+        data: updatedPayment,
+        message: "Payment Updated Successfully",
+      });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  }),
+
   getPaymentsBySubscriberId: asyncHandler(async (req, res, next) => {
     try {
       if (!mongoose.Types.ObjectId.isValid(req.params.subId)) {

@@ -26,6 +26,19 @@ export const getPaymentsAPI = async () => {
   }
 };
 
+export const getPaymentByIdAPI = async (paymentId) => {
+  try {
+    const response = await axios.get(
+      `${BASE_URL}/payments/id/${paymentId}`,
+      getAuthHeaders()
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching payment:", error);
+    throw error;
+  }
+};
+
 export const getPaymentsBySubscriberIdAPI = async (subId) => {
   try {
     const response = await axios.get(
@@ -39,6 +52,20 @@ export const getPaymentsBySubscriberIdAPI = async (subId) => {
   }
 };
 
+export const updatePaymentAPI = async ({ id, data }) => {
+  try {
+    const response = await axios.patch(
+      `${BASE_URL}/payments/${id}`,
+      data,
+      getAuthHeaders()
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating payment:", error);
+    throw error;
+  }
+};
+
 export const approvePaymentAPI = async (id, status, payment) => {
   try {
     let payload;
@@ -48,14 +75,14 @@ export const approvePaymentAPI = async (id, status, payment) => {
         request_status: "approved",
       };
     } else if (status === "Modified") {
-      // payload = {
-      //   name: payment?.modifiedData?.current?.name,
-      //   email: payment?.modifiedData?.current?.email,
-      //   contact: payment?.modifiedData?.current?.contact,
-      //   roles: payment?.modifiedData?.current?.roles,
-      //   request_status: "approved",
-      //   status: "Active",
-      // };
+      payload = {
+        transactionMode: payment?.modifiedData?.current?.transactionMode,
+        amount: payment?.modifiedData?.current?.amount,
+        activationDate: payment?.modifiedData?.current?.activationDate,
+        expiryDate: payment?.modifiedData?.current?.expiryDate,
+        request_status: "approved",
+        status: "Received",
+      };
     } else if (status === "Received") {
       payload = {
         request_status: "approved",

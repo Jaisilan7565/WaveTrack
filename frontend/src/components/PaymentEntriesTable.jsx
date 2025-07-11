@@ -24,12 +24,15 @@ import {
   approvePaymentAPI,
   rejectPaymentAPI,
 } from "../services/paymentServices";
+import UpdatePaymentForm from "../pages/SubscriberManagement/Subscriber/Payments/UpdatePaymentForm";
+import Toast from "./Toast";
 
 const PaymentEntriesTable = ({ payments, refetch, subscriber, subRefetch }) => {
   const [activeFilters, setActiveFilters] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [loadingApprove, setLoadingApprove] = useState(null);
   const [loadingReject, setLoadingReject] = useState(null);
+  const [submissionStatus, setSubmissionStatus] = useState(null);
 
   const [sortConfig, setSortConfig] = useState({
     key: "transactionDate",
@@ -236,6 +239,21 @@ const PaymentEntriesTable = ({ payments, refetch, subscriber, subRefetch }) => {
     setIsNewPaymentFormOpen(false);
   };
 
+  const [selectedPaymentId, setSelectedPaymentId] = useState(null);
+  const [isUpdatePaymentFormOpen, setIsUpdatePaymentFormOpen] = useState(false);
+
+  const handleOpenUpdatePaymentForm = async (id) => {
+    setSelectedPaymentId(id);
+    setIsUpdatePaymentFormOpen(true);
+  };
+
+  const handleCloseUpdatePaymentForm = () => {
+    setSelectedPaymentId(null);
+    refetch();
+    subRefetch();
+    setIsUpdatePaymentFormOpen(false);
+  };
+
   const handleApprove = async (paymentId, status, payment) => {
     setLoadingApprove(paymentId);
     try {
@@ -292,6 +310,32 @@ const PaymentEntriesTable = ({ payments, refetch, subscriber, subRefetch }) => {
     }
   };
 
+  const fieldDisplayNames = {
+    transactionMode: "Transaction Mode",
+    amount: "Amount",
+    activationDate: "Activation Date",
+    expiryDate: "Expiry Date",
+  };
+
+  function getDisplayName(fieldPath) {
+    // Check if we have a direct mapping
+    if (fieldDisplayNames[fieldPath]) {
+      return fieldDisplayNames[fieldPath];
+    }
+
+    // Fallback transformation for unlisted fields
+    return fieldPath
+      .split(".") // Split nested paths
+      .map(
+        (part) =>
+          part
+            .replace(/([A-Z])/g, " $1") // Add space before capitals
+            .replace(/^./, (str) => str.toUpperCase()) // Capitalize first letter
+            .replace(/Of|And|The/gi, (match) => match.toLowerCase()) // Handle special words
+      )
+      .join(" "); // Join with spaces
+  }
+
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
       {isNewPaymentFormOpen && (
@@ -299,6 +343,21 @@ const PaymentEntriesTable = ({ payments, refetch, subscriber, subRefetch }) => {
           subscriber={subscriber}
           handleClose={handleCloseNewPaymentForm}
           paymentsLength={payments?.length}
+        />
+      )}
+
+      {isUpdatePaymentFormOpen && (
+        <UpdatePaymentForm
+          id={selectedPaymentId}
+          handleClose={handleCloseUpdatePaymentForm}
+        />
+      )}
+
+      {submissionStatus && (
+        <Toast
+          type={submissionStatus.type}
+          message={submissionStatus.message}
+          onClose={() => setSubmissionStatus(null)}
         />
       )}
 
@@ -648,15 +707,18 @@ const PaymentEntriesTable = ({ payments, refetch, subscriber, subRefetch }) => {
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
                         <div className="flex items-center space-x-1">
-                          {payment?.request_status !== "pending" && (
-                            <button
-                              className="p-1.5 text-blue-600 hover:bg-blue-500 hover:text-white rounded-md transition-colors"
-                              title="Edit"
-                              onClick={() => handleEdit(payment._id)}
-                            >
-                              <FiEdit className="h-5 w-5" />
-                            </button>
-                          )}
+                          {payment?.request_status !== "pending" &&
+                            payment?.transactionType === "Income" && (
+                              <button
+                                className="p-1.5 text-blue-600 hover:bg-blue-500 hover:text-white rounded-md transition-colors"
+                                title="Edit"
+                                onClick={() =>
+                                  handleOpenUpdatePaymentForm(payment?._id)
+                                }
+                              >
+                                <FiEdit className="h-5 w-5" />
+                              </button>
+                            )}
 
                           {DecisionMaker &&
                             payment?.request_status === "pending" && (
@@ -732,84 +794,234 @@ const PaymentEntriesTable = ({ payments, refetch, subscriber, subRefetch }) => {
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                                   {/* Previous Data */}
-                                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm">
-                                    <div className="flex items-center gap-2 mb-3">
-                                      <div className="w-3 h-3 rounded-full bg-gray-400"></div>
-                                      <h3 className="font-semibold text-gray-700">
-                                        Previous Values
+                                  <div className="bg-gray-50 p-2 rounded-lg border border-gray-200">
+                                    <div className="flex items-center gap-1 mb-1">
+                                      <div className="w-1.5 h-1.5 rounded-full bg-gray-400"></div>
+                                      <h3 className="font-medium text-gray-700 text-sm">
+                                        Previous
                                       </h3>
                                     </div>
-                                    <div className="space-y-3">
+                                    <div className="space-y-1">
                                       {Object.entries(
                                         payment.modifiedData.previous
-                                      ).map(([key, value]) => (
-                                        <div key={`prev-${key}`}>
-                                          <div className="font-medium text-gray-600 flex items-baseline">
-                                            <span className="inline-block min-w-[100px] capitalize">
-                                              {key}:
-                                            </span>
-                                            <div className="flex-1">
-                                              {Array.isArray(value) ? (
-                                                <div className="flex flex-wrap gap-1">
-                                                  {value.map((item, i) => (
-                                                    <span
-                                                      key={i}
-                                                      className="bg-gray-500 text-white text-xs px-2 py-1 rounded-full"
-                                                    >
-                                                      {item}
-                                                    </span>
-                                                  ))}
-                                                </div>
-                                              ) : (
-                                                <span className="text-gray-800">
-                                                  {value}
+                                      ).map(([key, value]) => {
+                                        // Handle nested objects
+                                        if (
+                                          typeof value === "object" &&
+                                          value !== null &&
+                                          !Array.isArray(value)
+                                        ) {
+                                          return (
+                                            <div
+                                              key={`prev-${key}`}
+                                              className="text-sm"
+                                            >
+                                              <div className="flex items-baseline">
+                                                <span className="inline-block min-w-[60px] text-gray-500 capitalize truncate">
+                                                  {getDisplayName(key)}:
                                                 </span>
-                                              )}
+                                                <div className="flex-1 ml-1">
+                                                  {Object.entries(value).map(
+                                                    ([
+                                                      nestedKey,
+                                                      nestedValue,
+                                                    ]) => (
+                                                      <div
+                                                        key={`prev-nested-${nestedKey}`}
+                                                        className="mb-1 last:mb-0"
+                                                      >
+                                                        <div className="flex items-baseline">
+                                                          <span className="inline-block min-w-[40px] text-gray-400 text-[10px] capitalize">
+                                                            {getDisplayName(
+                                                              nestedKey
+                                                            )}
+                                                            :
+                                                          </span>
+                                                          <span className="text-gray-700 ml-1 break-words">
+                                                            {nestedValue || (
+                                                              <span className="text-gray-400">
+                                                                (empty)
+                                                              </span>
+                                                            )}
+                                                          </span>
+                                                        </div>
+                                                      </div>
+                                                    )
+                                                  )}
+                                                </div>
+                                              </div>
+                                            </div>
+                                          );
+                                        }
+
+                                        // Handle regular values
+                                        return (
+                                          <div
+                                            key={`prev-${key}`}
+                                            className="text-sm"
+                                          >
+                                            <div className="flex items-baseline">
+                                              <span className="inline-block min-w-[60px] text-gray-500 capitalize truncate">
+                                                {getDisplayName(key)}:
+                                              </span>
+                                              <div className="flex-1 ml-1">
+                                                {Array.isArray(value) ? (
+                                                  <div className="flex flex-wrap gap-0.5">
+                                                    {value.map((item, i) => (
+                                                      <span
+                                                        key={i}
+                                                        className="bg-gray-100 text-gray-700 text-[10px] px-1.5 py-0.5 rounded-full font-semibold break-words"
+                                                      >
+                                                        {item}
+                                                      </span>
+                                                    ))}
+                                                  </div>
+                                                ) : (
+                                                  <span className="text-gray-700 break-words">
+                                                    {value || (
+                                                      <span className="text-gray-400">
+                                                        (empty)
+                                                      </span>
+                                                    )}
+                                                  </span>
+                                                )}
+                                              </div>
                                             </div>
                                           </div>
-                                        </div>
-                                      ))}
+                                        );
+                                      })}
                                     </div>
                                   </div>
 
                                   {/* Current Data */}
-                                  <div className="bg-blue-100 p-4 rounded-lg border border-blue-200 shadow-sm">
-                                    <div className="flex items-center gap-2 mb-3">
-                                      <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                                      <h3 className="font-semibold text-blue-700">
-                                        New Values
+                                  <div className="bg-blue-100 p-2 rounded-lg border border-blue-200">
+                                    <div className="flex items-center gap-1 mb-1">
+                                      <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                                      <h3 className="font-medium text-blue-700 text-sm">
+                                        New
                                       </h3>
                                     </div>
-                                    <div className="space-y-3">
+                                    <div className="space-y-1">
                                       {Object.entries(
                                         payment.modifiedData.current
-                                      ).map(([key, value]) => (
-                                        <div key={`curr-${key}`}>
-                                          <div className="font-medium text-blue-600 flex items-baseline">
-                                            <span className="inline-block min-w-[100px] capitalize">
-                                              {key}:
-                                            </span>
-                                            <div className="flex-1">
-                                              {Array.isArray(value) ? (
-                                                <div className="flex flex-wrap gap-1">
-                                                  {value.map((item, i) => (
-                                                    <span
-                                                      key={i}
-                                                      className="bg-blue-50 text-white text-xs px-2 py-1 rounded-full"
-                                                    >
-                                                      {item}
-                                                    </span>
-                                                  ))}
-                                                </div>
-                                              ) : (
-                                                <span className="text-blue-900">
-                                                  {value}
+                                      ).map(([key, value]) => {
+                                        const previousValue =
+                                          payment.modifiedData.previous[key];
+                                        const hasChanged =
+                                          JSON.stringify(value) !==
+                                          JSON.stringify(previousValue);
+
+                                        // Handle nested objects differently
+                                        if (
+                                          typeof value === "object" &&
+                                          value !== null &&
+                                          !Array.isArray(value)
+                                        ) {
+                                          return (
+                                            <div
+                                              key={`curr-${key}`}
+                                              className="text-sm"
+                                            >
+                                              <div className="flex items-baseline">
+                                                <span className="inline-block min-w-[60px] text-blue-600 capitalize truncate">
+                                                  {getDisplayName(key)}:
                                                 </span>
-                                              )}
+                                                <div className="flex-1 ml-1">
+                                                  {Object.entries(value).map(
+                                                    ([
+                                                      nestedKey,
+                                                      nestedValue,
+                                                    ]) => {
+                                                      const prevNestedValue =
+                                                        previousValue?.[
+                                                          nestedKey
+                                                        ];
+                                                      const nestedHasChanged =
+                                                        JSON.stringify(
+                                                          nestedValue
+                                                        ) !==
+                                                        JSON.stringify(
+                                                          prevNestedValue
+                                                        );
+
+                                                      return (
+                                                        <div
+                                                          key={`nested-${nestedKey}`}
+                                                          className="mb-1 last:mb-0"
+                                                        >
+                                                          <div className="flex items-baseline">
+                                                            <span className="inline-block min-w-[40px] text-blue-500 text-[10px] capitalize">
+                                                              {getDisplayName(
+                                                                nestedKey
+                                                              )}
+                                                              :
+                                                            </span>
+                                                            <span
+                                                              className={`text-blue-900 ml-1 break-words ${
+                                                                nestedHasChanged
+                                                                  ? "bg-green-600 px-1 rounded-md text-white font-semibold"
+                                                                  : "text-blue-900"
+                                                              }`}
+                                                            >
+                                                              {nestedValue || (
+                                                                <span className="text-gray-400">
+                                                                  (empty)
+                                                                </span>
+                                                              )}
+                                                            </span>
+                                                          </div>
+                                                        </div>
+                                                      );
+                                                    }
+                                                  )}
+                                                </div>
+                                              </div>
+                                            </div>
+                                          );
+                                        }
+
+                                        // Handle regular values
+                                        return (
+                                          <div
+                                            key={`curr-${key}`}
+                                            className="text-sm"
+                                          >
+                                            <div className="flex items-baseline">
+                                              <span className="inline-block min-w-[60px] text-blue-600 capitalize truncate">
+                                                {getDisplayName(key)}:
+                                              </span>
+                                              <div className="flex-1 ml-1">
+                                                {Array.isArray(value) ? (
+                                                  <div className="flex flex-wrap gap-0.5">
+                                                    {value.map((item, i) => (
+                                                      <span
+                                                        key={i}
+                                                        className="bg-blue-50 text-blue-900 text-[10px] px-1.5 py-0.5 rounded-full font-semibold"
+                                                      >
+                                                        {item}
+                                                      </span>
+                                                    ))}
+                                                  </div>
+                                                ) : (
+                                                  <span
+                                                    className={`text-blue-900 break-words ${
+                                                      hasChanged
+                                                        ? "bg-green-600 px-2 rounded-xl text-white font-semibold"
+                                                        : "text-blue-900"
+                                                    }`}
+                                                  >
+                                                    {value || (
+                                                      <span className="text-gray-400">
+                                                        (empty)
+                                                      </span>
+                                                    )}
+                                                  </span>
+                                                )}
+                                              </div>
                                             </div>
                                           </div>
-                                        </div>
-                                      ))}
+                                        );
+                                      })}
                                     </div>
                                   </div>
                                 </div>
@@ -821,8 +1033,8 @@ const PaymentEntriesTable = ({ payments, refetch, subscriber, subRefetch }) => {
                                     onMouseEnter={() =>
                                       setHoveredUser({
                                         modifiedBy:
-                                          emp.modifiedData.modified_by,
-                                        employeeId: emp._id,
+                                          payment.modifiedData.modified_by,
+                                        employeeId: payment._id,
                                       })
                                     }
                                     onMouseLeave={() =>
@@ -848,7 +1060,8 @@ const PaymentEntriesTable = ({ payments, refetch, subscriber, subRefetch }) => {
                                   {/* Hover Card */}
                                   {hoveredUser?.modifiedBy?._id ===
                                     payment?.modifiedData?.modified_by?._id &&
-                                    hoveredUser?.employeeId === emp?._id && (
+                                    hoveredUser?.employeeId ===
+                                      payment?._id && (
                                       <UserHoverCard userData={hoveredUser} />
                                     )}
                                 </div>
