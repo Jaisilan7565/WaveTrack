@@ -18,6 +18,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { getUserRoles } from "../utils/jwt";
 import { hasPermission } from "../utils/auth";
 import NoData from "./NoData";
+import * as XLSX from "xlsx";
 import AddPaymentForm from "../pages/SubscriberManagement/Subscriber/Payments/AddPaymentForm";
 import UserHoverCard from "./UserHoverCard";
 import {
@@ -33,6 +34,8 @@ const PaymentEntriesTable = ({ payments, refetch, subscriber, subRefetch }) => {
   const [loadingApprove, setLoadingApprove] = useState(null);
   const [loadingReject, setLoadingReject] = useState(null);
   const [submissionStatus, setSubmissionStatus] = useState(null);
+
+  console.log(subscriber);
 
   const [sortConfig, setSortConfig] = useState({
     key: "transactionDate",
@@ -215,8 +218,43 @@ const PaymentEntriesTable = ({ payments, refetch, subscriber, subRefetch }) => {
   };
 
   const exportToExcel = () => {
-    // Implement your Excel export logic here
-    console.log("Exporting to Excel:", processedPayments);
+    // Determine which data to export
+    const dataToExport = processedPayments;
+
+    if (!dataToExport || dataToExport.length === 0) {
+      alert("No data available to export");
+      return;
+    }
+
+    // Prepare the worksheet data
+    const worksheetData = dataToExport.map((payment) => ({
+      "Site Code": payment?.subscriberId?.siteCode || "",
+      "Transaction ID": payment?.transactionId || "",
+      "Transaction Type": payment?.transactionType || "",
+      "Transaction Mode": payment?.transactionMode || "",
+      "Activation Date": payment?.activationDate?.split("T")[0] || "",
+      "Renewal Date": payment?.expiryDate?.split("T")[0] || "",
+      Amount: payment?.amount || "",
+      "Transaction Date": payment?.transactionDate?.split("T")[0] || "",
+      Status: payment?.status || "",
+      "Recorded By": payment?.created_by?.name || "",
+      "Modified By": payment?.modifiedData?.modified_by?.name || "",
+      "Verified By": payment?.decision_by?.name || "",
+    }));
+
+    // Create workbook and worksheet
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+
+    // Add worksheet to workbook
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Payments");
+
+    // Generate Excel file and trigger download
+    const fileName = `${subscriber?.siteCode}_Payments_(${
+      subscriber?.subscriber_id
+    })${new Date().toISOString().split("T")[0]}.xlsx`;
+
+    XLSX.writeFile(workbook, fileName, { compression: true });
   };
 
   const formatDate = (dateString) => {
