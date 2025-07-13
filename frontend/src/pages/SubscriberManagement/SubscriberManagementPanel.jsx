@@ -905,7 +905,7 @@ const SubscriberManagementPanel = () => {
                       <option value="">All Statuses</option>
                       <option value="Added">Added</option>
                       <option value="Active">Active</option>
-                      <option value="InActive">Inactive</option>
+                      <option value="InActive">InActive</option>
                       <option value="Modified">Modified</option>
                       <option value="Rejected">Rejected</option>
                     </select>

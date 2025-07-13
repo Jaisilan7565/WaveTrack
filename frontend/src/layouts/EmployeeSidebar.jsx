@@ -4,6 +4,7 @@ import { GoOrganization } from "react-icons/go";
 import { FaUsers } from "react-icons/fa";
 import { AiOutlineAlert } from "react-icons/ai";
 import { IoTicketSharp } from "react-icons/io5";
+import { SiPivotaltracker } from "react-icons/si";
 import { HiDocumentCurrencyRupee } from "react-icons/hi2";
 import { MdInventory, MdOutlineAdminPanelSettings } from "react-icons/md";
 import { Podcast } from "lucide-react";
@@ -186,16 +187,32 @@ const EmployeeSidebar = ({ sidebarOpen, setSidebarOpen }) => {
             </Link>
           )}
 
-          <Link to="/all-payments">
-            <SidebarItem
-              icon={<HiDocumentCurrencyRupee size={30} />}
-              text="Payment Records"
-              active={
-                path === "/all-payments" || path.startsWith("/all-payments")
-              }
-              onClick={() => setSidebarOpen(false)}
-            />
-          </Link>
+          {FinancePermission && (
+            <Link to="/subscription-tracker">
+              <SidebarItem
+                icon={<SiPivotaltracker size={30} />}
+                text="Subscription Tracker"
+                active={
+                  path === "/subscription-tracker" ||
+                  path.startsWith("/subscription-tracker")
+                }
+                onClick={() => setSidebarOpen(false)}
+              />
+            </Link>
+          )}
+
+          {FinancePermission && (
+            <Link to="/all-payments">
+              <SidebarItem
+                icon={<HiDocumentCurrencyRupee size={30} />}
+                text="Payment Records"
+                active={
+                  path === "/all-payments" || path.startsWith("/all-payments")
+                }
+                onClick={() => setSidebarOpen(false)}
+              />
+            </Link>
+          )}
 
           <hr className="my-3" />
 

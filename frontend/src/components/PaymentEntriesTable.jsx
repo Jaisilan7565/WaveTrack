@@ -273,7 +273,11 @@ const PaymentEntriesTable = ({ payments, refetch, subscriber, subRefetch }) => {
       const worksheet = XLSX.utils.json_to_sheet(worksheetData);
 
       // Add worksheet to workbook
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Payments");
+      XLSX.utils.book_append_sheet(
+        workbook,
+        worksheet,
+        `${subscriber?.siteCode} Payments`
+      );
 
       setProgress(90);
 

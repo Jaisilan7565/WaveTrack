@@ -417,7 +417,7 @@ const AllPaymentsPanel = () => {
       const worksheet = XLSX.utils.json_to_sheet(worksheetData);
 
       // Add worksheet to workbook
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Subscribers");
+      XLSX.utils.book_append_sheet(workbook, worksheet, "All Payments");
 
       setProgress(90);
 
@@ -814,7 +814,7 @@ const AllPaymentsPanel = () => {
                 <tr>
                   <td colSpan="9" className="text-center py-6 text-gray-500">
                     <NoData
-                      title="No Subscribers Found"
+                      title="No Payments Found"
                       description="Try adjusting your search or filters"
                     />
                   </td>
@@ -1400,7 +1400,7 @@ const AllPaymentsPanel = () => {
           {currentItems.length === 0 ? (
             <div className="p-6 text-center">
               <NoData
-                title="No Subscribers Found"
+                title="No Payments Found"
                 description="Try adjusting your search or filters"
               />
             </div>
