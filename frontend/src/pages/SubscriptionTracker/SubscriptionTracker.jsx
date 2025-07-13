@@ -187,7 +187,11 @@ const SubscriptionTracker = () => {
       futureDate.setDate(today.getDate() + upcomingDays);
 
       result = result.filter((subscriber) => {
-        if (!subscriber?.ispInfo?.renewalDate) return false;
+        if (
+          !subscriber?.ispInfo?.renewalDate ||
+          subscriber.status === "Suspended"
+        )
+          return false;
 
         const renewalDate = new Date(subscriber.ispInfo.renewalDate);
         renewalDate.setHours(0, 0, 0, 0); // Normalize to start of day
