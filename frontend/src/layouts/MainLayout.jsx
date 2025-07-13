@@ -61,7 +61,7 @@ const MainLayout = () => {
       )}
 
       <div className="flex-1 flex flex-col overflow-y-auto hide-scrollbar">
-        <div className="sticky top-0 z-10 w-full">
+        <div className="sticky top-0 z-100 w-full">
           {shouldShowSidebar && (
             <TopBar
               onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
