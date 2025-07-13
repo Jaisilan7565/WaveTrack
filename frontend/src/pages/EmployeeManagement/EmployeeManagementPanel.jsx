@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import NoData from "../../components/NoData";
 import { Loader } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -322,6 +322,32 @@ const EmployeeManagementPanel = () => {
     if (sortConfig.key !== key) return null;
     return sortConfig.direction === "asc" ? <FiChevronUp /> : <FiChevronDown />;
   };
+
+  const [isManualRefetching, setIsManualRefetching] = useState(false);
+
+  // Create a refetch function that we can call when the page is navigated to
+  const forceRefetch = useCallback(async () => {
+    setIsManualRefetching(true);
+    try {
+      await refetch();
+    } finally {
+      setIsManualRefetching(false);
+    }
+  }, [refetch]);
+
+  // Detect when the page is navigated to and refetch
+  useEffect(() => {
+    // This will run whenever the location (route) changes
+    forceRefetch();
+  }, [location.pathname, forceRefetch]);
+
+  if (isManualRefetching) {
+    return (
+      <div className="flex justify-center py-8">
+        <Loader className="animate-spin h-6 w-6 text-blue-600 mx-auto" />
+      </div>
+    );
+  }
 
   if (isLoading)
     return <div className="flex justify-center py-8">Loading...</div>;
