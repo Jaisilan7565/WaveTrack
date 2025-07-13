@@ -666,8 +666,19 @@ const PaymentEntriesTable = ({ payments, refetch, subscriber, subRefetch }) => {
           )}
 
           <button
-            className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className={`flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 ${
+              subscriber?.request_status === "pending" ||
+              subscriber?.status === "Suspended" ||
+              subscriber?.status === "Modified"
+                ? "cursor-not-allowed"
+                : "cursor-pointer"
+            }`}
             onClick={handleOpenNewPaymentForm}
+            disabled={
+              subscriber?.request_status === "pending" ||
+              subscriber?.status === "Suspended" ||
+              subscriber?.status === "Modified"
+            }
           >
             <FiPlus /> <span className="">Add Payment</span>
           </button>
