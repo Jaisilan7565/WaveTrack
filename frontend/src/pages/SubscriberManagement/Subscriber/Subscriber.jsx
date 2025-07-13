@@ -37,7 +37,7 @@ const Subscriber = () => {
   });
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-y-4 md:gap-4 p-4 h-[90vh]">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-y-4 md:gap-4 p-4 h-[90vh] bg-gradient-to-br from-gray-50 to-blue-50">
       {/* Left Column - Subscriber Card */}
       <div className="col-span-1 md:overflow-y-auto hide-scrollbar rounded-2xl">
         <SubscriberCard subscriber={subscriber?.data} refetch={refetch} />

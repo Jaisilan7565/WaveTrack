@@ -175,7 +175,7 @@ const MainDashboard = () => {
   );
 
   return (
-    <div className="p-6">
+    <div className="p-6 bg-gradient-to-br from-gray-50 to-blue-50">
       {loading ? (
         <div className="flex flex-col justify-center items-center h-64">
           <div className="flex">

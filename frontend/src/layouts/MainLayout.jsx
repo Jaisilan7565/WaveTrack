@@ -74,7 +74,7 @@ const MainLayout = () => {
           )}
         </div>
 
-        <div className="flex-1 overflow-y-auto hide-scrollbar bg-gradient-to-br from-gray-50 to-blue-50">
+        <div className="flex-1 overflow-y-auto hide-scrollbar bg-white">
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route
