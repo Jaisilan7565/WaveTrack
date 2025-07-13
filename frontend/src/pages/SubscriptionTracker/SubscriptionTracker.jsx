@@ -589,7 +589,7 @@ const SubscriptionTracker = () => {
                       step="1"
                       value={upcomingDays}
                       onChange={handleUpcomingDaysChange}
-                      className="w-full accent-blue-500 cursor-pointer"
+                      className="w-full accent-blue-500 cursor-grab focus:cursor-grabbing"
                     />
                   </div>
 
@@ -607,7 +607,7 @@ const SubscriptionTracker = () => {
                       step="5"
                       value={itemsPerPage}
                       onChange={handleItemsPerPageChange}
-                      className="w-full accent-blue-500 cursor-pointer"
+                      className="w-full accent-blue-500 cursor-grab focus:cursor-grabbing"
                     />
                   </div>
 
