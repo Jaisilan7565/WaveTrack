@@ -8,6 +8,7 @@ const {
   rejectPayment,
   getPaymentById,
   updatePayment,
+  refundPayment,
 } = require("../controllers/paymentCtrl");
 
 const router = express.Router();
@@ -44,24 +45,10 @@ router.patch(
   rejectPayment
 );
 
-// router.patch(
-//   "/:id",
-//   authorize("Admin", "General Manager", "Senior HR", "HR", "Manager"),
-//   updateEmployee
-// );
-
-// router.patch(
-//   "/:id/inActivate",
-//   authorize("Admin", "General Manager", "Senior HR", "HR", "Manager"),
-//   inActivateEmployee
-// );
-
-// router.patch(
-//   "/:id/resetPassword",
-//   authorize("Admin", "General Manager", "Senior HR", "Manager"),
-//   resetPassword
-// );
-
-// router.delete("/:id", authorize("Admin", "General Manager"), deleteEmployee);
+router.patch(
+  "/:id/refund",
+  authorize("Admin", "General Manager", "Manager", "Finance"),
+  refundPayment
+);
 
 module.exports = router;

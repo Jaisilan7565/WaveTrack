@@ -5,6 +5,7 @@ import * as XLSX from "xlsx";
 import {
   approvePaymentAPI,
   getPaymentsAPI,
+  refundPaymentAPI,
   rejectPaymentAPI,
 } from "../../services/paymentServices";
 import { useQuery } from "@tanstack/react-query";
@@ -20,6 +21,7 @@ import {
   FiEdit,
   FiUpload,
 } from "react-icons/fi";
+import { HiOutlineReceiptRefund } from "react-icons/hi";
 import NoData from "../../components/NoData";
 import Toast from "../../components/Toast";
 import { hasPermission } from "../../utils/auth";
@@ -362,7 +364,7 @@ const AllPaymentsPanel = () => {
   };
 
   const handleRowClick = (id) => {
-    navigate(`/payment/${id}`);
+    navigate(`/subscriber/${id}`);
   };
 
   const exportToExcel = () => {
@@ -898,6 +900,34 @@ const AllPaymentsPanel = () => {
                                 <FiEdit className="h-5 w-5" />
                               </button>
                             )}
+                          {payment?.request_status !== "pending" &&
+                            payment?.transactionType === "Expense" &&
+                            payment?.status !== "Refunded" &&
+                            payment?.status !== "Rejected" && (
+                              <button
+                                className="p-1.5 text-rose-600 hover:bg-rose-500 hover:text-white rounded-md transition-colors"
+                                title="Refund"
+                                onClick={async () => {
+                                  await refundPaymentAPI(
+                                    payment?._id,
+                                    payment?.status
+                                  )
+                                    .then((res) => {
+                                      setSubmissionStatus({
+                                        type: "success",
+                                        message:
+                                          res?.message ??
+                                          "Refunding in process...",
+                                      });
+                                    })
+                                    .finally(() => {
+                                      refetch();
+                                    });
+                                }}
+                              >
+                                <HiOutlineReceiptRefund className="h-5 w-5" />
+                              </button>
+                            )}
                           {DecisionMaker &&
                             payment.request_status === "pending" && (
                               <>
@@ -905,13 +935,34 @@ const AllPaymentsPanel = () => {
                                   className="p-1.5 text-green-600 hover:bg-green-500 hover:text-white rounded-md transition-colors"
                                   title="Approve"
                                   disabled={loadingApprove === payment._id}
-                                  onClick={() =>
-                                    handleApprove(
-                                      payment?._id,
-                                      payment?.status,
-                                      payment
-                                    )
-                                  }
+                                  onClick={async () => {
+                                    if (payment?.status === "Refunding") {
+                                      const confirmRefund = window.confirm(
+                                        "Are you sure this payment is Refunded? This action cannot be undone."
+                                      );
+
+                                      if (!confirmRefund) return;
+
+                                      try {
+                                        handleApprove(
+                                          payment?._id,
+                                          payment?.status,
+                                          payment
+                                        );
+                                      } catch (error) {
+                                        setSubmissionStatus({
+                                          type: "error",
+                                          message: "Failed to process refund",
+                                        });
+                                      }
+                                    } else {
+                                      handleApprove(
+                                        payment?._id,
+                                        payment?.status,
+                                        payment
+                                      );
+                                    }
+                                  }}
                                 >
                                   {loadingApprove === payment?._id ? (
                                     <Loader className="h-5 w-5 animate-spin" />
@@ -1435,18 +1486,66 @@ const AllPaymentsPanel = () => {
                           <FiEdit className="h-4 w-4" />
                         </button>
                       )}
+                    {payment?.request_status !== "pending" &&
+                      payment?.transactionType === "Expense" &&
+                      payment?.status !== "Refunded" &&
+                      payment?.status !== "Rejected" && (
+                        <button
+                          className="p-1.5 text-rose-600 hover:bg-rose-500 hover:text-white rounded-md transition-colors"
+                          title="Refund"
+                          onClick={async () => {
+                            await refundPaymentAPI(
+                              payment?._id,
+                              payment?.status
+                            )
+                              .then((res) => {
+                                setSubmissionStatus({
+                                  type: "success",
+                                  message:
+                                    res?.message ?? "Refunding in process",
+                                });
+                              })
+                              .finally(() => {
+                                refetch();
+                              });
+                          }}
+                        >
+                          <HiOutlineReceiptRefund className="h-5 w-5" />
+                        </button>
+                      )}
                     {DecisionMaker && payment.request_status === "pending" && (
                       <>
                         <button
                           className="p-1.5 text-green-600 hover:bg-green-100 rounded-md transition-colors"
                           title="Approve"
-                          onClick={() =>
-                            handleApprove(
-                              payment?._id,
-                              payment?.status,
-                              payment
-                            )
-                          }
+                          onClick={async () => {
+                            if (payment?.status === "Refunding") {
+                              const confirmRefund = window.confirm(
+                                "Are you sure this payment is Refunded? This action cannot be undone."
+                              );
+
+                              if (!confirmRefund) return;
+
+                              try {
+                                handleApprove(
+                                  payment?._id,
+                                  payment?.status,
+                                  payment
+                                );
+                              } catch (error) {
+                                setSubmissionStatus({
+                                  type: "error",
+                                  message: "Failed to process refund",
+                                });
+                              }
+                            } else {
+                              handleApprove(
+                                payment?._id,
+                                payment?.status,
+                                payment
+                              );
+                            }
+                          }}
                           disabled={loadingApprove === payment._id}
                         >
                           {loadingApprove === payment._id ? (

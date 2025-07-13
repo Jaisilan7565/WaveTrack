@@ -92,6 +92,11 @@ export const approvePaymentAPI = async (id, status, payment) => {
         request_status: "approved",
         status: "Active",
       };
+    } else if (status === "Refunding") {
+      payload = {
+        request_status: "approved",
+        status: "Refunded",
+      };
     }
 
     const response = await axios.patch(
@@ -120,6 +125,14 @@ export const rejectPaymentAPI = async (id, status, payment) => {
         request_status: "rejected",
         status: "Rejected",
       };
+    } else if (
+      status === "Refunding" &&
+      payment?.transactionType === "Expense"
+    ) {
+      payload = {
+        request_status: "approved",
+        status: "Paid",
+      };
     }
 
     const response = await axios.patch(
@@ -130,6 +143,38 @@ export const rejectPaymentAPI = async (id, status, payment) => {
     return response.data;
   } catch (error) {
     console.error("Error rejecting payment:", error);
+    throw error;
+  }
+};
+
+export const refundPaymentAPI = async (id, status) => {
+  try {
+    let payload;
+    if (status === "Rejected") {
+      payload = {
+        request_status: "pending",
+        status: "Refunding",
+      };
+    } else if (status === "Paid") {
+      payload = {
+        request_status: "pending",
+        status: "Refunding",
+      };
+    } else if (status === "Received") {
+      payload = {
+        request_status: "pending",
+        status: "Refunding",
+      };
+    }
+
+    const response = await axios.patch(
+      `${BASE_URL}/payments/${id}/refund`,
+      payload,
+      getAuthHeaders()
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating payment:", error);
     throw error;
   }
 };

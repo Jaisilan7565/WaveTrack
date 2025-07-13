@@ -434,6 +434,35 @@ const paymentController = {
       res.status(500).json({ message: err.message });
     }
   }),
+
+  //Refund Payment
+  refundPayment: asyncHandler(async (req, res, next) => {
+    try {
+      const payment = await Payment.findById(req.params.id);
+
+      if (!payment) {
+        return res.status(404).json({ message: "Payment not found" });
+      }
+
+      const refundedSubscriber = await Payment.findByIdAndUpdate(
+        req.params.id,
+        {
+          ...req.body,
+          decision_by: req.user.id,
+          updatedAt: Date.now(),
+        },
+        { new: true, runValidators: true }
+      );
+
+      res.json({
+        success: true,
+        data: refundedSubscriber,
+        message: `Payment ${req.body.status} in Process`,
+      });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  }),
 };
 
 module.exports = paymentController;

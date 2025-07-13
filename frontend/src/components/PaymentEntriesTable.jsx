@@ -13,6 +13,7 @@ import {
   FiDelete,
   FiTrash,
 } from "react-icons/fi";
+import { HiOutlineReceiptRefund } from "react-icons/hi";
 import { Loader } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import { getUserRoles } from "../utils/jwt";
@@ -23,10 +24,12 @@ import AddPaymentForm from "../pages/SubscriberManagement/Subscriber/Payments/Ad
 import UserHoverCard from "./UserHoverCard";
 import {
   approvePaymentAPI,
+  refundPaymentAPI,
   rejectPaymentAPI,
 } from "../services/paymentServices";
 import UpdatePaymentForm from "../pages/SubscriberManagement/Subscriber/Payments/UpdatePaymentForm";
 import Toast from "./Toast";
+import { useMutation } from "@tanstack/react-query";
 
 const PaymentEntriesTable = ({ payments, refetch, subscriber, subRefetch }) => {
   const [activeFilters, setActiveFilters] = useState(0);
@@ -34,8 +37,6 @@ const PaymentEntriesTable = ({ payments, refetch, subscriber, subRefetch }) => {
   const [loadingApprove, setLoadingApprove] = useState(null);
   const [loadingReject, setLoadingReject] = useState(null);
   const [submissionStatus, setSubmissionStatus] = useState(null);
-
-  console.log(subscriber);
 
   const [sortConfig, setSortConfig] = useState({
     key: "transactionDate",
@@ -47,6 +48,16 @@ const PaymentEntriesTable = ({ payments, refetch, subscriber, subRefetch }) => {
     ["Admin", "General Manager", "Manager", "Senior HR"],
     userRoles
   );
+
+  // //Refund Mutation
+  // const {
+  //   mutateAsync: refundPaymentMutate,
+  //   isLoading: isRefundLoading,
+  //   isSuccess: isRefundSuccess,
+  // } = useMutation({
+  //   mutationFn: () => refundPaymentAPI(id, subscriberData.status),
+  //   mutationKey: ["refundPayment", id],
+  // });
 
   const [hoveredUser, setHoveredUser] = useState({
     modifiedBy: null,
@@ -758,19 +769,69 @@ const PaymentEntriesTable = ({ payments, refetch, subscriber, subRefetch }) => {
                               </button>
                             )}
 
+                          {payment?.request_status !== "pending" &&
+                            payment?.transactionType === "Expense" &&
+                            payment?.status !== "Refunded" &&
+                            payment?.status !== "Rejected" && (
+                              <button
+                                className="p-1.5 text-rose-600 hover:bg-rose-500 hover:text-white rounded-md transition-colors"
+                                title="Refund"
+                                onClick={async () => {
+                                  await refundPaymentAPI(
+                                    payment?._id,
+                                    payment?.status
+                                  )
+                                    .then((res) => {
+                                      setSubmissionStatus({
+                                        type: "success",
+                                        message:
+                                          res?.message ??
+                                          "Refunding in process...",
+                                      });
+                                    })
+                                    .finally(() => {
+                                      refetch();
+                                    });
+                                }}
+                              >
+                                <HiOutlineReceiptRefund className="h-5 w-5" />
+                              </button>
+                            )}
+
                           {DecisionMaker &&
                             payment?.request_status === "pending" && (
                               <>
                                 <button
                                   className="p-1.5 text-green-600 hover:bg-green-500 hover:text-white rounded-md transition-colors"
                                   title="Approve"
-                                  onClick={() =>
-                                    handleApprove(
-                                      payment?._id,
-                                      payment?.status,
-                                      payment
-                                    )
-                                  }
+                                  onClick={async () => {
+                                    if (payment?.status === "Refunding") {
+                                      const confirmRefund = window.confirm(
+                                        "Are you sure this payment is Refunded? This action cannot be undone."
+                                      );
+
+                                      if (!confirmRefund) return;
+
+                                      try {
+                                        handleApprove(
+                                          payment?._id,
+                                          payment?.status,
+                                          payment
+                                        );
+                                      } catch (error) {
+                                        setSubmissionStatus({
+                                          type: "error",
+                                          message: "Failed to process refund",
+                                        });
+                                      }
+                                    } else {
+                                      handleApprove(
+                                        payment?._id,
+                                        payment?.status,
+                                        payment
+                                      );
+                                    }
+                                  }}
                                   disabled={loadingApprove === payment?._id}
                                 >
                                   {loadingApprove === payment?._id ? (
