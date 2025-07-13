@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { LayoutDashboard, LogOut } from "lucide-react";
 import { GoOrganization } from "react-icons/go";
 import { FaUsers } from "react-icons/fa";
@@ -13,6 +13,9 @@ import Sidebar, { SidebarItem, DropdownItem } from "./Sidebar";
 import { logoutAPI } from "../services/authServices";
 import { getUserRoles } from "../utils/jwt";
 import { hasPermission } from "../utils/auth";
+import { getEmployeesAPI } from "../services/employeeServices";
+import { getSubscribersAPI } from "../services/subscriberServices";
+import { getPaymentsAPI } from "../services/paymentServices";
 
 const EmployeeSidebar = ({ sidebarOpen, setSidebarOpen }) => {
   const userRoles = getUserRoles();
@@ -50,6 +53,88 @@ const EmployeeSidebar = ({ sidebarOpen, setSidebarOpen }) => {
     }
   };
 
+  const [employees, setEmployees] = useState([]);
+  const [subscribers, setSubscribers] = useState([]);
+  const [payments, setPayments] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [employees, subscribers, payments] = await Promise.all([
+          getEmployeesAPI(),
+          getSubscribersAPI(),
+          getPaymentsAPI(),
+        ]);
+
+        setEmployees(employees?.data);
+        setSubscribers(subscribers?.data);
+        setPayments(payments?.data);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    fetchData();
+  }, [path]);
+
+  const [employeeNotifications, setEmployeeNotifications] = useState([]);
+  const [subscriberNotifications, setSubscriberNotifications] = useState([]);
+  const [paymentNotifications, setPaymentNotifications] = useState([]);
+  const [trackerNotifications, setTrackerNotifications] = useState([]);
+
+  // Count active filters and notifications
+  useEffect(() => {
+    const calculateNotifications = () => {
+      // Employee notifications
+      const pendingAndRejectedEmployees = employees.filter(
+        (e) => e.request_status === "pending" || e.request_status === "rejected"
+      ).length;
+
+      // Subscriber notifications
+      const pendingAndRejectedSubscribers = subscribers.filter(
+        (e) => e.request_status === "pending" || e.request_status === "rejected"
+      ).length;
+
+      // Payment notifications
+      const pendingPayments = payments.filter(
+        (e) => e.request_status === "pending"
+      ).length;
+
+      // Renewal tracker notifications
+      const upcomingDays = 7;
+      let renewalNotifications = 0;
+
+      if (upcomingDays !== undefined) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const futureDate = new Date(today);
+        futureDate.setDate(today.getDate() + upcomingDays);
+
+        renewalNotifications = subscribers.filter((subscriber) => {
+          if (
+            !subscriber?.ispInfo?.renewalDate ||
+            subscriber.status === "Suspended"
+          ) {
+            return false;
+          }
+
+          const renewalDate = new Date(subscriber.ispInfo.renewalDate);
+          renewalDate.setHours(0, 0, 0, 0);
+          return renewalDate <= futureDate;
+        }).length;
+      }
+
+      // Update states
+      setEmployeeNotifications(pendingAndRejectedEmployees);
+      setSubscriberNotifications(pendingAndRejectedSubscribers);
+      setPaymentNotifications(pendingPayments);
+      setTrackerNotifications(renewalNotifications);
+    };
+
+    calculateNotifications();
+  }, [employees, subscribers, payments]);
+
   return (
     <>
       {/* Backdrop for mobile */}
@@ -67,7 +152,6 @@ const EmployeeSidebar = ({ sidebarOpen, setSidebarOpen }) => {
           lg:translate-x-0 lg:relative
         `}
       >
-        {/* ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} */}
         <Sidebar>
           <Link to="/">
             <SidebarItem
@@ -78,31 +162,8 @@ const EmployeeSidebar = ({ sidebarOpen, setSidebarOpen }) => {
             />
           </Link>
 
-          {/* <Link to="/subscribers">
-            <SidebarItem
-              icon={<Podcast size={30} />}
-              text="Subscribers"
-              onClick={toggleSubscriberDropdown}
-              isDropdown
-              isOpen={isSubscriberOpen}
-              active={
-                path === "/subscribers" || path.startsWith("/subscribers/")
-              }
-            />
-          </Link>
-          {isSubscriberOpen && (
-            <>
-              <Link to="/subscribers-history">
-                <DropdownItem
-                  text="Subscribers History"
-                  onClick={() => setSidebarOpen(false)}
-                />
-              </Link>
-            </>
-          )} */}
-
           {FinancePermission && (
-            <Link to="/subscriber-management">
+            <Link to="/subscriber-management" className="relative">
               <SidebarItem
                 icon={<Podcast size={30} />}
                 text="Subscribers"
@@ -115,66 +176,16 @@ const EmployeeSidebar = ({ sidebarOpen, setSidebarOpen }) => {
                   path.startsWith("/subscriber/")
                 }
               />
+              {subscriberNotifications > 0 && (
+                <span className="absolute bottom-3 -right-2 bg-gray-100 border-1 border-red-500 text-red-600 text-sm font-semibold rounded-full h-5 w-5 flex items-center justify-center">
+                  {subscriberNotifications}
+                </span>
+              )}
             </Link>
           )}
-
-          {/* {FinancePermission && (
-            <Link to="/subscribers-alert">
-              <SidebarItem
-                icon={<AiOutlineAlert size={30} />}
-                text="Subscription Tracker"
-                active={
-                  path === "/subscribers-alert" ||
-                  path.startsWith("/subscribers-alert/")
-                }
-                onClick={() => setSidebarOpen(false)}
-              />
-            </Link>
-          )}
-
-          {TLStaffPermission && (
-            <Link to="/order-dashboard">
-              <SidebarItem
-                icon={<LayoutDashboard size={30} />}
-                text="Orders"
-                active={
-                  path === "/order-dashboard" ||
-                  path.startsWith("/order-dashboard/")
-                }
-                onClick={() => setSidebarOpen(false)}
-              />
-            </Link>
-          )}
-          {TLStaffPermission && (
-            <Link to="/isp-management">
-              <SidebarItem
-                icon={<GoOrganization size={30} />}
-                text="Vendor Management"
-                active={
-                  path === "/isp-management" ||
-                  path.startsWith("/isp-management/")
-                }
-                onClick={() => setSidebarOpen(false)}
-              />
-            </Link>
-          )}
-
-          {FinancePermission && (
-            <Link to="/inventory-management">
-              <SidebarItem
-                icon={<MdInventory size={30} />}
-                text="Stocks & Inventory"
-                active={
-                  path === "/inventory-management" ||
-                  path.startsWith("/inventory-management/")
-                }
-                onClick={() => setSidebarOpen(false)}
-              />
-            </Link>
-          )} */}
 
           {HRPermission && (
-            <Link to="/employee-management">
+            <Link to="/employee-management" className="relative">
               <SidebarItem
                 icon={<FaUsers size={30} />}
                 text="User Management"
@@ -184,11 +195,16 @@ const EmployeeSidebar = ({ sidebarOpen, setSidebarOpen }) => {
                 }
                 onClick={() => setSidebarOpen(false)}
               />
+              {employeeNotifications > 0 && (
+                <span className="absolute bottom-3 -right-2 bg-gray-100 border-1 border-red-500 text-red-600 text-sm font-semibold rounded-full h-5 w-5 flex items-center justify-center">
+                  {employeeNotifications}
+                </span>
+              )}
             </Link>
           )}
 
           {FinancePermission && (
-            <Link to="/subscription-tracker">
+            <Link to="/subscription-tracker" className="relative">
               <SidebarItem
                 icon={<SiPivotaltracker size={30} />}
                 text="Subscription Tracker"
@@ -198,11 +214,16 @@ const EmployeeSidebar = ({ sidebarOpen, setSidebarOpen }) => {
                 }
                 onClick={() => setSidebarOpen(false)}
               />
+              {trackerNotifications > 0 && (
+                <span className="absolute bottom-3 -right-2 bg-gray-100 border-1 border-red-500 text-red-600 text-sm font-semibold rounded-full h-5 w-5 flex items-center justify-center">
+                  {trackerNotifications}
+                </span>
+              )}
             </Link>
           )}
 
           {FinancePermission && (
-            <Link to="/all-payments">
+            <Link to="/all-payments" className="relative">
               <SidebarItem
                 icon={<HiDocumentCurrencyRupee size={30} />}
                 text="Payment Records"
@@ -211,6 +232,11 @@ const EmployeeSidebar = ({ sidebarOpen, setSidebarOpen }) => {
                 }
                 onClick={() => setSidebarOpen(false)}
               />
+              {paymentNotifications > 0 && (
+                <span className="absolute bottom-3 -right-2 bg-gray-100 border-1 border-red-500 text-red-600 text-sm font-semibold rounded-full h-5 w-5 flex items-center justify-center">
+                  {paymentNotifications}
+                </span>
+              )}
             </Link>
           )}
 

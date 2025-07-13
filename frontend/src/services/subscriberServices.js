@@ -133,6 +133,11 @@ export const rejectSubscriberAPI = async (id, status, subscriber) => {
         request_status: "approved",
         status: "Active",
       };
+    } else if (status === "Active") {
+      payload = {
+        request_status: "approved",
+        status: "Suspended",
+      };
     }
 
     const response = await axios.patch(
