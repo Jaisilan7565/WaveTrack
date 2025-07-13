@@ -91,7 +91,6 @@ const AllPaymentsPanel = () => {
     queryKey: ["getPayments"],
     refetchOnWindowFocus: true,
   });
-  console.log("Payments Data:", payments);
 
   const [selectedPaymentId, setSelectedPaymentId] = useState(null);
   const [isUpdatePaymentFormOpen, setIsUpdatePaymentFormOpen] = useState(false);
@@ -891,8 +890,18 @@ const AllPaymentsPanel = () => {
                       </td>
 
                       {/* Type */}
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                        {payment?.transactionType}
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <span
+                          className={`px-2.5 py-1 rounded-full text-xs font-semibold leading-5 ${
+                            payment?.transactionType === "Income"
+                              ? "bg-green-100 text-green-800" // Green for Income
+                              : payment?.transactionType === "Expense"
+                              ? "bg-rose-100 text-rose-800" // Rose/deep pink for Expense
+                              : "bg-gray-100 text-gray-800" // Default fallback
+                          }`}
+                        >
+                          {payment?.transactionType}
+                        </span>
                       </td>
 
                       {/* Amount */}
