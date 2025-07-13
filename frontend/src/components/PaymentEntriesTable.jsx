@@ -228,44 +228,70 @@ const PaymentEntriesTable = ({ payments, refetch, subscriber, subRefetch }) => {
     return sortConfig.direction === "asc" ? <FiChevronUp /> : <FiChevronDown />;
   };
 
-  const exportToExcel = () => {
-    // Determine which data to export
-    const dataToExport = processedPayments;
+  const [isExporting, setIsExporting] = useState(false);
+  const [progress, setProgress] = useState(0);
 
-    if (!dataToExport || dataToExport.length === 0) {
-      alert("No data available to export");
-      return;
+  const exportToExcel = async () => {
+    setIsExporting(true);
+    setProgress(0);
+
+    try {
+      setProgress(10); // Starting
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      setProgress(30);
+      // Determine which data to export
+      const dataToExport = processedPayments;
+
+      if (!dataToExport || dataToExport.length === 0) {
+        alert("No data available to export");
+        return;
+      }
+
+      setProgress(50);
+
+      // Prepare the worksheet data
+      const worksheetData = dataToExport.map((payment) => ({
+        "Site Code": payment?.subscriberId?.siteCode || "",
+        "Transaction ID": payment?.transactionId || "",
+        "Transaction Type": payment?.transactionType || "",
+        "Transaction Mode": payment?.transactionMode || "",
+        "Activation Date": payment?.activationDate?.split("T")[0] || "",
+        "Renewal Date": payment?.expiryDate?.split("T")[0] || "",
+        Amount: payment?.amount || "",
+        "Transaction Date": payment?.transactionDate?.split("T")[0] || "",
+        Status: payment?.status || "",
+        "Recorded By": payment?.created_by?.name || "",
+        "Modified By": payment?.modifiedData?.modified_by?.name || "",
+        "Verified By": payment?.decision_by?.name || "",
+      }));
+
+      setProgress(70);
+
+      // Create workbook and worksheet
+      const workbook = XLSX.utils.book_new();
+      const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+
+      // Add worksheet to workbook
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Payments");
+
+      setProgress(90);
+
+      // Generate Excel file and trigger download
+      const fileName = `${subscriber?.siteCode}_Payments_(${
+        subscriber?.subscriber_id
+      })${new Date().toISOString().split("T")[0]}.xlsx`;
+
+      XLSX.writeFile(workbook, fileName, { compression: true });
+
+      setProgress(100);
+      await new Promise((resolve) => setTimeout(resolve, 3000)); // Small delay for completion animation
+    } catch (error) {
+      console.error("Export failed:", error);
+      alert("Export failed. Please try again.");
+    } finally {
+      setIsExporting(false);
     }
-
-    // Prepare the worksheet data
-    const worksheetData = dataToExport.map((payment) => ({
-      "Site Code": payment?.subscriberId?.siteCode || "",
-      "Transaction ID": payment?.transactionId || "",
-      "Transaction Type": payment?.transactionType || "",
-      "Transaction Mode": payment?.transactionMode || "",
-      "Activation Date": payment?.activationDate?.split("T")[0] || "",
-      "Renewal Date": payment?.expiryDate?.split("T")[0] || "",
-      Amount: payment?.amount || "",
-      "Transaction Date": payment?.transactionDate?.split("T")[0] || "",
-      Status: payment?.status || "",
-      "Recorded By": payment?.created_by?.name || "",
-      "Modified By": payment?.modifiedData?.modified_by?.name || "",
-      "Verified By": payment?.decision_by?.name || "",
-    }));
-
-    // Create workbook and worksheet
-    const workbook = XLSX.utils.book_new();
-    const worksheet = XLSX.utils.json_to_sheet(worksheetData);
-
-    // Add worksheet to workbook
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Payments");
-
-    // Generate Excel file and trigger download
-    const fileName = `${subscriber?.siteCode}_Payments_(${
-      subscriber?.subscriber_id
-    })${new Date().toISOString().split("T")[0]}.xlsx`;
-
-    XLSX.writeFile(workbook, fileName, { compression: true });
   };
 
   const formatDate = (dateString) => {
@@ -579,13 +605,61 @@ const PaymentEntriesTable = ({ payments, refetch, subscriber, subRefetch }) => {
           </div>
         </div>
 
-        <div className="flex gap-2 w-full sm:w-auto justify-end">
+        <div className="flex gap-2 w-full sm:w-auto justify-end relative">
           <button
             onClick={exportToExcel}
+            disabled={isExporting}
             className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
           >
-            <FiDownload /> <span className="">Export</span>
+            <FiDownload /> <span>Export</span>
           </button>
+
+          {isExporting && (
+            <div className="fixed inset-0 bg-black/50 flex flex-col items-center justify-center z-50">
+              <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+                <h3 className="text-lg font-medium mb-4 text-center">
+                  Preparing Excel Export
+                </h3>
+
+                {/* Progress bar */}
+                <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4">
+                  <div
+                    className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                    style={{ width: `${progress}%` }}
+                  ></div>
+                </div>
+
+                {/* Percentage and spinner */}
+                <div className="flex items-center justify-center space-x-3">
+                  <div className="text-gray-700 font-medium">
+                    {progress}% Complete
+                  </div>
+                  <div className="animate-spin">
+                    <svg
+                      className="w-5 h-5 text-blue-600"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           <button
             className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"

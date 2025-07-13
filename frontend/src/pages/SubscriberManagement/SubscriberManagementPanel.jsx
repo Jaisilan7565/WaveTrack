@@ -730,52 +730,79 @@ const SubscriberManagementPanel = () => {
     navigate(`/subscriber/${id}`);
   };
 
-  const exportToExcel = () => {
-    // Determine which data to export
-    const dataToExport =
-      selectedRows.length > 0
-        ? selectedRows.map((row) => row.subscriber)
-        : processedSubscribers;
+  const [isExporting, setIsExporting] = useState(false);
+  const [progress, setProgress] = useState(0);
 
-    if (!dataToExport || dataToExport.length === 0) {
-      alert("No data available to export");
-      return;
+  const exportToExcel = async () => {
+    setIsExporting(true);
+    setProgress(0);
+
+    try {
+      setProgress(10); // Starting
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // Determine which data to export
+      setProgress(30);
+      const dataToExport =
+        selectedRows.length > 0
+          ? selectedRows.map((row) => row.subscriber)
+          : processedSubscribers;
+
+      if (!dataToExport || dataToExport.length === 0) {
+        alert("No data available to export");
+        return;
+      }
+
+      // Prepare the worksheet data
+      setProgress(50);
+
+      const worksheetData = dataToExport.map((subscriber) => ({
+        "Subscriber ID": subscriber.subscriber_id,
+        "Site Name": subscriber.siteName,
+        "Site Code": subscriber.siteCode,
+        Address: subscriber.siteAddress,
+        "LC Name": subscriber.localContact?.name || "",
+        "LC Contact": subscriber.localContact?.contact || "",
+        "ISP Name": subscriber.ispInfo?.name || "",
+        "ISP Contact": subscriber.ispInfo?.contact || "",
+        Plan: subscriber.ispInfo?.broadbandPlan || "",
+        "MRC (₹)": subscriber.ispInfo?.mrc || "",
+        "OTC (₹)": subscriber.ispInfo?.otc || "",
+        Status: subscriber.status,
+        "Activation Date": subscriber.activationDate?.split("T")[0] || "",
+        "Current Activation Date":
+          subscriber.ispInfo?.currentActivationDate?.split("T")[0] || "",
+        "Renewal Date": subscriber.ispInfo?.renewalDate?.split("T")[0] || "",
+      }));
+
+      // Create workbook and worksheet
+      setProgress(70);
+      const workbook = XLSX.utils.book_new();
+      const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+
+      // Add worksheet to workbook
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Subscribers");
+
+      // Generate Excel file and trigger download
+      setProgress(90);
+
+      const fileName =
+        selectedRows.length > 0
+          ? `Selected_Subscribers_${
+              new Date().toISOString().split("T")[0]
+            }.xlsx`
+          : `All_Subscribers_${new Date().toISOString().split("T")[0]}.xlsx`;
+
+      XLSX.writeFile(workbook, fileName, { compression: true });
+
+      setProgress(100);
+      await new Promise((resolve) => setTimeout(resolve, 3000)); // Small delay for completion animation
+    } catch (error) {
+      console.error("Export failed:", error);
+      alert("Export failed. Please try again.");
+    } finally {
+      setIsExporting(false);
     }
-
-    // Prepare the worksheet data
-    const worksheetData = dataToExport.map((subscriber) => ({
-      "Subscriber ID": subscriber.subscriber_id,
-      "Site Name": subscriber.siteName,
-      "Site Code": subscriber.siteCode,
-      Address: subscriber.siteAddress,
-      "LC Name": subscriber.localContact?.name || "",
-      "LC Contact": subscriber.localContact?.contact || "",
-      "ISP Name": subscriber.ispInfo?.name || "",
-      "ISP Contact": subscriber.ispInfo?.contact || "",
-      Plan: subscriber.ispInfo?.broadbandPlan || "",
-      "MRC (₹)": subscriber.ispInfo?.mrc || "",
-      "OTC (₹)": subscriber.ispInfo?.otc || "",
-      Status: subscriber.status,
-      "Activation Date": subscriber.activationDate?.split("T")[0] || "",
-      "Current Activation Date":
-        subscriber.ispInfo?.currentActivationDate?.split("T")[0] || "",
-      "Renewal Date": subscriber.ispInfo?.renewalDate?.split("T")[0] || "",
-    }));
-
-    // Create workbook and worksheet
-    const workbook = XLSX.utils.book_new();
-    const worksheet = XLSX.utils.json_to_sheet(worksheetData);
-
-    // Add worksheet to workbook
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Subscribers");
-
-    // Generate Excel file and trigger download
-    const fileName =
-      selectedRows.length > 0
-        ? `Selected_Subscribers_${new Date().toISOString().split("T")[0]}.xlsx`
-        : `All_Subscribers_${new Date().toISOString().split("T")[0]}.xlsx`;
-
-    XLSX.writeFile(workbook, fileName, { compression: true });
   };
 
   if (isManualRefetching) {
@@ -977,7 +1004,7 @@ const SubscriberManagementPanel = () => {
           </div>
         </div>
 
-        <div className="w-full flex flex-col px-4 py-2 sm:flex-row justify-between gap-3 sm:gap-0">
+        <div className="w-full flex flex-col px-4 py-2 sm:flex-row justify-between gap-3 sm:gap-0 relative">
           {/* Left Button Group */}
           <div className="flex flex-wrap gap-2 sm:gap-3">
             <button
@@ -988,17 +1015,65 @@ const SubscriberManagementPanel = () => {
               Import Subscribers
             </button>
             <button
-              className="flex items-center gap-2 sm:flex-none whitespace-nowrap px-3 py-2 sm:px-4 sm:py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 text-sm sm:text-base"
               onClick={exportToExcel}
-              disabled={
-                !processedSubscribers || processedSubscribers.length === 0
-              }
+              disabled={isExporting}
+              className={`flex items-center gap-2 sm:flex-none whitespace-nowrap px-3 py-2 sm:px-4 sm:py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 text-sm sm:text-base ${
+                isExporting ? "cursor-not-allowed" : "cursor-pointer"
+              }`}
             >
               <FiUpload />
               {selectedRows.length > 0
                 ? `Export Selected (${selectedRows.length})`
+                : isExporting
+                ? "Exporting..."
                 : "Export"}
             </button>
+            {isExporting && (
+              <div className="fixed inset-0 bg-black/50 flex flex-col items-center justify-center z-50">
+                <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+                  <h3 className="text-lg font-medium mb-4 text-center">
+                    Preparing Excel Export
+                  </h3>
+
+                  {/* Progress bar */}
+                  <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4">
+                    <div
+                      className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                      style={{ width: `${progress}%` }}
+                    ></div>
+                  </div>
+
+                  {/* Percentage and spinner */}
+                  <div className="flex items-center justify-center space-x-3">
+                    <div className="text-gray-700 font-medium">
+                      {progress}% Complete
+                    </div>
+                    <div className="animate-spin">
+                      <svg
+                        className="w-5 h-5 text-blue-600"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
             {hasDeletePermission && selectedRows.length > 0 && (
               <button
                 className="flex-1 sm:flex-none whitespace-nowrap px-3 py-2 sm:px-4 sm:py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 text-sm sm:text-base"
