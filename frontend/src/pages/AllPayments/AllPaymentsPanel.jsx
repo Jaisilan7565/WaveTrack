@@ -485,7 +485,7 @@ const AllPaymentsPanel = () => {
     );
 
   return (
-    <div className="bg-gradient-to-br from-gray-50 to-gray-100 min-h-fit">
+    <div className="min-h-fit">
       {isUpdatePaymentFormOpen && (
         <UpdatePaymentForm
           id={selectedPaymentId}

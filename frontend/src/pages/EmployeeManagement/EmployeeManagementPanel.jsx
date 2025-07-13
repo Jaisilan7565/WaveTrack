@@ -333,7 +333,7 @@ const EmployeeManagementPanel = () => {
     );
 
   return (
-    <div className="bg-gradient-to-br from-gray-50 to-gray-100 min-h-fit">
+    <div className="min-h-fit">
       {/* min-h-screen */}
       {/* Sticky Search Header */}
       {submissionStatus && (
@@ -483,44 +483,8 @@ const EmployeeManagementPanel = () => {
       </div>
 
       <div className="max-w-7xl mx-auto p-4 sm:p-6">
-        {/* Summary Stats */}
-        <div className="grid grid-cols-3 sm:grid-cols-3 gap-4 mb-6">
-          <div className="bg-white p-4 rounded-lg shadow border border-gray-200">
-            <h3 className="text-sm font-medium text-gray-500">
-              Total Employees
-            </h3>
-            <p className="text-2xl font-semibold text-gray-900">
-              {processedEmployees.length}
-            </p>
-          </div>
-          <div className="bg-white p-4 rounded-lg shadow border border-gray-200">
-            <h3 className="text-sm font-medium text-gray-500">
-              Active - InActive
-            </h3>
-            <p className="text-2xl font-semibold text-green-600">
-              {processedEmployees.filter((e) => e.status === "Active").length}
-              {" - "}
-              <span className="text-red-600">
-                {
-                  processedEmployees.filter((e) => e.status === "InActive")
-                    .length
-                }
-              </span>
-            </p>
-          </div>
-          <div className="bg-white p-4 rounded-lg shadow border border-gray-200">
-            <h3 className="text-sm font-medium text-gray-500">On Process</h3>
-            <p className="text-2xl font-semibold text-blue-600">
-              {
-                processedEmployees.filter((e) => e.status === "OnProcess")
-                  .length
-              }
-            </p>
-          </div>
-        </div>
-
         {/* Desktop Table */}
-        <div className="hidden sm:block bg-white shadow-xl rounded-xl overflow-x-auto">
+        <div className="hidden sm:block shadow-xl rounded-xl overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gradient-to-r from-blue-600 to-blue-500">
               <tr>

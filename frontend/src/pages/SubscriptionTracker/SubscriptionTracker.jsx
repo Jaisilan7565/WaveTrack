@@ -437,7 +437,7 @@ const SubscriptionTracker = () => {
     );
 
   return (
-    <div className="bg-gradient-to-br from-gray-50 to-gray-100 min-h-fit">
+    <div className="min-h-fit">
       <div className="sticky top-0 z-10 bg-white shadow-sm">
         {submissionStatus && (
           <Toast

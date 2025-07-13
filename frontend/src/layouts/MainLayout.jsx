@@ -61,7 +61,7 @@ const MainLayout = () => {
       )}
 
       <div className="flex-1 flex flex-col overflow-y-auto hide-scrollbar">
-        <div className="sticky top-0 z-100 w-full">
+        <div className="sticky top-0 z-39 w-full">
           {shouldShowSidebar && (
             <TopBar
               onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
@@ -74,7 +74,7 @@ const MainLayout = () => {
           )}
         </div>
 
-        <div className="flex-1 overflow-y-auto hide-scrollbar">
+        <div className="flex-1 overflow-y-auto hide-scrollbar bg-gradient-to-br from-gray-50 to-blue-50">
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route

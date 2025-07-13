@@ -175,10 +175,18 @@ const MainDashboard = () => {
   );
 
   return (
-    <div className="p-6 bg-gray-50">
+    <div className="p-6">
       {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        <div className="flex flex-col justify-center items-center h-64">
+          <div className="flex">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900">
+            No Data Available for Visualization
+          </h1>
         </div>
       ) : (
         <>
