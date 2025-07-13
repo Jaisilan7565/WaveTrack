@@ -5,6 +5,7 @@ import { IoSyncOutline } from "react-icons/io5";
 import { SlUser } from "react-icons/sl";
 import { inActivateExpiredSubscriberAPI } from "../services/automateServices";
 import Toast from "../components/Toast";
+import { Link, useLocation } from "react-router-dom";
 
 const TopBar = ({ onToggleSidebar, pageTitle }) => {
   const [submissionStatus, setSubmissionStatus] = useState(null);
@@ -64,7 +65,9 @@ const TopBar = ({ onToggleSidebar, pageTitle }) => {
               });
           }}
         />
-        <SlUser size={22} className="text-black ml-2 mr-4 cursor-pointer" />
+        <Link to="/my-profile">
+          <SlUser size={22} className="text-black ml-2 mr-4 cursor-pointer" />
+        </Link>
       </div>
     </div>
   );

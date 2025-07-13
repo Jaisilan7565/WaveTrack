@@ -77,6 +77,55 @@ const authCtrl = {
       next(err);
     }
   }),
+
+  // Change password
+  changePassword: asyncHandler(async (req, res, next) => {
+    try {
+      const employee = await Employee.findById(req.params.id).select(
+        "+password"
+      );
+
+      if (!employee) {
+        return res.status(404).json({ message: "Employee not found" });
+      }
+
+      const { currentPassword, newPassword } = req.body;
+
+      // Validate current password
+      if (!currentPassword || !newPassword) {
+        return next(
+          new ErrorResponse("Please provide current and new password", 400)
+        );
+      }
+      // Check if current password matches
+      const isMatch = await bcrypt.compare(currentPassword, employee.password);
+
+      if (!isMatch) {
+        return next(new ErrorResponse("Current password is incorrect", 401));
+      }
+
+      // Hash new password
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+      await Employee.findByIdAndUpdate(
+        req.params.id,
+        {
+          password: hashedPassword,
+          decision_by: req.user.id,
+          updatedAt: Date.now(),
+        },
+        { new: true, runValidators: true }
+      );
+
+      res.status(200).json({
+        success: true,
+        message: "Password Changed Successfully",
+      });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  }),
 };
 
 module.exports = authCtrl;

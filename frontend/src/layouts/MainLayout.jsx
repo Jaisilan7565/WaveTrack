@@ -17,6 +17,7 @@ import MainDashboard from "../pages/Dashboard/MainDashboard";
 import Subscriber from "../pages/SubscriberManagement/Subscriber/Subscriber";
 import AllPaymentsPanel from "../pages/AllPayments/AllPaymentsPanel";
 import SubscriptionTracker from "../pages/SubscriptionTracker/SubscriptionTracker";
+import MyProfile from "../pages/MyProfile/MyProfile";
 
 const MainLayout = () => {
   const location = useLocation();
@@ -47,6 +48,7 @@ const MainLayout = () => {
     { path: "subscriber", name: "Subscriber" },
     { path: "/all-payments", name: "All Payments" },
     { path: "/subscription-tracker", name: "Subscription Tracker" },
+    { path: "/my-profile", name: "My Profile" },
   ];
 
   return (
@@ -59,7 +61,7 @@ const MainLayout = () => {
       )}
 
       <div className="flex-1 flex flex-col overflow-y-auto hide-scrollbar">
-        <div className="sticky top-0 w-full">
+        <div className="sticky top-0 z-10 w-full">
           {shouldShowSidebar && (
             <TopBar
               onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
@@ -120,6 +122,14 @@ const MainLayout = () => {
               element={
                 <AuthRoute>
                   <SubscriptionTracker />
+                </AuthRoute>
+              }
+            />
+            <Route
+              path="/my-profile"
+              element={
+                <AuthRoute>
+                  <MyProfile />
                 </AuthRoute>
               }
             />
