@@ -14,7 +14,7 @@ const { protect, authorize } = require("../middlewares/auth");
 
 const router = express.Router();
 
-router.use(protect);
+// router.use(protect);
 
 router.get("/", getEmployees);
 
@@ -22,7 +22,7 @@ router.get("/:id", getEmployeeById);
 
 router.post(
   "/",
-  authorize("Admin", "General Manager", "Senior HR", "HR", "Manager"),
+  // authorize("Admin", "General Manager", "Senior HR", "HR", "Manager"),
   createEmployee
 );
 
