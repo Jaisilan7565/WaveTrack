@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { format, addMonths, parseISO } from "date-fns";
@@ -98,6 +98,7 @@ const AddSubscriberForm = ({ handleClose }) => {
         otc: 0,
         mrc: 0,
         currentActivationDate: format(new Date(), "yyyy-MM-dd"),
+        renewalDate: "",
       },
       activationDate: format(new Date(), "yyyy-MM-dd"),
       credentials: {
@@ -113,18 +114,11 @@ const AddSubscriberForm = ({ handleClose }) => {
         // Trim all string values (including nested ones) before processing
         const trimmedValues = deepTrim(values);
 
-        // Calculate renewal date with trimmed values
-        const renewalDate = calculateRenewalDate(
-          trimmedValues.activationDate,
-          trimmedValues.ispInfo.numberOfMonths
-        );
-
         const newSubs = {
           ...trimmedValues,
           ispInfo: {
             ...trimmedValues.ispInfo,
             currentActivationDate: trimmedValues.activationDate,
-            renewalDate,
           },
         };
 
@@ -164,11 +158,25 @@ const AddSubscriberForm = ({ handleClose }) => {
     },
   });
 
-  // Updated renewal date calculation
-  const renewalDate = calculateRenewalDate(
-    formik.values.ispInfo?.currentActivationDate,
-    formik.values.ispInfo?.numberOfMonths
-  );
+  const handleActivationDateChange = (e) => {
+    const newDate = e.target.value;
+    // Updated renewal date calculation
+    const renewalDate = calculateRenewalDate(
+      format(newDate, "yyyy-MM-dd"),
+      formik.values.ispInfo?.numberOfMonths
+    );
+
+    formik.setFieldValue("activationDate", newDate);
+    formik.setFieldValue("ispInfo.renewalDate", renewalDate);
+  };
+
+  useEffect(() => {
+    const renewalDate = calculateRenewalDate(
+      formik.values.activationDate,
+      formik.values.ispInfo?.numberOfMonths
+    );
+    formik.setFieldValue("ispInfo.renewalDate", renewalDate);
+  }, [formik.values.activationDate, formik.values.ispInfo?.numberOfMonths]);
 
   return (
     <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
@@ -586,7 +594,11 @@ const AddSubscriberForm = ({ handleClose }) => {
                     id="activationDate"
                     name="activationDate"
                     value={formik.values.activationDate}
-                    onChange={formik.handleChange}
+                    // onChange={formik.handleChange}
+                    onChange={(e) => {
+                      formik.handleChange(e);
+                      handleActivationDateChange(e);
+                    }}
                     onBlur={formik.handleBlur}
                     className={`block w-full rounded-md py-2 px-3.5 shadow-sm border ${
                       formik.touched.activationDate &&
@@ -609,8 +621,11 @@ const AddSubscriberForm = ({ handleClose }) => {
                   Next Renewal Date
                 </label>
                 <div className="block w-full px-3 py-2 rounded-md border border-gray-300 shadow-sm sm:text-sm">
-                  {renewalDate
-                    ? format(parseISO(renewalDate), "MMMM d, yyyy")
+                  {formik?.values?.ispInfo?.renewalDate
+                    ? format(
+                        parseISO(formik?.values?.ispInfo?.renewalDate),
+                        "MMMM d, yyyy"
+                      )
                     : "N/A"}
                 </div>
               </div>

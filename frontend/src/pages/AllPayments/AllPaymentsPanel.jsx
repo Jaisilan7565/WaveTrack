@@ -223,6 +223,13 @@ const AllPaymentsPanel = () => {
     return result;
   }, [payments, searchTerm, filters, sortConfig, currentPage]);
 
+  const totalRevenue = processedPayments
+    ?.filter((p) => p.transactionType === "Income")
+    .reduce((sum, p) => sum + Number(p.amount), 0);
+  const totalExpenses = processedPayments
+    ?.filter((p) => p.transactionType === "Expense")
+    .reduce((sum, p) => sum + Number(p.amount), 0);
+
   // Get current items
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -2103,6 +2110,23 @@ const AllPaymentsPanel = () => {
             </div>
           </div>
         )}
+
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+          <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-green-500">
+            <h3 className="text-gray-500 text-sm font-medium">Total Income</h3>
+            <p className="text-2xl font-bold text-gray-800">
+              ₹ {totalRevenue.toLocaleString()}
+            </p>
+          </div>
+
+          <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-red-500">
+            <h3 className="text-gray-500 text-sm font-medium">Total Expense</h3>
+            <p className="text-2xl font-bold text-gray-800">
+              ₹ {totalExpenses.toLocaleString()}
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
