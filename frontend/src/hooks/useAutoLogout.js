@@ -23,7 +23,7 @@ const useAutoLogout = () => {
     const timer = setTimeout(() => {
       dispatch(logout());
       localStorage.removeItem("jwt");
-      window.location.href = "/login?expired=true";
+      window.location.href = "#/login?expired=true";
     }, expiresIn);
 
     return () => clearTimeout(timer);

@@ -21,7 +21,7 @@ export const loginAPI = async (credentials) => {
 export const logoutAPI = () => {
   localStorage.removeItem("jwt");
   store.dispatch(logout());
-  window.location.href = "/login";
+  window.location.href = "#/login";
 };
 
 export const changePasswordAPI = async ({
