@@ -52,7 +52,7 @@ const employeeController = {
       roles,
       remark,
       joining_date: new Date(),
-      created_by: req.user.id || "Demo",
+      created_by: "Demo",
       status: "OnProcess",
     });
 
