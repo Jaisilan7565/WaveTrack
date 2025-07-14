@@ -224,10 +224,15 @@ const AllPaymentsPanel = () => {
   }, [payments, searchTerm, filters, sortConfig, currentPage]);
 
   const totalRevenue = processedPayments
-    ?.filter((p) => p.transactionType === "Income")
+    ?.filter((p) => p.transactionType === "Income" && p.status !== "Rejected")
     .reduce((sum, p) => sum + Number(p.amount), 0);
   const totalExpenses = processedPayments
-    ?.filter((p) => p.transactionType === "Expense")
+    ?.filter(
+      (p) =>
+        p.transactionType === "Expense" &&
+        p.status !== "Rejected" &&
+        p.status !== "Refunded"
+    )
     .reduce((sum, p) => sum + Number(p.amount), 0);
 
   // Get current items
