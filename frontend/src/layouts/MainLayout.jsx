@@ -18,6 +18,7 @@ import Subscriber from "../pages/SubscriberManagement/Subscriber/Subscriber";
 import AllPaymentsPanel from "../pages/AllPayments/AllPaymentsPanel";
 import SubscriptionTracker from "../pages/SubscriptionTracker/SubscriptionTracker";
 import MyProfile from "../pages/MyProfile/MyProfile";
+import TicketManagementPanel from "../pages/TicketManagement/TicketManagementPanel";
 
 const MainLayout = () => {
   const location = useLocation();
@@ -49,6 +50,7 @@ const MainLayout = () => {
     { path: "/all-payments", name: "All Payments" },
     { path: "/subscription-tracker", name: "Subscription Tracker" },
     { path: "/my-profile", name: "My Profile" },
+    { path: "/tickets", name: "Tickets" },
   ];
 
   return (
@@ -130,6 +132,14 @@ const MainLayout = () => {
               element={
                 <AuthRoute>
                   <MyProfile />
+                </AuthRoute>
+              }
+            />
+            <Route
+              path="/tickets"
+              element={
+                <AuthRoute>
+                  <TicketManagementPanel />
                 </AuthRoute>
               }
             />

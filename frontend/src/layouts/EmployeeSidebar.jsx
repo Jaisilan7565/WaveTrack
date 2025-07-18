@@ -56,6 +56,7 @@ const EmployeeSidebar = ({ sidebarOpen, setSidebarOpen }) => {
   const [employees, setEmployees] = useState([]);
   const [subscribers, setSubscribers] = useState([]);
   const [payments, setPayments] = useState([]);
+  const [tickets, setTickets] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -81,6 +82,7 @@ const EmployeeSidebar = ({ sidebarOpen, setSidebarOpen }) => {
   const [subscriberNotifications, setSubscriberNotifications] = useState([]);
   const [paymentNotifications, setPaymentNotifications] = useState([]);
   const [trackerNotifications, setTrackerNotifications] = useState([]);
+  const [ticketNotifications, setTicketNotifications] = useState([]);
 
   // Count active filters and notifications
   useEffect(() => {
@@ -98,6 +100,11 @@ const EmployeeSidebar = ({ sidebarOpen, setSidebarOpen }) => {
       // Payment notifications
       const pendingPayments = payments.filter(
         (e) => e.request_status === "pending"
+      ).length;
+
+      // Ticket notifications
+      const pendingTickets = tickets.filter(
+        (e) => e.request_status === "pending" || e.status !== "Closed"
       ).length;
 
       // Renewal tracker notifications
@@ -235,6 +242,22 @@ const EmployeeSidebar = ({ sidebarOpen, setSidebarOpen }) => {
               {paymentNotifications > 0 && (
                 <span className="absolute bottom-3 -right-2 bg-gray-100 border-1 border-red-500 text-red-600 text-sm font-semibold rounded-full h-5 w-5 flex items-center justify-center">
                   {paymentNotifications}
+                </span>
+              )}
+            </Link>
+          )}
+
+          {TLStaffPermission && (
+            <Link to="/tickets" className="relative">
+              <SidebarItem
+                icon={<IoTicketSharp size={30} />}
+                text="Tickets"
+                active={path === "/tickets" || path.startsWith("/tickets")}
+                onClick={() => setSidebarOpen(false)}
+              />
+              {ticketNotifications > 0 && (
+                <span className="absolute bottom-3 -right-2 bg-gray-100 border-1 border-red-500 text-red-600 text-sm font-semibold rounded-full h-5 w-5 flex items-center justify-center">
+                  {ticketNotifications}
                 </span>
               )}
             </Link>

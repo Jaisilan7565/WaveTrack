@@ -14,7 +14,8 @@ const employeeRoutes = require("./routes/employeeRoutes");
 const subscriberRoutes = require("./routes/subscriberRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const auditRoutes = require("./routes/auditRoutes");
-automateRoutes = require("./routes/automateRoutes");
+const automateRoutes = require("./routes/automateRoutes");
+const ticketRoutes = require("./routes/ticketRoutes");
 
 const app = express();
 
@@ -56,6 +57,7 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/employees", employeeRoutes);
 app.use("/api/v1/subscribers", subscriberRoutes);
 app.use("/api/v1/payments", paymentRoutes);
+app.use("/api/v1/tickets", ticketRoutes);
 app.use("/api/v1/automate", automateRoutes);
 // app.use("/api/v1/audit-logs", auditRoutes);
 
