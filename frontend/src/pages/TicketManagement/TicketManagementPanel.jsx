@@ -166,18 +166,20 @@ const TicketManagementPanel = () => {
   };
 
   // Ticket filter counts
-  const allTicketsReminder = tickets.filter(
+  const allTicketsReminder = tickets?.filter(
     (e) => e.request_status === "pending"
   ).length;
-  const openTickets = tickets.filter((e) => e.status === "Open").length;
-  const inProgressTickets = tickets.filter(
+  const openTickets = tickets?.filter((e) => e.status === "Open").length;
+  const inProgressTickets = tickets?.filter(
     (e) => e.status === "In Progress"
   ).length;
-  const criticalTickets = tickets.filter((e) => e.status === "Critical").length;
-  const resolvedTicketsReminder = tickets.filter(
+  const criticalTickets = tickets?.filter(
+    (e) => e.status === "Critical"
+  ).length;
+  const resolvedTicketsReminder = tickets?.filter(
     (e) => e.status === "Resolved" && e.request_status === "pending"
   ).length;
-  const highPriorityTickets = tickets.filter(
+  const highPriorityTickets = tickets?.filter(
     (e) => e.priority === "High" && e.status !== "Resolved"
   ).length;
 
