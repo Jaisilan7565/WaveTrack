@@ -6,6 +6,8 @@ const {
   approveTicket,
   rejectTicket,
   getTicketById,
+  updateTicket,
+  resolveTicket,
 } = require("../controllers/ticketCtrl");
 
 const router = express.Router();
@@ -31,6 +33,18 @@ router.patch(
   "/:id/reject",
   authorize("Admin", "General Manager", "Manager", "Team Lead"),
   rejectTicket
+);
+
+router.patch(
+  "/:id",
+  authorize("Admin", "General Manager", "Manager", "Team Lead", "Staff"),
+  updateTicket
+);
+
+router.patch(
+  "/:id/resolved",
+  authorize("Admin", "General Manager", "Manager", "Team Lead", "Staff"),
+  resolveTicket
 );
 
 module.exports = router;

@@ -250,6 +250,65 @@ const ticketController = {
       res.status(500).json({ message: err.message });
     }
   }),
+
+  //Update Ticket
+  updateTicket: asyncHandler(async (req, res, next) => {
+    try {
+      const ticket = await Ticket.findById(req.params.id);
+
+      if (!ticket) {
+        return res.status(404).json({ message: "Ticket not found" });
+      }
+
+      const updatedTicket = await Ticket.findByIdAndUpdate(
+        req.params.id,
+        {
+          ispTicketId: req.body.ispTicketId,
+          note: req.body.note,
+          status: "In Progress",
+          updatedAt: Date.now(),
+        },
+        { new: true, runValidators: true }
+      );
+
+      res.json({
+        success: true,
+        data: updatedTicket,
+        message: "Ticket Updated Successfully",
+      });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  }),
+
+  //Resolve Ticket
+  resolveTicket: asyncHandler(async (req, res, next) => {
+    try {
+      const ticket = await Ticket.findById(req.params.id);
+
+      if (!ticket) {
+        return res.status(404).json({ message: "Ticket not found" });
+      }
+
+      const resolvedTicket = await Ticket.findByIdAndUpdate(
+        req.params.id,
+        {
+          ...req.body,
+          decision_by: req.user.id,
+          updatedAt: Date.now(),
+        },
+        { new: true, runValidators: true }
+      );
+
+      res.json({
+        success: true,
+        data: resolvedTicket,
+        message: `Ticket ${req.body.status} in Process`,
+      });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  }),
 };
 
 module.exports = ticketController;

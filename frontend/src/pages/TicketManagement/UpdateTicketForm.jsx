@@ -3,10 +3,15 @@ import * as Yup from "yup";
 import { useState, useEffect } from "react";
 import Toast from "../../components/Toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { getTicketByIdAPI } from "../../services/ticketServices";
+import {
+  getTicketByIdAPI,
+  resolveTicketAPI,
+  updateTicketAPI,
+} from "../../services/ticketServices";
 import { Loader } from "lucide-react";
 import { FiMapPin } from "react-icons/fi";
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
+import { FaRegThumbsUp } from "react-icons/fa";
 
 const UpdateTicketForm = ({ id, handleClose }) => {
   const [submissionStatus, setSubmissionStatus] = useState(null);
@@ -14,7 +19,7 @@ const UpdateTicketForm = ({ id, handleClose }) => {
   const {
     data: fetchedTicket,
     isSuccess: fetchedSuccess,
-    refetch: refetchSub,
+    refetch: refetchTicket,
   } = useQuery({
     queryFn: () => getTicketByIdAPI(id),
     queryKey: ["ticketByID", id],
@@ -34,47 +39,34 @@ const UpdateTicketForm = ({ id, handleClose }) => {
     isSuccess: updateSuccess,
     error,
   } = useMutation({
-    // mutationFn: updateTicketAPI,
+    mutationFn: updateTicketAPI,
     mutationKey: ["updateTicket"],
   });
 
   const formik = useFormik({
     initialValues: {
-      subscriber: null, // will store the selected subscriber object
-      issueTitle: "",
-      issueDescription: "",
-      priority: "Medium",
-      assignedTo: null, // will store the selected employee object
+      ispTicketId: "",
+      note: "",
     },
     validationSchema: Yup.object({
-      subscriber: Yup.object().required("Subscriber is required"),
-      issueTitle: Yup.string()
+      ispTicketId: Yup.string().required("ISP Ticket is required"),
+      note: Yup.string()
         .min(5, "Must be at least 5 characters")
-        .max(100, "Must be 100 characters or less")
+        .max(500, "Must be 100 characters or less")
         .required("Required"),
-      issueDescription: Yup.string()
-        .min(10, "Must be at least 10 characters")
-        .max(500, "Must be 500 characters or less")
-        .required("Required"),
-      priority: Yup.string().required("Required"),
-      assignedTo: Yup.object().required("Assignee is required"),
     }),
     onSubmit: async (values) => {
       try {
-        const ticketData = {
-          subscriberId: values.subscriber._id,
-          issueTitle: values.issueTitle.trim(),
-          issueDescription: values.issueDescription.trim(),
-          priority: values.priority,
-          assignedTo: values.assignedTo._id,
-          issueRaisedDate: new Date(),
+        const updatedTicketData = {
+          ispTicketId: values.ispTicketId,
+          note: values.note,
         };
 
-        await updateTicketMutate(ticketData)
+        await updateTicketMutate({ id: id, data: updatedTicketData })
           .then(() => {
             setSubmissionStatus({
               type: "success",
-              message: "Ticket created successfully!",
+              message: "Ticket updated successfully!",
             });
             formik.resetForm();
             setTimeout(() => {
@@ -82,13 +74,13 @@ const UpdateTicketForm = ({ id, handleClose }) => {
             }, 2000);
           })
           .catch((error) => {
-            console.error("Error creating ticket:", error);
+            console.error("Error updating ticket:", error);
             setSubmissionStatus({
               type: "error",
               message:
                 error?.response?.data?.error ??
                 error?.message ??
-                "Failed to create ticket",
+                "Failed to update ticket",
             });
           });
       } catch (error) {
@@ -97,14 +89,61 @@ const UpdateTicketForm = ({ id, handleClose }) => {
           message:
             error?.response?.data?.error ??
             error?.message ??
-            "Failed to create ticket",
+            "Failed to update ticket",
         });
       }
     },
   });
 
+  useEffect(() => {
+    if (ticket) {
+      formik.setValues({
+        ispTicketId: ticket?.ispTicketId || "", // Set the default value here
+        note: ticket?.note || "",
+      });
+    }
+    refetchTicket();
+  }, [ticket, id]);
+
+  //Resolve Mutation
+  const {
+    mutateAsync: resolveTicketMutate,
+    isLoading: inResolveLoading,
+    isSuccess: inResolveSuccess,
+  } = useMutation({
+    mutationFn: () =>
+      resolveTicketAPI(id, ticket?.status, formik.values.note.trim()),
+    mutationKey: ["resolveTicket", id],
+  });
+
+  const handleResolved = async () => {
+    await resolveTicketMutate()
+      .then((response) => {
+        setSubmissionStatus({
+          type: "success",
+          message: response?.message ?? "Ticket Resolved in Process",
+        });
+        setTimeout(() => handleClose(), 3000);
+      })
+      .catch((error) => {
+        setSubmissionStatus({
+          type: "error",
+          message:
+            error?.response?.data?.error ??
+            error?.message ??
+            "Failed to Resolve Ticket",
+        });
+      });
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
+      {submissionStatus && (
+        <Toast
+          type={submissionStatus.type}
+          message={submissionStatus.message}
+        />
+      )}
       <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto hide-scrollbar">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold text-gray-900">Update Ticket</h3>
@@ -129,7 +168,9 @@ const UpdateTicketForm = ({ id, handleClose }) => {
           </button>
         </div>
 
-        {!updateSuccess ? (
+        {!fetchedSuccess ? (
+          <Loader className="flex justify-center items-center animate-spin text-blue-500" />
+        ) : !updateSuccess ? (
           <form onSubmit={formik.handleSubmit} className="space-y-6">
             <div className="space-y-5">
               <h2 className="text-lg font-semibold text-gray-800 mb-2">
@@ -210,24 +251,27 @@ const UpdateTicketForm = ({ id, handleClose }) => {
 
             {/* Status and Actions */}
             <div className="space-y-4">
-              {submissionStatus && (
-                <Toast
-                  type={submissionStatus.type}
-                  message={submissionStatus.message}
-                  onClose={() => setSubmissionStatus(null)}
-                />
-              )}
-
               <div className="flex justify-between space-x-3 pt-4 border-t border-gray-200">
-                <button
-                  type="button"
-                  onClick={() => formik.resetForm()}
-                  className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
-                  <ArrowPathIcon className="-ml-1 mr-2 h-5 w-5 text-gray-500" />
-                  Reset
-                </button>
-                <div className="flex justify-end space-x-3">
+                {(ticket?.status === "In Progress" ||
+                  ticket?.status === "Critical") &&
+                  ticket?.note && (
+                    <button
+                      type="button"
+                      onClick={handleResolved}
+                      disabled={inResolveSuccess}
+                      className="inline-flex items-center px-4 py-2 border border-green-600 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-green-100 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-600 disabled:opacity-70 disabled:cursor-not-allowed transition-colors"
+                    >
+                      {inResolveSuccess ? (
+                        <Loader className="animate-spin text-blue-500 " />
+                      ) : (
+                        <>
+                          <FaRegThumbsUp className="-ml-1 mr-2 h-5 w-5 text-gray-500" />
+                          Resolved
+                        </>
+                      )}
+                    </button>
+                  )}
+                <div className="flex w-full justify-end space-x-3">
                   <button
                     type="button"
                     onClick={handleClose}

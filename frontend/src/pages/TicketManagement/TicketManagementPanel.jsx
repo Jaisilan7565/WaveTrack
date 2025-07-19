@@ -144,23 +144,6 @@ const TicketManagementPanel = () => {
     }
   };
 
-  // // Filter tickets based on active filter and search term
-  // const filteredTickets = tickets?.filter((ticket) => {
-  //   const matchesFilter =
-  //     activeFilter === "all" ||
-  //     ticket.status.toLowerCase() === activeFilter.toLowerCase() ||
-  //     ticket.priority.toLowerCase() === activeFilter.toLowerCase();
-
-  //   const matchesSearch =
-  //     searchTerm === "" ||
-  //     Object.values(ticket).some(
-  //       (value) =>
-  //         value &&
-  //         value.toString().toLowerCase().includes(searchTerm.toLowerCase())
-  //     );
-
-  //   return matchesFilter && matchesSearch;
-  // });
   const deepSearch = (obj, searchTerm) => {
     if (typeof obj !== "object" || obj === null) {
       // Handle primitives (string, number, boolean)
@@ -187,7 +170,8 @@ const TicketManagementPanel = () => {
       const matchesFilter =
         activeFilter === "all" ||
         ticket.status.toLowerCase() === activeFilter.toLowerCase() ||
-        ticket.priority.toLowerCase() === activeFilter.toLowerCase();
+        (ticket.priority.toLowerCase() === activeFilter.toLowerCase() &&
+          ticket.status.toLowerCase() !== "resolved");
 
       const matchesSearch = searchTerm === "" || deepSearch(ticket, searchTerm);
 
@@ -228,6 +212,8 @@ const TicketManagementPanel = () => {
         return "bg-emerald-500/10 text-emerald-600";
       case "closed":
         return "bg-gray-500/10 text-gray-600";
+      case "critical":
+        return "bg-red-500/10 text-red-600";
       default:
         return "bg-gray-500/10 text-gray-600";
     }
@@ -339,6 +325,16 @@ const TicketManagementPanel = () => {
           High Priority
         </button>
         <button
+          onClick={() => setActiveFilter("critical")}
+          className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+            activeFilter === "critical"
+              ? "bg-red-100 text-red-700"
+              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+          }`}
+        >
+          Critical
+        </button>
+        <button
           onClick={() => setActiveFilter("open")}
           className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
             activeFilter === "open"
@@ -387,7 +383,17 @@ const TicketManagementPanel = () => {
           {filteredTickets?.map((ticket) => (
             <div
               key={ticket._id}
-              className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 border-1 border-gray-800 flex flex-col"
+              className={`${
+                ticket.status === "Resolved"
+                  ? "bg-green-200/50"
+                  : ticket.status === "In Progress"
+                  ? "bg-purple-200/50"
+                  : ticket.status === "Critical"
+                  ? "bg-red-200/50"
+                  : ticket.status === "Open"
+                  ? "bg-blue-200/50"
+                  : "bg-gray-200/50"
+              }  rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 border-1 border-gray-800 flex flex-col`}
             >
               <div className="p-5 flex-1 flex flex-col">
                 <div className="flex justify-between items-start mb-3">
@@ -443,7 +449,7 @@ const TicketManagementPanel = () => {
                       <div>
                         <p className="text-xs text-gray-500">ISP Ticket ID</p>
                         <p className="text-sm font-medium text-gray-700">
-                          {formatDate(ticket?.ispTicketId)}
+                          {ticket?.ispTicketId}
                         </p>
                       </div>
                     )}
@@ -452,21 +458,7 @@ const TicketManagementPanel = () => {
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <p className="text-xs text-gray-500">Assigned To</p>
-                      <p
-                        className="text-sm font-medium text-gray-700 truncate"
-                        onMouseEnter={() => {
-                          setHoveredUser({
-                            modifiedBy: ticket?.decision_by,
-                            ticketId: ticket?._id,
-                          });
-                        }}
-                        onMouseLeave={() =>
-                          setHoveredUser({
-                            modifiedBy: null,
-                            ticketId: null,
-                          })
-                        }
-                      >
+                      <p className="text-sm font-medium text-gray-700 truncate">
                         {ticket?.assignedTo.name}
                       </p>
                     </div>
@@ -476,6 +468,15 @@ const TicketManagementPanel = () => {
                         {formatDate(ticket.issueRaisedDate)}
                       </p>
                     </div>
+
+                    {ticket?.note && (
+                      <div className="col-span-2 bg-amber-100 p-2 rounded-xl">
+                        <p className="text-xs text-gray-500">Note</p>
+                        <p className="text-sm font-medium text-gray-700 truncate">
+                          {ticket.note}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -541,9 +542,10 @@ const TicketManagementPanel = () => {
                       <p>Updated: {formatDate(ticket?.updatedAt)}</p>
                     </div>
                   </div>
+
                   <div className="flex justify-between pt-1">
                     <button
-                      className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors"
+                      className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors mt-1"
                       onClick={() => handleRowClick(ticket?.subscriberId?._id)}
                     >
                       <FiExternalLink className="mr-1" />
@@ -551,17 +553,19 @@ const TicketManagementPanel = () => {
                     </button>
 
                     <div className="space-x-2">
-                      {ticket?.request_status !== "pending" && (
-                        <button
-                          className="p-1.5 text-blue-600 hover:bg-blue-500 hover:text-white rounded-md transition-colors cursor-pointer"
-                          title="Edit"
-                          onClick={() =>
-                            handleOpenUpdateTicketForm(ticket?._id)
-                          }
-                        >
-                          <FiEdit className="h-5 w-5" />
-                        </button>
-                      )}
+                      {ticket?.request_status !== "pending" &&
+                        ticket?.request_status !== "rejected" &&
+                        ticket?.status !== "Resolved" && (
+                          <button
+                            className="p-1.5 text-blue-600 hover:bg-blue-500 hover:text-white rounded-md transition-colors cursor-pointer"
+                            title="Edit"
+                            onClick={() =>
+                              handleOpenUpdateTicketForm(ticket?._id)
+                            }
+                          >
+                            <FiEdit className="h-5 w-5" />
+                          </button>
+                        )}
 
                       {DecisionMaker &&
                         ticket?.request_status === "pending" && (
