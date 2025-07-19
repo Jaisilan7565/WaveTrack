@@ -16,6 +16,7 @@ import { hasPermission } from "../utils/auth";
 import { getEmployeesAPI } from "../services/employeeServices";
 import { getSubscribersAPI } from "../services/subscriberServices";
 import { getPaymentsAPI } from "../services/paymentServices";
+import { getTicketsAPI } from "../services/ticketServices";
 
 const EmployeeSidebar = ({ sidebarOpen, setSidebarOpen }) => {
   const userRoles = getUserRoles();
@@ -61,15 +62,17 @@ const EmployeeSidebar = ({ sidebarOpen, setSidebarOpen }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [employees, subscribers, payments] = await Promise.all([
+        const [employees, subscribers, payments, tickets] = await Promise.all([
           getEmployeesAPI(),
           getSubscribersAPI(),
           getPaymentsAPI(),
+          getTicketsAPI(),
         ]);
 
         setEmployees(employees?.data);
         setSubscribers(subscribers?.data);
         setPayments(payments?.data);
+        setTickets(tickets?.data);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -104,7 +107,7 @@ const EmployeeSidebar = ({ sidebarOpen, setSidebarOpen }) => {
 
       // Ticket notifications
       const pendingTickets = tickets.filter(
-        (e) => e.request_status === "pending" || e.status !== "Closed"
+        (e) => e.status !== "Resolved" && e.status !== "Canceled"
       ).length;
 
       // Renewal tracker notifications
@@ -137,10 +140,11 @@ const EmployeeSidebar = ({ sidebarOpen, setSidebarOpen }) => {
       setSubscriberNotifications(pendingAndRejectedSubscribers);
       setPaymentNotifications(pendingPayments);
       setTrackerNotifications(renewalNotifications);
+      setTicketNotifications(pendingTickets);
     };
 
     calculateNotifications();
-  }, [employees, subscribers, payments]);
+  }, [employees, subscribers, payments, tickets]);
 
   return (
     <>

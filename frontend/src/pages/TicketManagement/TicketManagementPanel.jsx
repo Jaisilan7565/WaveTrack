@@ -165,6 +165,22 @@ const TicketManagementPanel = () => {
     });
   };
 
+  // Ticket filter counts
+  const allTicketsReminder = tickets.filter(
+    (e) => e.request_status === "pending"
+  ).length;
+  const openTickets = tickets.filter((e) => e.status === "Open").length;
+  const inProgressTickets = tickets.filter(
+    (e) => e.status === "In Progress"
+  ).length;
+  const criticalTickets = tickets.filter((e) => e.status === "Critical").length;
+  const resolvedTicketsReminder = tickets.filter(
+    (e) => e.status === "Resolved" && e.request_status === "pending"
+  ).length;
+  const highPriorityTickets = tickets.filter(
+    (e) => e.priority === "High" && e.status !== "Resolved"
+  ).length;
+
   const filteredTickets = tickets
     ?.filter((ticket) => {
       const matchesFilter =
@@ -306,63 +322,93 @@ const TicketManagementPanel = () => {
       <div className="flex flex-wrap gap-2 my-4 px-4">
         <button
           onClick={() => setActiveFilter("all")}
-          className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+          className={`relative px-4 py-2 rounded-full text-sm font-medium transition-all ${
             activeFilter === "all"
               ? "bg-blue-100 text-blue-700"
               : "bg-gray-100 text-gray-600 hover:bg-gray-200"
           }`}
         >
           All Tickets
+          {allTicketsReminder > 0 && (
+            <span className="absolute -top-1 -right-2 bg-yellow-500 text-white text-sm font-semibold rounded-full h-5 w-5 flex items-center justify-center">
+              {allTicketsReminder}
+            </span>
+          )}
         </button>
         <button
           onClick={() => setActiveFilter("high")}
-          className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+          className={`relative px-4 py-2 rounded-full text-sm font-medium transition-all ${
             activeFilter === "high"
               ? "bg-red-100 text-red-700"
               : "bg-gray-100 text-gray-600 hover:bg-gray-200"
           }`}
         >
           High Priority
+          {highPriorityTickets > 0 && (
+            <span className="absolute -top-1 -right-2 bg-blue-50 text-white text-sm font-semibold rounded-full h-5 w-5 flex items-center justify-center">
+              {highPriorityTickets}
+            </span>
+          )}
         </button>
         <button
           onClick={() => setActiveFilter("critical")}
-          className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+          className={`relative px-4 py-2 rounded-full text-sm font-medium transition-all ${
             activeFilter === "critical"
               ? "bg-red-100 text-red-700"
               : "bg-gray-100 text-gray-600 hover:bg-gray-200"
           }`}
         >
           Critical
+          {criticalTickets > 0 && (
+            <span className="absolute -top-1 -right-2 bg-blue-50 text-white text-sm font-semibold rounded-full h-5 w-5 flex items-center justify-center">
+              {criticalTickets}
+            </span>
+          )}
         </button>
         <button
           onClick={() => setActiveFilter("open")}
-          className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+          className={`relative px-4 py-2 rounded-full text-sm font-medium transition-all ${
             activeFilter === "open"
               ? "bg-blue-100 text-blue-700"
               : "bg-gray-100 text-gray-600 hover:bg-gray-200"
           }`}
         >
           Open
+          {openTickets > 0 && (
+            <span className="absolute -top-1 -right-2 bg-blue-50 text-white text-sm font-semibold rounded-full h-5 w-5 flex items-center justify-center">
+              {openTickets}
+            </span>
+          )}
         </button>
         <button
           onClick={() => setActiveFilter("in progress")}
-          className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+          className={`relative px-4 py-2 rounded-full text-sm font-medium transition-all ${
             activeFilter === "in progress"
               ? "bg-purple-100 text-purple-700"
               : "bg-gray-100 text-gray-600 hover:bg-gray-200"
           }`}
         >
           In Progress
+          {inProgressTickets > 0 && (
+            <span className="absolute -top-1 -right-2 bg-blue-50 text-white text-sm font-semibold rounded-full h-5 w-5 flex items-center justify-center">
+              {inProgressTickets}
+            </span>
+          )}
         </button>
         <button
           onClick={() => setActiveFilter("resolved")}
-          className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+          className={`relative px-4 py-2 rounded-full text-sm font-medium transition-all ${
             activeFilter === "resolved"
               ? "bg-green-100 text-green-700"
               : "bg-gray-100 text-gray-600 hover:bg-gray-200"
           }`}
         >
           Resolved
+          {resolvedTicketsReminder > 0 && (
+            <span className="absolute -top-1 -right-2 bg-yellow-500 text-white text-sm font-semibold rounded-full h-5 w-5 flex items-center justify-center">
+              {resolvedTicketsReminder}
+            </span>
+          )}
         </button>
       </div>
 
