@@ -32,7 +32,7 @@ const UserHoverCard = ({ userData }) => {
       ref={hoverRef}
       className={`absolute z-50 left-0 ${
         position === "top" ? "bottom-full mb-2" : "top-full mt-2"
-      } w-56 bg-white shadow-xl rounded-lg border border-gray-100 p-2.5`}
+      } w-56 bg-white shadow-xl rounded-lg border-1 border-gray-500 p-2.5`}
     >
       <div className="space-y-1.5">
         {/* Header with name */}

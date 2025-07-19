@@ -7,12 +7,57 @@ import {
   FiInfo,
   FiExternalLink,
   FiSearch,
+  FiCheck,
+  FiX,
+  FiEdit,
 } from "react-icons/fi";
+import { Loader } from "lucide-react";
 import AddTicketForm from "./AddTicketForm";
+import {
+  approveTicketAPI,
+  getTicketsAPI,
+  rejectTicketAPI,
+} from "../../services/ticketServices";
+import { useQuery } from "@tanstack/react-query";
+import { getUserRoles } from "../../utils/jwt";
+import { hasPermission } from "../../utils/auth";
+import UserHoverCard from "../../components/UserHoverCard";
+import { useNavigate } from "react-router-dom";
+import Toast from "../../components/Toast";
 
 const TicketManagementPanel = () => {
+  const navigate = useNavigate();
   const [activeFilter, setActiveFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+
+  const [loadingApprove, setLoadingApprove] = useState(null);
+  const [loadingReject, setLoadingReject] = useState(null);
+
+  const [submissionStatus, setSubmissionStatus] = useState(null);
+
+  const [hoveredUser, setHoveredUser] = useState({
+    modifiedBy: null,
+    ticketId: null,
+  });
+
+  const userRoles = getUserRoles();
+  const DecisionMaker = hasPermission(
+    ["Admin", "General Manager", "Manager", "Team Lead"],
+    userRoles
+  );
+
+  const {
+    data: fetchedTickets,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryFn: getTicketsAPI,
+    queryKey: ["getTickets"],
+    refetchOnWindowFocus: true,
+  });
+
+  const tickets = fetchedTickets?.data;
 
   const [isNewTicketFormOpen, setIsNewTicketFormOpen] = useState(false);
 
@@ -21,114 +66,128 @@ const TicketManagementPanel = () => {
   };
 
   const handleCloseNewTicketForm = () => {
-    // refetch();
+    refetch();
     setIsNewTicketFormOpen(false);
   };
 
-  const tickets = [
-    {
-      ticketId: "TKT-2023-001",
-      ispTicketId: "ISP-45678",
-      siteCode: "SC-001",
-      siteAddress: "123 Main St, Tech Park, Bangalore, Karnataka 560001",
-      issueTitle: "Network Connectivity Issue",
-      issueDescription:
-        "Customers reporting intermittent network connectivity in the area since morning. Need immediate resolution.",
-      ticketRaisedDate: "2023-05-15T09:30:00",
-      priority: "High",
-      status: "In Progress",
-      assignedTo: "John Doe",
-      lastUpdated: "2023-05-16T14:20:00",
-    },
-    {
-      ticketId: "TKT-2023-002",
-      ispTicketId: "ISP-45679",
-      siteCode: "SC-002",
-      siteAddress: "456 Oak Ave, Industrial Area, Mumbai, Maharashtra 400001",
-      issueTitle: "Slow Internet Speeds",
-      issueDescription:
-        "Users complaining about slow internet speeds during peak hours. Speed tests show 50% reduction in throughput.",
-      ticketRaisedDate: "2023-05-14T14:15:00",
-      priority: "Medium",
-      status: "Open",
-      assignedTo: "Jane Smith",
-      lastUpdated: "2023-05-15T10:45:00",
-    },
-    {
-      ticketId: "TKT-2023-003",
-      ispTicketId: null,
-      siteCode: "SC-003",
-      siteAddress: "789 Pine Rd, Commercial Complex, Delhi 110001",
-      issueTitle: "Router Configuration",
-      issueDescription:
-        "New router needs to be configured for the expanded office space. Requires VLAN setup and QoS configuration.",
-      ticketRaisedDate: "2023-05-10T11:00:00",
-      priority: "Low",
-      status: "Resolved",
-      assignedTo: "Mike Johnson",
-      lastUpdated: "2023-05-12T16:30:00",
-    },
-    {
-      ticketId: "TKT-2023-004",
-      ispTicketId: "ISP-45680",
-      siteCode: "SC-004",
-      siteAddress: "321 Elm Blvd, Tech Zone, Hyderabad, Telangana 500001",
-      issueTitle: "Fiber Cable Damage",
-      issueDescription:
-        "Reported fiber cable damage due to construction work in the area. Approximately 200m of cable needs replacement.",
-      ticketRaisedDate: "2023-05-16T08:45:00",
-      priority: "High",
-      status: "Open",
-      assignedTo: "Sarah Williams",
-      lastUpdated: "2023-05-16T09:30:00",
-    },
-    {
-      ticketId: "TKT-2023-005",
-      ispTicketId: "ISP-45681",
-      siteCode: "SC-005",
-      siteAddress: "654 Cedar Ln, Business Park, Chennai, Tamil Nadu 600001",
-      issueTitle: "Billing Discrepancy",
-      issueDescription:
-        "Customer reported incorrect billing for the last month. Overcharged by ₹1,200 for premium services not availed.",
-      ticketRaisedDate: "2023-05-12T16:20:00",
-      priority: "Medium",
-      status: "Closed",
-      assignedTo: "David Brown",
-      lastUpdated: "2023-05-14T11:15:00",
-    },
-    {
-      ticketId: "TKT-2023-006",
-      ispTicketId: null,
-      siteCode: "SC-006",
-      siteAddress: "987 Maple St, IT Hub, Pune, Maharashtra 411001",
-      issueTitle: "New Connection Request",
-      issueDescription:
-        "Request for new broadband connection for office expansion. Requires 1Gbps dedicated line with static IP addresses.",
-      ticketRaisedDate: "2023-05-17T10:10:00",
-      priority: "Low",
-      status: "Open",
-      assignedTo: "Unassigned",
-      lastUpdated: "2023-05-17T10:10:00",
-    },
-  ];
+  const handleRowClick = (id) => {
+    navigate(`/subscriber/${id}`);
+  };
 
-  // Filter tickets based on active filter and search term
-  const filteredTickets = tickets.filter((ticket) => {
-    const matchesFilter =
-      activeFilter === "all" ||
-      ticket.status.toLowerCase() === activeFilter.toLowerCase() ||
-      ticket.priority.toLowerCase() === activeFilter.toLowerCase();
+  const handleApprove = async (ticketId, status, ticket) => {
+    setLoadingApprove(ticketId);
+    try {
+      const response = await approveTicketAPI(ticketId, status, ticket);
 
-    const matchesSearch =
-      searchTerm === "" ||
-      Object.values(ticket).some(
-        (value) =>
-          value &&
-          value.toString().toLowerCase().includes(searchTerm.toLowerCase())
-      );
+      // Refresh the employee list
+      setTimeout(() => {
+        refetch();
+      }, 1000);
 
-    return matchesFilter && matchesSearch;
-  });
+      // Show success message
+      setSubmissionStatus({
+        type: "success",
+        message: response?.message ?? "Approved Successfully",
+      });
+    } catch (error) {
+      setSubmissionStatus({
+        type: "error",
+        message:
+          error?.response?.data?.error ??
+          error?.message ??
+          "Failed to Approve Subscriber",
+      });
+    } finally {
+      setLoadingApprove(null);
+    }
+  };
+
+  const handleReject = async (ticketId, status, ticket) => {
+    setLoadingReject(ticketId);
+    try {
+      const response = await rejectTicketAPI(ticketId, status, ticket);
+
+      // Refresh the employee list
+      setTimeout(() => {
+        refetch();
+      }, 1000);
+
+      // Show success message
+      setSubmissionStatus({
+        type: "success",
+        message: response?.message ?? "Rejected Successfully",
+      });
+    } catch (error) {
+      setSubmissionStatus({
+        type: "error",
+        message:
+          error?.response?.data?.error ??
+          error?.message ??
+          "Failed to Reject Subscriber",
+      });
+    } finally {
+      setLoadingReject(null);
+    }
+  };
+
+  // // Filter tickets based on active filter and search term
+  // const filteredTickets = tickets?.filter((ticket) => {
+  //   const matchesFilter =
+  //     activeFilter === "all" ||
+  //     ticket.status.toLowerCase() === activeFilter.toLowerCase() ||
+  //     ticket.priority.toLowerCase() === activeFilter.toLowerCase();
+
+  //   const matchesSearch =
+  //     searchTerm === "" ||
+  //     Object.values(ticket).some(
+  //       (value) =>
+  //         value &&
+  //         value.toString().toLowerCase().includes(searchTerm.toLowerCase())
+  //     );
+
+  //   return matchesFilter && matchesSearch;
+  // });
+  const deepSearch = (obj, searchTerm) => {
+    if (typeof obj !== "object" || obj === null) {
+      // Handle primitives (string, number, boolean)
+      return obj?.toString().toLowerCase().includes(searchTerm.toLowerCase());
+    }
+
+    // Handle arrays and objects
+    return Object.values(obj).some((value) => {
+      if (Array.isArray(value)) {
+        return value.some((item) => deepSearch(item, searchTerm));
+      } else if (typeof value === "object" && value !== null) {
+        return deepSearch(value, searchTerm);
+      } else {
+        return value
+          ?.toString()
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase());
+      }
+    });
+  };
+
+  const filteredTickets = tickets
+    ?.filter((ticket) => {
+      const matchesFilter =
+        activeFilter === "all" ||
+        ticket.status.toLowerCase() === activeFilter.toLowerCase() ||
+        ticket.priority.toLowerCase() === activeFilter.toLowerCase();
+
+      const matchesSearch = searchTerm === "" || deepSearch(ticket, searchTerm);
+
+      return matchesFilter && matchesSearch;
+    })
+    ?.sort((a, b) => {
+      if (a.request_status === "pending" && b.request_status !== "pending")
+        return -1;
+      if (a.request_status !== "pending" && b.request_status === "pending")
+        return 1;
+
+      // Then by createdAt (newest first)
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    });
 
   // Priority styling
   const getPriorityColor = (priority) => {
@@ -192,37 +251,13 @@ const TicketManagementPanel = () => {
       {isNewTicketFormOpen && (
         <AddTicketForm handleClose={handleCloseNewTicketForm} />
       )}
-      {/* <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-800">
-            Ticket Management
-          </h1>
-          <p className="text-gray-600 mt-1">
-            {filteredTickets.length}{" "}
-            {filteredTickets.length === 1 ? "ticket" : "tickets"} found
-          </p>
-        </div>
-
-        <div className="mt-4 md:mt-0 w-full md:w-auto">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search tickets..."
-              className="w-full md:w-64 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            {searchTerm && (
-              <button
-                onClick={() => setSearchTerm("")}
-                className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
-              >
-                ✕
-              </button>
-            )}
-          </div>
-        </div>
-      </div> */}
+      {submissionStatus && (
+        <Toast
+          type={submissionStatus.type}
+          message={submissionStatus.message}
+          onClose={() => setSubmissionStatus(null)}
+        />
+      )}
 
       <div className="sticky top-0 z-10 bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-col sm:flex-row justify-between items-center gap-3">
@@ -231,8 +266,8 @@ const TicketManagementPanel = () => {
               Ticket Directory
             </h2>
             <p className="text-gray-600 mt-1">
-              {filteredTickets.length}{" "}
-              {filteredTickets.length === 1 ? "ticket" : "tickets"} found
+              {filteredTickets?.length}{" "}
+              {filteredTickets?.length === 1 ? "ticket" : "tickets"} found
             </p>
           </div>
 
@@ -315,7 +350,7 @@ const TicketManagementPanel = () => {
         </button>
       </div>
 
-      {filteredTickets.length === 0 ? (
+      {filteredTickets?.length === 0 ? (
         <div className="bg-white rounded-xl shadow-sm p-8 text-center px-4">
           <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
             <FiInfo className="text-gray-400 text-2xl" />
@@ -329,9 +364,9 @@ const TicketManagementPanel = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 px-4">
-          {filteredTickets.map((ticket) => (
+          {filteredTickets?.map((ticket) => (
             <div
-              key={ticket.ticketId}
+              key={ticket._id}
               className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 border-1 border-gray-800 flex flex-col"
             >
               <div className="p-5 flex-1 flex flex-col">
@@ -364,9 +399,17 @@ const TicketManagementPanel = () => {
                 </p>
 
                 <div className="space-y-3 mb-4">
-                  <div className="flex items-center text-sm text-gray-600">
-                    <FiMapPin className="mr-2 text-gray-400 flex-shrink-0" />
-                    <span className="truncate">{ticket.siteAddress}</span>
+                  <div className="flex flex-col items-start text-sm text-gray-600">
+                    <span className="text-xs text-black font-semibold">
+                      {ticket.subscriberId.siteCode} {" - "}
+                      {ticket.subscriberId.siteName}
+                    </span>
+                    <div className="flex items-center">
+                      <FiMapPin className="mr-2 text-gray-400 flex-shrink-0" />
+                      <span className="truncate">
+                        {ticket.subscriberId.siteAddress}
+                      </span>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
@@ -376,38 +419,163 @@ const TicketManagementPanel = () => {
                         {ticket.ticketId}
                       </p>
                     </div>
-                    <div>
-                      <p className="text-xs text-gray-500">ISP Ticket ID</p>
-                      <p className="text-sm font-medium text-gray-700">
-                        {formatDate(ticket.lastUpdated)}
-                      </p>
-                    </div>
+                    {ticket.ispTicketId && (
+                      <div>
+                        <p className="text-xs text-gray-500">ISP Ticket ID</p>
+                        <p className="text-sm font-medium text-gray-700">
+                          {formatDate(ticket?.ispTicketId)}
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <p className="text-xs text-gray-500">Assigned To</p>
-                      <p className="text-sm font-medium text-gray-700 truncate">
-                        {ticket.assignedTo}
+                      <p
+                        className="text-sm font-medium text-gray-700 truncate"
+                        onMouseEnter={() => {
+                          setHoveredUser({
+                            modifiedBy: ticket?.decision_by,
+                            ticketId: ticket?._id,
+                          });
+                        }}
+                        onMouseLeave={() =>
+                          setHoveredUser({
+                            modifiedBy: null,
+                            ticketId: null,
+                          })
+                        }
+                      >
+                        {ticket?.assignedTo.name}
                       </p>
                     </div>
                     <div>
                       <p className="text-xs text-gray-500">Raised On</p>
                       <p className="text-sm font-medium text-gray-700">
-                        {formatDate(ticket.ticketRaisedDate)}
+                        {formatDate(ticket.issueRaisedDate)}
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-auto pt-3 border-t border-gray-100 flex justify-between items-center">
-                  <button className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors">
-                    <FiExternalLink className="mr-1" />
-                    View Details
-                  </button>
-                  <span className="text-xs text-gray-500">
-                    {ticket.siteCode}
-                  </span>
+                <div>
+                  <div className="flex justify-between items-center pt-3 border-t">
+                    <div className="text-xs text-gray-500 relative">
+                      <p>
+                        Raised By:{" "}
+                        <span
+                          className="text-blue-500 hover:underline hover:cursor-pointer"
+                          onMouseEnter={() => {
+                            setHoveredUser({
+                              modifiedBy: ticket?.created_by,
+                              ticketId: ticket?._id,
+                            });
+                          }}
+                          onMouseLeave={() =>
+                            setHoveredUser({
+                              modifiedBy: null,
+                              ticketId: null,
+                            })
+                          }
+                        >
+                          {ticket?.created_by?.name}
+                        </span>
+                      </p>
+                      {/* Hover Card */}
+                      {hoveredUser?.modifiedBy?._id ===
+                        ticket?.created_by?._id &&
+                        hoveredUser?.ticketId === ticket?._id && (
+                          <UserHoverCard userData={hoveredUser} />
+                        )}
+                      <p>
+                        Authorized By:{" "}
+                        <span
+                          className="text-blue-500 hover:underline hover:cursor-pointer"
+                          onMouseEnter={() => {
+                            setHoveredUser({
+                              modifiedBy: ticket?.decision_by,
+                              ticketId: ticket?._id,
+                            });
+                          }}
+                          onMouseLeave={() =>
+                            setHoveredUser({
+                              modifiedBy: null,
+                              ticketId: null,
+                            })
+                          }
+                        >
+                          {ticket?.decision_by?.name}
+                        </span>
+                      </p>
+                      {/* Hover Card */}
+                      {hoveredUser?.modifiedBy?._id ===
+                        ticket?.decision_by?._id &&
+                        hoveredUser?.ticketId === ticket?._id && (
+                          <UserHoverCard userData={hoveredUser} />
+                        )}
+                    </div>
+
+                    <div className="text-xs text-gray-500 relative">
+                      <p>Created: {formatDate(ticket?.createdAt)}</p>
+                      <p>Updated: {formatDate(ticket?.updatedAt)}</p>
+                    </div>
+                  </div>
+                  <div className="flex justify-between pt-1">
+                    <button
+                      className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors"
+                      onClick={() => handleRowClick(ticket?.subscriberId?._id)}
+                    >
+                      <FiExternalLink className="mr-1" />
+                      View Details
+                    </button>
+
+                    <div className="space-x-2">
+                      {ticket?.request_status !== "pending" && (
+                        <button
+                          className="p-1.5 text-blue-600 hover:bg-blue-500 hover:text-white rounded-md transition-colors"
+                          title="Edit"
+                          // onClick={() => handleOpenUpdatePaymentForm(payment?._id)}
+                        >
+                          <FiEdit className="h-5 w-5" />
+                        </button>
+                      )}
+
+                      {DecisionMaker &&
+                        ticket?.request_status === "pending" && (
+                          <div className="bg-white border-1 border-black rounded-lg space-x-2">
+                            <button
+                              className="p-1.5 text-green-600 hover:bg-green-500 hover:text-white rounded-md transition-colors"
+                              title="Approve"
+                              onClick={() =>
+                                handleApprove(ticket._id, ticket.status, ticket)
+                              }
+                              disabled={loadingApprove === ticket._id}
+                            >
+                              {loadingApprove === ticket._id ? (
+                                <Loader className="h-5 w-5 animate-spin" />
+                              ) : (
+                                <FiCheck className="h-5 w-5" />
+                              )}
+                            </button>
+                            <button
+                              className="p-1.5 text-red-600 hover:bg-red-500 hover:text-white rounded-md transition-colors"
+                              title="Reject"
+                              onClick={() =>
+                                handleReject(ticket._id, ticket.status, ticket)
+                              }
+                              disabled={loadingReject === ticket._id}
+                            >
+                              {loadingReject === ticket._id ? (
+                                <Loader className="h-5 w-5 animate-spin" />
+                              ) : (
+                                <FiX className="h-5 w-5" />
+                              )}
+                            </button>
+                          </div>
+                        )}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

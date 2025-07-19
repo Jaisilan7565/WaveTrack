@@ -25,3 +25,59 @@ export const getTicketsAPI = async () => {
     throw error;
   }
 };
+
+export const approveTicketAPI = async (id, status, ticket) => {
+  try {
+    let payload;
+
+    if (status === "Open") {
+      payload = {
+        request_status: "approved",
+        status: "Open",
+      };
+    } else if (status === "Resolved") {
+      payload = {
+        request_status: "approved",
+        status: "Resolved",
+      };
+    }
+
+    const response = await axios.patch(
+      `${BASE_URL}/tickets/${id}/approve`,
+      payload,
+      getAuthHeaders()
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error :", error);
+    throw error;
+  }
+};
+
+export const rejectTicketAPI = async (id, status, subscriber) => {
+  try {
+    let payload;
+
+    if (status === "Open") {
+      payload = {
+        request_status: "rejected",
+        status: "Canceled",
+      };
+    } else if (status === "Resolved") {
+      payload = {
+        request_status: "rejected",
+        status: "InProgress",
+      };
+    }
+
+    const response = await axios.patch(
+      `${BASE_URL}/tickets/${id}/reject`,
+      payload,
+      getAuthHeaders()
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error rejecting ticket:", error);
+    throw error;
+  }
+};

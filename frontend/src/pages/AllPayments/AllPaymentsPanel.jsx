@@ -36,7 +36,7 @@ const AllPaymentsPanel = () => {
 
   const userRoles = getUserRoles();
   const DecisionMaker = hasPermission(
-    ["Admin", "General Manager", "Manager", "Senior HR"],
+    ["Admin", "General Manager", "Manager", "Finance"],
     userRoles
   );
 

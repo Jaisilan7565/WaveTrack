@@ -86,12 +86,118 @@ const ticketController = {
 
   //Get all tickets
   getTickets: asyncHandler(async (req, res, next) => {
-    const tickets = await Ticket.find({ user: req.user.id });
+    try {
+      const { status } = req.query;
+      let query = { isDeleted: false };
 
-    res.status(200).json({
-      success: true,
-      data: tickets,
-    });
+      if (status) query.status = status;
+
+      const tickets = await Ticket.find(query)
+        .populate({
+          path: "subscriberId",
+          select: "subscriber_id siteName siteCode siteAddress",
+          model: "Subscriber",
+        })
+        .populate({
+          path: "assignedTo",
+          select: "employee_id name email contact roles",
+          model: "Employee",
+        })
+        .populate({
+          path: "modifiedData.modified_by",
+          select: "employee_id name email contact roles",
+          model: "Employee",
+        })
+        .populate({
+          path: "created_by",
+          select: "employee_id name email contact roles",
+          model: "Employee",
+        })
+        .populate({
+          path: "decision_by",
+          select: "employee_id name email contact roles",
+          model: "Employee",
+        });
+
+      res.status(200).json({
+        success: true,
+        count: tickets.length,
+        data: tickets,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }),
+
+  //Approve Tickets
+  approveTicket: asyncHandler(async (req, res, next) => {
+    try {
+      const ticket = await Ticket.findById(req.params.id);
+
+      if (!ticket) {
+        return res.status(404).json({ message: "Ticket not found" });
+      }
+
+      if (ticket.request_status !== "pending") {
+        return res.status(400).json({ message: "Request already processed" });
+      }
+
+      let update;
+      if (ticket.status === "Open" || ticket.status === "Resolved") {
+        update = {
+          ...req.body,
+          decision_by: req.user.id,
+          updatedAt: Date.now(),
+        };
+      }
+
+      const updatedTicket = await Ticket.findByIdAndUpdate(
+        req.params.id,
+        update,
+        { new: true, runValidators: true }
+      );
+
+      res.json({
+        success: true,
+        data: updatedTicket,
+        message: "Ticket Approved Successfully",
+      });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  }),
+
+  //Reject Ticket
+  rejectTicket: asyncHandler(async (req, res, next) => {
+    try {
+      const ticket = await Ticket.findById(req.params.id);
+
+      if (!ticket) {
+        return res.status(404).json({ message: "Ticket not found" });
+      }
+
+      if (ticket.request_status !== "pending") {
+        return res.status(400).json({ message: "Request already processed" });
+      }
+
+      const updatedTicket = await Ticket.findByIdAndUpdate(
+        req.params.id,
+        {
+          ...req.body,
+          decision_by: req.user.id,
+          updatedAt: Date.now(),
+        },
+        { new: true, runValidators: true }
+      );
+
+      res.json({
+        success: true,
+        data: updatedTicket,
+        message: "Ticket Rejected Successfully",
+      });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
   }),
 };
 
