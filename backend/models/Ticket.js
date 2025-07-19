@@ -42,9 +42,14 @@ const ticketSchema = new mongoose.Schema(
       type: Date,
       required: true,
     },
+    note: {
+      type: String,
+      maxlength: 500,
+      trim: true,
+    },
     status: {
       type: String,
-      enum: ["Open", "InProgress", "Resolved", "Canceled"],
+      enum: ["Open", "InProgress", "Resolved", "Canceled", "Critical"],
       default: "Open",
     },
     request_status: {

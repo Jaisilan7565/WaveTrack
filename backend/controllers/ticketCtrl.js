@@ -129,6 +129,57 @@ const ticketController = {
     }
   }),
 
+  //Get tickets by id
+  getTicketById: asyncHandler(async (req, res, next) => {
+    try {
+      if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid ID format" });
+      }
+
+      const ticket = await Ticket.findById(req.params.id)
+        .populate({
+          path: "subscriberId",
+          select: "subscriber_id siteName siteCode siteAddress",
+          model: "Subscriber",
+        })
+        .populate({
+          path: "assignedTo",
+          select: "employee_id name email contact roles",
+          model: "Employee",
+        })
+        .populate({
+          path: "modifiedData.modified_by",
+          select: "employee_id name email contact roles",
+          model: "Employee",
+        })
+        .populate({
+          path: "created_by",
+          select: "employee_id name email contact roles",
+          model: "Employee",
+        })
+        .populate({
+          path: "decision_by",
+          select: "employee_id name email contact roles",
+          model: "Employee",
+        });
+
+      if (!ticket) {
+        return res
+          .status(404)
+          .json({ success: false, message: "Ticket not found" });
+      }
+
+      res.status(200).json({
+        success: true,
+        data: ticket,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }),
+
   //Approve Tickets
   approveTicket: asyncHandler(async (req, res, next) => {
     try {

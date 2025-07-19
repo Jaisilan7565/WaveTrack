@@ -5,6 +5,7 @@ const {
   getTickets,
   approveTicket,
   rejectTicket,
+  getTicketById,
 } = require("../controllers/ticketCtrl");
 
 const router = express.Router();
@@ -12,6 +13,7 @@ const router = express.Router();
 router.use(protect);
 
 router.get("/", getTickets);
+router.get("/:id", getTicketById);
 
 router.post(
   "/",

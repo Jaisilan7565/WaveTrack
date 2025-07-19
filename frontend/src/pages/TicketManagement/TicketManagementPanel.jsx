@@ -24,6 +24,7 @@ import { hasPermission } from "../../utils/auth";
 import UserHoverCard from "../../components/UserHoverCard";
 import { useNavigate } from "react-router-dom";
 import Toast from "../../components/Toast";
+import UpdateTicketForm from "./UpdateTicketForm";
 
 const TicketManagementPanel = () => {
   const navigate = useNavigate();
@@ -60,6 +61,19 @@ const TicketManagementPanel = () => {
   const tickets = fetchedTickets?.data;
 
   const [isNewTicketFormOpen, setIsNewTicketFormOpen] = useState(false);
+  const [selectedTicketId, setSelectedTicketId] = useState(null);
+  const [isUpdateTicketFormOpen, setIsUpdateTicketFormOpen] = useState(false);
+
+  const handleOpenUpdateTicketForm = (id) => {
+    setSelectedTicketId(id);
+    setIsUpdateTicketFormOpen(true);
+  };
+
+  const handleCloseUpdateTicketForm = () => {
+    setSelectedTicketId(null);
+    refetch();
+    setIsUpdateTicketFormOpen(false);
+  };
 
   const handleOpenNewTicketForm = () => {
     setIsNewTicketFormOpen(true);
@@ -256,6 +270,12 @@ const TicketManagementPanel = () => {
           type={submissionStatus.type}
           message={submissionStatus.message}
           onClose={() => setSubmissionStatus(null)}
+        />
+      )}
+      {isUpdateTicketFormOpen && (
+        <UpdateTicketForm
+          id={selectedTicketId}
+          handleClose={handleCloseUpdateTicketForm}
         />
       )}
 
@@ -533,9 +553,11 @@ const TicketManagementPanel = () => {
                     <div className="space-x-2">
                       {ticket?.request_status !== "pending" && (
                         <button
-                          className="p-1.5 text-blue-600 hover:bg-blue-500 hover:text-white rounded-md transition-colors"
+                          className="p-1.5 text-blue-600 hover:bg-blue-500 hover:text-white rounded-md transition-colors cursor-pointer"
                           title="Edit"
-                          // onClick={() => handleOpenUpdatePaymentForm(payment?._id)}
+                          onClick={() =>
+                            handleOpenUpdateTicketForm(ticket?._id)
+                          }
                         >
                           <FiEdit className="h-5 w-5" />
                         </button>

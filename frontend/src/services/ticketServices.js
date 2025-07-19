@@ -26,6 +26,19 @@ export const getTicketsAPI = async () => {
   }
 };
 
+export const getTicketByIdAPI = async (id) => {
+  try {
+    const response = await axios.get(
+      `${BASE_URL}/tickets/${id}`,
+      getAuthHeaders()
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching ticket:", error);
+    throw error;
+  }
+};
+
 export const approveTicketAPI = async (id, status, ticket) => {
   try {
     let payload;
