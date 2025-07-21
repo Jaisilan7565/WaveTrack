@@ -37,7 +37,6 @@ const AddSubscribersExcel = ({ handleClose }) => {
     data.forEach((row, index) => {
       const missingFields = [];
       const isValidNumber = (value) => {
-        if (value === 0 || value === "0") return true;
         if (typeof value === "number")
           return Number.isInteger(value) && value >= 0;
         if (typeof value === "string") return /^[0-9]+$/.test(value.trim());
@@ -55,7 +54,8 @@ const AddSubscribersExcel = ({ handleClose }) => {
       if (!row.ispInfo?.contact) missingFields.push("ISP Contact");
       if (!row.ispInfo?.broadbandPlan) missingFields.push("Plan");
       if (!row.ispInfo?.numberOfMonths) missingFields.push("Months");
-      if (!row.ispInfo?.otc) missingFields.push("OTC");
+      if (row.ispInfo?.otc === undefined || row.ispInfo?.otc === null)
+        missingFields.push("OTC");
       if (!row.ispInfo?.mrc) missingFields.push("MRC");
       if (!row.activationDate) missingFields.push("Activation Date");
 
