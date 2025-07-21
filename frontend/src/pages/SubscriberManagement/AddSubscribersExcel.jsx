@@ -37,6 +37,7 @@ const AddSubscribersExcel = ({ handleClose }) => {
     data.forEach((row, index) => {
       const missingFields = [];
       const isValidNumber = (value) => {
+        if (value === 0 || value === "0") return true;
         if (typeof value === "number")
           return Number.isInteger(value) && value >= 0;
         if (typeof value === "string") return /^[0-9]+$/.test(value.trim());
