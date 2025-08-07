@@ -13,6 +13,10 @@ const subscriberSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    customerName: {
+      type: String,
+      trim: true,
+    },
     siteCode: {
       type: String,
       trim: true,
@@ -84,6 +88,14 @@ const subscriberSchema = new mongoose.Schema(
         trim: true,
       },
       password: {
+        type: String,
+        trim: true,
+      },
+      circuitId: {
+        type: String,
+        trim: true,
+      },
+      accountId: {
         type: String,
         trim: true,
       },

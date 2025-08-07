@@ -7,6 +7,7 @@ const subscriberController = {
   //Create a new subscriber
   createSubscriber: asyncHandler(async (req, res, next) => {
     const {
+      customerName,
       siteCode,
       siteName,
       siteAddress,
@@ -18,6 +19,7 @@ const subscriberController = {
 
     // Validate required fields
     const requiredFields = {
+      customerName,
       siteCode,
       siteName,
       siteAddress,
@@ -93,6 +95,7 @@ const subscriberController = {
       // Create subscriber data object
       const subscriberData = {
         subscriber_id: await generateSubscriberId(),
+        customerName,
         siteCode,
         siteName,
         siteAddress,
