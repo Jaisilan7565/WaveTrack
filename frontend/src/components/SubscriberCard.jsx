@@ -79,6 +79,36 @@ const SubscriberCard = ({ subscriber, refetch }) => {
       .join(" "); // Join with spaces
   }
 
+  function deepEqual(obj1, obj2) {
+    // Primitive comparison
+    if (obj1 === obj2) return true;
+
+    // Type check
+    if (
+      typeof obj1 !== "object" ||
+      obj1 === null ||
+      typeof obj2 !== "object" ||
+      obj2 === null
+    ) {
+      return false;
+    }
+
+    const keys1 = Object.keys(obj1);
+    const keys2 = Object.keys(obj2);
+
+    // Different number of keys
+    if (keys1.length !== keys2.length) return false;
+
+    // Check all keys recursively
+    for (const key of keys1) {
+      if (!keys2.includes(key) || !deepEqual(obj1[key], obj2[key])) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   const [hoveredUser, setHoveredUser] = useState({
     modifiedBy: null,
     subscriberId: null,
@@ -420,7 +450,7 @@ const SubscriberCard = ({ subscriber, refetch }) => {
             <p>Updated: {formatDate(subscriber?.updatedAt)}</p>
           </div>
         </div>
-        {subscriber?.status === "Modified" && (
+        {(subscriber.status === "Modified" || subscriber.remark) && (
           <div>
             <div className="w-full px-4 py-3 bg-yellow-50 rounded-lg mb-3">
               <div className="space-y-3">
@@ -436,28 +466,33 @@ const SubscriberCard = ({ subscriber, refetch }) => {
                 )}
 
                 {/* Modified Data Section */}
-                {subscriber.modifiedData && (
-                  <div className="border-t border-yellow-200 pt-3">
-                    <div className="flex items-start mb-2">
-                      <span className="text-yellow-600 mr-2">🔄</span>
-                      <span className="text-sm font-medium text-gray-700">
-                        Changes:
-                      </span>
-                    </div>
+                {subscriber.modifiedData &&
+                  !deepEqual(
+                    subscriber.modifiedData.previous,
+                    subscriber.modifiedData.current
+                  ) && (
+                    <div className="border-t border-yellow-200 pt-3">
+                      <div className="flex items-start mb-2">
+                        <span className="text-yellow-600 mr-2">🔄</span>
+                        <span className="text-sm font-medium text-gray-700">
+                          Changes:
+                        </span>
+                      </div>
 
-                    {/* Responsive Grid - Stacks on mobile */}
-                    <div className="grid grid-cols-1 gap-2">
-                      {/* Previous Data */}
-                      <div className="bg-gray-50 p-2 rounded-lg border border-gray-200">
-                        <div className="flex items-center gap-1 mb-1">
-                          <div className="w-1.5 h-1.5 rounded-full bg-gray-400"></div>
-                          <h3 className="font-medium text-gray-700 text-xs">
-                            Previous
-                          </h3>
-                        </div>
-                        <div className="space-y-1">
-                          {Object.entries(subscriber.modifiedData.previous).map(
-                            ([key, value]) => {
+                      {/* Responsive Grid - Stacks on mobile */}
+                      <div className="grid grid-cols-1 gap-2">
+                        {/* Previous Data */}
+                        <div className="bg-gray-50 p-2 rounded-lg border border-gray-200">
+                          <div className="flex items-center gap-1 mb-1">
+                            <div className="w-1.5 h-1.5 rounded-full bg-gray-400"></div>
+                            <h3 className="font-medium text-gray-700 text-xs">
+                              Previous
+                            </h3>
+                          </div>
+                          <div className="space-y-1">
+                            {Object.entries(
+                              subscriber.modifiedData.previous
+                            ).map(([key, value]) => {
                               // Handle nested objects
                               if (
                                 typeof value === "object" &&
@@ -530,22 +565,22 @@ const SubscriberCard = ({ subscriber, refetch }) => {
                                   </div>
                                 </div>
                               );
-                            }
-                          )}
+                            })}
+                          </div>
                         </div>
-                      </div>
 
-                      {/* Current Data */}
-                      <div className="bg-blue-100 p-2 rounded-lg border border-blue-200">
-                        <div className="flex items-center gap-1 mb-1">
-                          <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
-                          <h3 className="font-medium text-blue-700 text-xs">
-                            New
-                          </h3>
-                        </div>
-                        <div className="space-y-1">
-                          {Object.entries(subscriber.modifiedData.current).map(
-                            ([key, value]) => {
+                        {/* Current Data */}
+                        <div className="bg-blue-100 p-2 rounded-lg border border-blue-200">
+                          <div className="flex items-center gap-1 mb-1">
+                            <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                            <h3 className="font-medium text-blue-700 text-xs">
+                              New
+                            </h3>
+                          </div>
+                          <div className="space-y-1">
+                            {Object.entries(
+                              subscriber.modifiedData.current
+                            ).map(([key, value]) => {
                               const previousValue =
                                 subscriber.modifiedData.previous[key];
                               const hasChanged =
@@ -644,51 +679,50 @@ const SubscriberCard = ({ subscriber, refetch }) => {
                                   </div>
                                 </div>
                               );
-                            }
-                          )}
+                            })}
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Metadata - Mobile Optimized */}
-                    <div className="mt-3 text-xs text-gray-500 relative">
-                      <span
-                        className="hover:underline cursor-pointer inline-block"
-                        onMouseEnter={() =>
-                          setHoveredUser({
-                            modifiedBy: subscriber.modifiedData.modified_by,
-                            employeeId: subscriber._id,
-                          })
-                        }
-                        onMouseLeave={() =>
-                          setHoveredUser({
-                            modifiedBy: null,
-                            employeeId: null,
-                          })
-                        }
-                      >
-                        Modified by:{" "}
-                        <span className="text-blue-500 underline">
-                          {subscriber?.modifiedData?.modified_by?.name ||
-                            "Unknown"}
+                      {/* Metadata - Mobile Optimized */}
+                      <div className="mt-3 text-xs text-gray-500 relative">
+                        <span
+                          className="hover:underline cursor-pointer inline-block"
+                          onMouseEnter={() =>
+                            setHoveredUser({
+                              modifiedBy: subscriber.modifiedData.modified_by,
+                              employeeId: subscriber._id,
+                            })
+                          }
+                          onMouseLeave={() =>
+                            setHoveredUser({
+                              modifiedBy: null,
+                              employeeId: null,
+                            })
+                          }
+                        >
+                          Modified by:{" "}
+                          <span className="text-blue-500 underline">
+                            {subscriber?.modifiedData?.modified_by?.name ||
+                              "Unknown"}
+                          </span>
                         </span>
-                      </span>
-                      <span className="mx-2">•</span>
-                      <span>
-                        {new Date(
-                          subscriber.modifiedData.modified_at
-                        ).toLocaleString()}
-                      </span>
+                        <span className="mx-2">•</span>
+                        <span>
+                          {new Date(
+                            subscriber.modifiedData.modified_at
+                          ).toLocaleString()}
+                        </span>
 
-                      {/* Mobile-Friendly Hover Card */}
-                      {hoveredUser?.modifiedBy?._id ===
-                        subscriber?.modifiedData?.modified_by?._id &&
-                        hoveredUser?.employeeId === subscriber?._id && (
-                          <UserHoverCard userData={hoveredUser} />
-                        )}
+                        {/* Mobile-Friendly Hover Card */}
+                        {hoveredUser?.modifiedBy?._id ===
+                          subscriber?.modifiedData?.modified_by?._id &&
+                          hoveredUser?.employeeId === subscriber?._id && (
+                            <UserHoverCard userData={hoveredUser} />
+                          )}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
               </div>
             </div>
           </div>

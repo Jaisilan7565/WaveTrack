@@ -736,6 +736,8 @@ const subscriberController = {
 
       const previousData = {};
       const currentData = {};
+      let request_status;
+      let status;
 
       trackedFields.forEach((field) => {
         // Get previous value
@@ -747,6 +749,46 @@ const subscriberController = {
         const currentValue = hasValue(newValue) ? newValue : prevValue;
         setNestedValue(currentData, field, currentValue);
       });
+
+      function deepEqual(obj1, obj2) {
+        // Primitive comparison
+        if (obj1 === obj2) return true;
+
+        // Type check
+        if (
+          typeof obj1 !== "object" ||
+          obj1 === null ||
+          typeof obj2 !== "object" ||
+          obj2 === null
+        ) {
+          return false;
+        }
+
+        const keys1 = Object.keys(obj1);
+        const keys2 = Object.keys(obj2);
+
+        // Different number of keys
+        if (keys1.length !== keys2.length) return false;
+
+        // Check all keys recursively
+        for (const key of keys1) {
+          if (!keys2.includes(key) || !deepEqual(obj1[key], obj2[key])) {
+            return false;
+          }
+        }
+
+        return true;
+      }
+
+      // Usage
+      if (deepEqual(previousData, currentData)) {
+        request_status = "approved";
+        status = subscriber?.status;
+        // status = "Modified";
+      } else {
+        request_status = "pending";
+        status = "Modified";
+      }
 
       const updatedSubscriber = await Subscriber.findByIdAndUpdate(
         req.params.id,
@@ -760,8 +802,8 @@ const subscriberController = {
             modified_at: Date.now(),
           },
           updatedAt: Date.now(),
-          request_status: "pending",
-          status: "Modified",
+          request_status: request_status,
+          status: status,
         },
         { new: true, runValidators: true }
       );

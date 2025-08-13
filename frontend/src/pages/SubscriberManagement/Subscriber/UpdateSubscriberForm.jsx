@@ -211,6 +211,7 @@ const UpdateSubscriberForm = ({ id, handleClose }) => {
           username: subscriberData?.credentials?.username || "",
           password: subscriberData?.credentials?.password || "",
         },
+        remark: subscriberData?.remark || "",
       });
     }
     refetchSub();

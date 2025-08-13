@@ -97,6 +97,36 @@ const SubscriberManagementPanel = () => {
       .join(" "); // Join with spaces
   }
 
+  function deepEqual(obj1, obj2) {
+    // Primitive comparison
+    if (obj1 === obj2) return true;
+
+    // Type check
+    if (
+      typeof obj1 !== "object" ||
+      obj1 === null ||
+      typeof obj2 !== "object" ||
+      obj2 === null
+    ) {
+      return false;
+    }
+
+    const keys1 = Object.keys(obj1);
+    const keys2 = Object.keys(obj2);
+
+    // Different number of keys
+    if (keys1.length !== keys2.length) return false;
+
+    // Check all keys recursively
+    for (const key of keys1) {
+      if (!keys2.includes(key) || !deepEqual(obj1[key], obj2[key])) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   const [hoveredUser, setHoveredUser] = useState({
     modifiedBy: null,
     employeeId: null,
@@ -1349,7 +1379,8 @@ const SubscriberManagementPanel = () => {
                       </td>
                     </tr>
                     {/* Add this row for Modified status remarks */}
-                    {subscriber.status === "Modified" && (
+                    {(subscriber.status === "Modified" ||
+                      subscriber.remark) && (
                       <tr>
                         <td colSpan="11" className="px-4 py-3 bg-yellow-50">
                           <div className="space-y-3">
@@ -1365,36 +1396,86 @@ const SubscriberManagementPanel = () => {
                             )}
 
                             {/* Modified Data Section */}
-                            {subscriber.modifiedData && (
-                              <div className="border-t border-yellow-200 pt-3">
-                                <div className="flex items-start mb-2">
-                                  <span className="text-yellow-600 mr-2">
-                                    🔄
-                                  </span>
-                                  <span className="text-sm font-medium text-gray-700">
-                                    Changes:
-                                  </span>
-                                </div>
+                            {subscriber.modifiedData &&
+                              !deepEqual(
+                                subscriber.modifiedData.previous,
+                                subscriber.modifiedData.current
+                              ) && (
+                                <div className="border-t border-yellow-200 pt-3">
+                                  <div className="flex items-start mb-2">
+                                    <span className="text-yellow-600 mr-2">
+                                      🔄
+                                    </span>
+                                    <span className="text-sm font-medium text-gray-700">
+                                      Changes:
+                                    </span>
+                                  </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                                  {/* Previous Data */}
-                                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm">
-                                    <div className="flex items-center gap-3 mb-4">
-                                      <div className="w-3 h-3 rounded-full bg-gray-400 shadow-inner"></div>
-                                      <h3 className="font-semibold text-gray-700 flex items-center">
-                                        Previous Values
-                                      </h3>
-                                    </div>
-                                    <div className="space-y-3.5">
-                                      {Object.entries(
-                                        subscriber.modifiedData.previous
-                                      ).map(([key, value]) => {
-                                        // Handle nested objects
-                                        if (
-                                          typeof value === "object" &&
-                                          value !== null &&
-                                          !Array.isArray(value)
-                                        ) {
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                    {/* Previous Data */}
+                                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm">
+                                      <div className="flex items-center gap-3 mb-4">
+                                        <div className="w-3 h-3 rounded-full bg-gray-400 shadow-inner"></div>
+                                        <h3 className="font-semibold text-gray-700 flex items-center">
+                                          Previous Values
+                                        </h3>
+                                      </div>
+                                      <div className="space-y-3.5">
+                                        {Object.entries(
+                                          subscriber.modifiedData.previous
+                                        ).map(([key, value]) => {
+                                          // Handle nested objects
+                                          if (
+                                            typeof value === "object" &&
+                                            value !== null &&
+                                            !Array.isArray(value)
+                                          ) {
+                                            return (
+                                              <div
+                                                key={`prev-${key}`}
+                                                className="group"
+                                              >
+                                                <div className="font-medium text-gray-600 flex flex-col sm:flex-row gap-1 sm:gap-3">
+                                                  <span className="inline-block min-w-[120px] capitalize text-gray-500 group-hover:text-gray-700 transition-colors">
+                                                    {getDisplayName(key)}:
+                                                  </span>
+                                                  <div className="flex-1">
+                                                    <div className="space-y-2 pl-2 border-l-2 border-gray-400">
+                                                      {Object.entries(
+                                                        value
+                                                      ).map(
+                                                        ([
+                                                          nestedKey,
+                                                          nestedValue,
+                                                        ]) => (
+                                                          <div
+                                                            key={`prev-nested-${nestedKey}`}
+                                                            className="flex flex-col sm:flex-row gap-1 sm:gap-3"
+                                                          >
+                                                            <span className="inline-block min-w-[100px] capitalize text-gray-400 text-sm">
+                                                              {getDisplayName(
+                                                                nestedKey
+                                                              )}
+                                                              :
+                                                            </span>
+                                                            <span className="text-gray-700 break-words">
+                                                              {nestedValue || (
+                                                                <span className="text-gray-400">
+                                                                  (empty)
+                                                                </span>
+                                                              )}
+                                                            </span>
+                                                          </div>
+                                                        )
+                                                      )}
+                                                    </div>
+                                                  </div>
+                                                </div>
+                                              </div>
+                                            );
+                                          }
+
+                                          // Handle regular values
                                           return (
                                             <div
                                               key={`prev-${key}`}
@@ -1405,99 +1486,133 @@ const SubscriberManagementPanel = () => {
                                                   {getDisplayName(key)}:
                                                 </span>
                                                 <div className="flex-1">
-                                                  <div className="space-y-2 pl-2 border-l-2 border-gray-400">
-                                                    {Object.entries(value).map(
-                                                      ([
-                                                        nestedKey,
-                                                        nestedValue,
-                                                      ]) => (
-                                                        <div
-                                                          key={`prev-nested-${nestedKey}`}
-                                                          className="flex flex-col sm:flex-row gap-1 sm:gap-3"
+                                                  {Array.isArray(value) ? (
+                                                    <div className="flex flex-wrap gap-1.5">
+                                                      {value.map((item, i) => (
+                                                        <span
+                                                          key={i}
+                                                          className="bg-gray-100 text-gray-700 text-xs px-2.5 py-1 rounded-full border border-gray-200"
                                                         >
-                                                          <span className="inline-block min-w-[100px] capitalize text-gray-400 text-sm">
-                                                            {getDisplayName(
-                                                              nestedKey
-                                                            )}
-                                                            :
-                                                          </span>
-                                                          <span className="text-gray-700 break-words">
-                                                            {nestedValue || (
-                                                              <span className="text-gray-400">
-                                                                (empty)
-                                                              </span>
-                                                            )}
-                                                          </span>
-                                                        </div>
-                                                      )
-                                                    )}
-                                                  </div>
+                                                          {item}
+                                                        </span>
+                                                      ))}
+                                                    </div>
+                                                  ) : (
+                                                    <span className="text-gray-800 break-words">
+                                                      {value || (
+                                                        <span className="text-gray-400">
+                                                          (empty)
+                                                        </span>
+                                                      )}
+                                                    </span>
+                                                  )}
                                                 </div>
                                               </div>
                                             </div>
                                           );
-                                        }
+                                        })}
+                                      </div>
+                                    </div>
 
-                                        // Handle regular values
-                                        return (
-                                          <div
-                                            key={`prev-${key}`}
-                                            className="group"
-                                          >
-                                            <div className="font-medium text-gray-600 flex flex-col sm:flex-row gap-1 sm:gap-3">
-                                              <span className="inline-block min-w-[120px] capitalize text-gray-500 group-hover:text-gray-700 transition-colors">
-                                                {getDisplayName(key)}:
-                                              </span>
-                                              <div className="flex-1">
-                                                {Array.isArray(value) ? (
-                                                  <div className="flex flex-wrap gap-1.5">
-                                                    {value.map((item, i) => (
-                                                      <span
-                                                        key={i}
-                                                        className="bg-gray-100 text-gray-700 text-xs px-2.5 py-1 rounded-full border border-gray-200"
-                                                      >
-                                                        {item}
-                                                      </span>
-                                                    ))}
-                                                  </div>
-                                                ) : (
-                                                  <span className="text-gray-800 break-words">
-                                                    {value || (
-                                                      <span className="text-gray-400">
-                                                        (empty)
-                                                      </span>
-                                                    )}
+                                    {/* Current Data */}
+                                    <div className="bg-blue-100 p-4 rounded-lg border border-blue-200 shadow-sm">
+                                      <div className="flex items-center gap-3 mb-4">
+                                        <div className="w-3 h-3 rounded-full bg-blue-500 shadow-inner"></div>
+                                        <h3 className="font-semibold text-blue-700 flex items-center">
+                                          New Values
+                                        </h3>
+                                      </div>
+                                      <div className="space-y-3.5">
+                                        {Object.entries(
+                                          subscriber.modifiedData.current
+                                        ).map(([key, value]) => {
+                                          const previousValue =
+                                            subscriber.modifiedData.previous[
+                                              key
+                                            ];
+
+                                          // Handle nested objects
+                                          if (
+                                            typeof value === "object" &&
+                                            value !== null &&
+                                            !Array.isArray(value)
+                                          ) {
+                                            return (
+                                              <div
+                                                key={`curr-${key}`}
+                                                className="group"
+                                              >
+                                                <div className="font-medium text-blue-600 flex flex-col sm:flex-row gap-1 sm:gap-3">
+                                                  <span className="inline-block min-w-[120px] capitalize text-blue-500 group-hover:text-blue-700 transition-colors">
+                                                    {getDisplayName(key)}:
                                                   </span>
-                                                )}
+                                                  <div className="flex-1">
+                                                    <div className="space-y-2 pl-2 border-l-2 border-blue-400">
+                                                      {Object.entries(
+                                                        value
+                                                      ).map(
+                                                        ([
+                                                          nestedKey,
+                                                          nestedValue,
+                                                        ]) => {
+                                                          const prevNestedValue =
+                                                            previousValue?.[
+                                                              nestedKey
+                                                            ];
+                                                          const nestedHasChanged =
+                                                            JSON.stringify(
+                                                              nestedValue
+                                                            ) !==
+                                                            JSON.stringify(
+                                                              prevNestedValue
+                                                            );
+
+                                                          return (
+                                                            <div
+                                                              key={`curr-nested-${nestedKey}`}
+                                                              className="flex flex-col sm:flex-row gap-1 sm:gap-3"
+                                                            >
+                                                              <span className="inline-block min-w-[100px] capitalize text-blue-400 text-sm">
+                                                                {getDisplayName(
+                                                                  nestedKey
+                                                                )}
+                                                                :
+                                                              </span>
+                                                              <span
+                                                                className={`break-words ${
+                                                                  nestedHasChanged
+                                                                    ? "bg-green-600 px-2 py-1 rounded-md text-white font-semibold"
+                                                                    : "text-blue-700"
+                                                                }`}
+                                                              >
+                                                                {nestedValue || (
+                                                                  <span
+                                                                    className={
+                                                                      nestedHasChanged
+                                                                        ? "bg-green-600 text-white px-2 py-1 rounded-md"
+                                                                        : "text-blue-400"
+                                                                    }
+                                                                  >
+                                                                    (empty)
+                                                                  </span>
+                                                                )}
+                                                              </span>
+                                                            </div>
+                                                          );
+                                                        }
+                                                      )}
+                                                    </div>
+                                                  </div>
+                                                </div>
                                               </div>
-                                            </div>
-                                          </div>
-                                        );
-                                      })}
-                                    </div>
-                                  </div>
+                                            );
+                                          }
 
-                                  {/* Current Data */}
-                                  <div className="bg-blue-100 p-4 rounded-lg border border-blue-200 shadow-sm">
-                                    <div className="flex items-center gap-3 mb-4">
-                                      <div className="w-3 h-3 rounded-full bg-blue-500 shadow-inner"></div>
-                                      <h3 className="font-semibold text-blue-700 flex items-center">
-                                        New Values
-                                      </h3>
-                                    </div>
-                                    <div className="space-y-3.5">
-                                      {Object.entries(
-                                        subscriber.modifiedData.current
-                                      ).map(([key, value]) => {
-                                        const previousValue =
-                                          subscriber.modifiedData.previous[key];
+                                          // Handle regular values
+                                          const hasChanged =
+                                            JSON.stringify(value) !==
+                                            JSON.stringify(previousValue);
 
-                                        // Handle nested objects
-                                        if (
-                                          typeof value === "object" &&
-                                          value !== null &&
-                                          !Array.isArray(value)
-                                        ) {
                                           return (
                                             <div
                                               key={`curr-${key}`}
@@ -1508,178 +1623,104 @@ const SubscriberManagementPanel = () => {
                                                   {getDisplayName(key)}:
                                                 </span>
                                                 <div className="flex-1">
-                                                  <div className="space-y-2 pl-2 border-l-2 border-blue-400">
-                                                    {Object.entries(value).map(
-                                                      ([
-                                                        nestedKey,
-                                                        nestedValue,
-                                                      ]) => {
-                                                        const prevNestedValue =
-                                                          previousValue?.[
-                                                            nestedKey
-                                                          ];
-                                                        const nestedHasChanged =
-                                                          JSON.stringify(
-                                                            nestedValue
-                                                          ) !==
-                                                          JSON.stringify(
-                                                            prevNestedValue
-                                                          );
+                                                  {Array.isArray(value) ? (
+                                                    <div className="flex flex-wrap gap-1.5">
+                                                      {value.map((item, i) => {
+                                                        const prevItem =
+                                                          Array.isArray(
+                                                            previousValue
+                                                          )
+                                                            ? previousValue[i]
+                                                            : null;
+                                                        const itemHasChanged =
+                                                          item !== prevItem;
 
                                                         return (
-                                                          <div
-                                                            key={`curr-nested-${nestedKey}`}
-                                                            className="flex flex-col sm:flex-row gap-1 sm:gap-3"
+                                                          <span
+                                                            key={i}
+                                                            className={`text-xs px-2.5 py-1 rounded-full border ${
+                                                              itemHasChanged
+                                                                ? "bg-green-100 text-green-800 border-green-200"
+                                                                : "bg-blue-50 text-blue-700 border-blue-100"
+                                                            }`}
                                                           >
-                                                            <span className="inline-block min-w-[100px] capitalize text-blue-400 text-sm">
-                                                              {getDisplayName(
-                                                                nestedKey
-                                                              )}
-                                                              :
-                                                            </span>
-                                                            <span
-                                                              className={`break-words ${
-                                                                nestedHasChanged
-                                                                  ? "bg-green-600 px-2 py-1 rounded-md text-white font-semibold"
-                                                                  : "text-blue-700"
-                                                              }`}
-                                                            >
-                                                              {nestedValue || (
-                                                                <span
-                                                                  className={
-                                                                    nestedHasChanged
-                                                                      ? "bg-green-600 text-white px-2 py-1 rounded-md"
-                                                                      : "text-blue-400"
-                                                                  }
-                                                                >
-                                                                  (empty)
-                                                                </span>
-                                                              )}
-                                                            </span>
-                                                          </div>
+                                                            {item}
+                                                          </span>
                                                         );
-                                                      }
-                                                    )}
-                                                  </div>
+                                                      })}
+                                                    </div>
+                                                  ) : (
+                                                    <span
+                                                      className={`text-blue-900 break-words ${
+                                                        hasChanged
+                                                          ? "bg-green-600 px-2 py-1 rounded-xl text-white font-semibold"
+                                                          : "text-blue-900"
+                                                      }`}
+                                                    >
+                                                      {value || (
+                                                        <span
+                                                          className={
+                                                            hasChanged
+                                                              ? "bg-green-600 text-white px-2 py-1 rounded-xl"
+                                                              : "text-blue-400"
+                                                          }
+                                                        >
+                                                          (empty)
+                                                        </span>
+                                                      )}
+                                                    </span>
+                                                  )}
                                                 </div>
                                               </div>
                                             </div>
                                           );
-                                        }
-
-                                        // Handle regular values
-                                        const hasChanged =
-                                          JSON.stringify(value) !==
-                                          JSON.stringify(previousValue);
-
-                                        return (
-                                          <div
-                                            key={`curr-${key}`}
-                                            className="group"
-                                          >
-                                            <div className="font-medium text-blue-600 flex flex-col sm:flex-row gap-1 sm:gap-3">
-                                              <span className="inline-block min-w-[120px] capitalize text-blue-500 group-hover:text-blue-700 transition-colors">
-                                                {getDisplayName(key)}:
-                                              </span>
-                                              <div className="flex-1">
-                                                {Array.isArray(value) ? (
-                                                  <div className="flex flex-wrap gap-1.5">
-                                                    {value.map((item, i) => {
-                                                      const prevItem =
-                                                        Array.isArray(
-                                                          previousValue
-                                                        )
-                                                          ? previousValue[i]
-                                                          : null;
-                                                      const itemHasChanged =
-                                                        item !== prevItem;
-
-                                                      return (
-                                                        <span
-                                                          key={i}
-                                                          className={`text-xs px-2.5 py-1 rounded-full border ${
-                                                            itemHasChanged
-                                                              ? "bg-green-100 text-green-800 border-green-200"
-                                                              : "bg-blue-50 text-blue-700 border-blue-100"
-                                                          }`}
-                                                        >
-                                                          {item}
-                                                        </span>
-                                                      );
-                                                    })}
-                                                  </div>
-                                                ) : (
-                                                  <span
-                                                    className={`text-blue-900 break-words ${
-                                                      hasChanged
-                                                        ? "bg-green-600 px-2 py-1 rounded-xl text-white font-semibold"
-                                                        : "text-blue-900"
-                                                    }`}
-                                                  >
-                                                    {value || (
-                                                      <span
-                                                        className={
-                                                          hasChanged
-                                                            ? "bg-green-600 text-white px-2 py-1 rounded-xl"
-                                                            : "text-blue-400"
-                                                        }
-                                                      >
-                                                        (empty)
-                                                      </span>
-                                                    )}
-                                                  </span>
-                                                )}
-                                              </div>
-                                            </div>
-                                          </div>
-                                        );
-                                      })}
+                                        })}
+                                      </div>
                                     </div>
                                   </div>
-                                </div>
 
-                                {/* Metadata */}
-                                <div className="mt-3 text-xs text-gray-500 relative">
-                                  <span
-                                    className="hover:underline cursor-pointer"
-                                    onMouseEnter={() =>
-                                      setHoveredUser({
-                                        modifiedBy:
-                                          subscriber.modifiedData.modified_by,
-                                        employeeId: subscriber._id,
-                                      })
-                                    }
-                                    onMouseLeave={() =>
-                                      setHoveredUser({
-                                        modifiedBy: null,
-                                        employeeId: null,
-                                      })
-                                    }
-                                  >
-                                    Modified by:{" "}
-                                    <span className="text-blue-500 underline">
-                                      {subscriber?.modifiedData?.modified_by
-                                        ?.name || "Unknown"}
+                                  {/* Metadata */}
+                                  <div className="mt-3 text-xs text-gray-500 relative">
+                                    <span
+                                      className="hover:underline cursor-pointer"
+                                      onMouseEnter={() =>
+                                        setHoveredUser({
+                                          modifiedBy:
+                                            subscriber.modifiedData.modified_by,
+                                          employeeId: subscriber._id,
+                                        })
+                                      }
+                                      onMouseLeave={() =>
+                                        setHoveredUser({
+                                          modifiedBy: null,
+                                          employeeId: null,
+                                        })
+                                      }
+                                    >
+                                      Modified by:{" "}
+                                      <span className="text-blue-500 underline">
+                                        {subscriber?.modifiedData?.modified_by
+                                          ?.name || "Unknown"}
+                                      </span>
                                     </span>
-                                  </span>
-                                  <span className="mx-2">•</span>
-                                  <span>
-                                    {new Date(
-                                      subscriber.modifiedData.modified_at
-                                    ).toLocaleString()}
-                                  </span>
+                                    <span className="mx-2">•</span>
+                                    <span>
+                                      {new Date(
+                                        subscriber.modifiedData.modified_at
+                                      ).toLocaleString()}
+                                    </span>
 
-                                  {/* Hover Card */}
-                                  {hoveredUser?.modifiedBy?._id ===
-                                    subscriber?.modifiedData?.modified_by
-                                      ?._id &&
-                                    hoveredUser?.employeeId ===
-                                      subscriber?._id && (
-                                      <UserHoverCard userData={hoveredUser} />
-                                    )}
+                                    {/* Hover Card */}
+                                    {hoveredUser?.modifiedBy?._id ===
+                                      subscriber?.modifiedData?.modified_by
+                                        ?._id &&
+                                      hoveredUser?.employeeId ===
+                                        subscriber?._id && (
+                                        <UserHoverCard userData={hoveredUser} />
+                                      )}
+                                  </div>
                                 </div>
-                              </div>
-                            )}
+                              )}
                           </div>
                         </td>
                       </tr>
