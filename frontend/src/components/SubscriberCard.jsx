@@ -450,23 +450,24 @@ const SubscriberCard = ({ subscriber, refetch }) => {
             <p>Updated: {formatDate(subscriber?.updatedAt)}</p>
           </div>
         </div>
-        {(subscriber.status === "Modified" || subscriber.remark) && (
+        {(subscriber?.status === "Modified" || subscriber?.remark) && (
           <div>
             <div className="w-full px-4 py-3 bg-yellow-50 rounded-lg mb-3">
               <div className="space-y-3">
                 {/* Remarks Section */}
-                {subscriber.remark && (
+                {subscriber?.remark && (
                   <div className="flex items-start">
                     <span className="text-yellow-600 mr-2">📝</span>
                     <div className="text-sm text-gray-700">
                       <span className="font-medium">Remarks:</span>{" "}
-                      {subscriber.remark}
+                      {subscriber?.remark}
                     </div>
                   </div>
                 )}
 
                 {/* Modified Data Section */}
-                {subscriber.modifiedData &&
+                {subscriber?.status === "Modified" &&
+                  subscriber?.modifiedData &&
                   !deepEqual(
                     subscriber.modifiedData.previous,
                     subscriber.modifiedData.current

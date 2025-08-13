@@ -1396,8 +1396,8 @@ const SubscriberManagementPanel = () => {
                             )}
 
                             {/* Modified Data Section */}
-                            {subscriber.status === "Modified" &&
-                              subscriber.modifiedData &&
+                            {subscriber?.status === "Modified" &&
+                              subscriber?.modifiedData &&
                               !deepEqual(
                                 subscriber.modifiedData.previous,
                                 subscriber.modifiedData.current
