@@ -725,12 +725,12 @@ const SubscriptionTracker = () => {
                       </td>
 
                       {/* Site Info */}
-                      <td className="px-4 py-3 whitespace-nowrap">
+                      <td className="px-4 py-3">
                         <div className="flex flex-col">
                           <span className="text-sm text-gray-900">
                             {subscriber?.siteCode} • {subscriber?.siteName}
                           </span>
-                          <span className="text-xs text-gray-500 truncate max-w-[180px]">
+                          <span className="text-xs text-gray-500 max-w-[180px]">
                             {subscriber?.siteAddress}
                           </span>
                         </div>
@@ -738,9 +738,14 @@ const SubscriptionTracker = () => {
 
                       {/* Plan */}
                       <td className="px-4 py-3 whitespace-nowrap">
-                        <span className="text-sm text-gray-900">
-                          {subscriber?.ispInfo?.broadbandPlan}
-                        </span>
+                        <div className="flex flex-col">
+                          <span className="text-sm truncate text-gray-900">
+                            {subscriber?.ispInfo?.name}
+                          </span>
+                          <span className="text-sm font-medium text-gray-900">
+                            [ {subscriber?.ispInfo?.broadbandPlan} ]
+                          </span>
+                        </div>
                       </td>
 
                       {/* Months */}
