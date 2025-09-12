@@ -44,6 +44,7 @@ const AddSubscribersExcel = ({ handleClose }) => {
       };
 
       // Check required fields
+      if (!row.customerName) missingFields.push("Customer Name");
       if (!row.siteName) missingFields.push("Site Name");
       if (!row.siteCode) missingFields.push("Site Code");
       if (!row.siteAddress) missingFields.push("Site Address");
@@ -167,6 +168,7 @@ const AddSubscribersExcel = ({ handleClose }) => {
               : "";
 
             return {
+              customerName: row["Customer Name"]?.toString().trim() || "",
               siteName: row["Site Name"]?.toString().trim() || "",
               siteCode: row["Site Code"]?.toString().trim() || "",
               siteAddress: row["Address"]?.toString().trim() || "",
@@ -187,6 +189,8 @@ const AddSubscribersExcel = ({ handleClose }) => {
               credentials: {
                 username: row["Username"]?.toString().trim() || "",
                 password: row["Password"]?.toString().trim() || "",
+                circuitId: row["Circuit ID"]?.toString().trim() || "",
+                accountId: row["Account ID"]?.toString().trim() || "",
               },
             };
           });

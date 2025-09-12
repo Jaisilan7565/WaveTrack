@@ -64,6 +64,7 @@ export const approveSubscriberAPI = async (id, status, subscriber) => {
       };
     } else if (status === "Modified") {
       payload = {
+        customerName: subscriber?.modifiedData?.current?.customerName,
         siteName: subscriber?.modifiedData?.current?.siteName,
         siteCode: subscriber?.modifiedData?.current?.siteCode,
         siteAddress: subscriber?.modifiedData?.current?.siteAddress,
@@ -84,6 +85,8 @@ export const approveSubscriberAPI = async (id, status, subscriber) => {
         credentials: {
           username: subscriber?.modifiedData?.current?.credentials?.username,
           password: subscriber?.modifiedData?.current?.credentials?.password,
+          circuitId: subscriber?.modifiedData?.current?.credentials?.circuitId,
+          accountId: subscriber?.modifiedData?.current?.credentials?.accountId,
         },
         request_status: "approved",
         status: "Active",

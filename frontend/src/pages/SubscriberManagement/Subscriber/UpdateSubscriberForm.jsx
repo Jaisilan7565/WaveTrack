@@ -80,6 +80,7 @@ const UpdateSubscriberForm = ({ id, handleClose }) => {
 
   // Form validation schema
   const validationSchema = Yup.object().shape({
+    customerName: Yup.string().required("Customer name is required"),
     siteName: Yup.string().required("Site name is required"),
     siteCode: Yup.string(),
     siteAddress: Yup.string().required("Site address is required"),
@@ -111,6 +112,8 @@ const UpdateSubscriberForm = ({ id, handleClose }) => {
     credentials: Yup.object().shape({
       username: Yup.string(),
       password: Yup.string(),
+      circuitId: Yup.string(),
+      accountId: Yup.string(),
     }),
     remark: Yup.string()
       .max(200, "Must be 200 characters or less")
@@ -119,6 +122,7 @@ const UpdateSubscriberForm = ({ id, handleClose }) => {
 
   const formik = useFormik({
     initialValues: {
+      customerName: "",
       siteName: "",
       siteCode: "",
       siteAddress: "",
@@ -137,6 +141,8 @@ const UpdateSubscriberForm = ({ id, handleClose }) => {
       credentials: {
         username: "",
         password: "",
+        circuitId: "",
+        accountId: "",
       },
       remarks: "",
     },
@@ -192,6 +198,7 @@ const UpdateSubscriberForm = ({ id, handleClose }) => {
   useEffect(() => {
     if (subscriberData) {
       formik.setValues({
+        customerName: subscriberData?.customerName || "",
         siteName: subscriberData?.siteName || "",
         siteCode: subscriberData?.siteCode || "",
         siteAddress: subscriberData?.siteAddress || "",
@@ -210,6 +217,8 @@ const UpdateSubscriberForm = ({ id, handleClose }) => {
         credentials: {
           username: subscriberData?.credentials?.username || "",
           password: subscriberData?.credentials?.password || "",
+          circuitId: subscriberData?.credentials?.circuitId || "",
+          accountId: subscriberData?.credentials?.accountId || "",
         },
         remark: subscriberData?.remark || "",
       });
@@ -268,6 +277,38 @@ const UpdateSubscriberForm = ({ id, handleClose }) => {
                   <h4 className="text-md font-medium text-gray-900 border-b-2">
                     Site Information
                   </h4>
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label
+                    htmlFor="siteName"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Customer Name <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="customerName"
+                      name="customerName"
+                      type="text"
+                      value={formik.values.customerName}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      className={`block w-full rounded-md py-2 px-3.5 shadow-sm border ${
+                        formik.touched.customerName &&
+                        formik.errors.customerName
+                          ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                          : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                      } focus:outline-none focus:ring-2 focus:ring-opacity-50 sm:text-sm`}
+                      placeholder="Aspirare / Alliant"
+                    />
+                  </div>
+                  {formik.touched.customerName &&
+                    formik.errors.customerName && (
+                      <p className="mt-1.5 text-sm text-red-600">
+                        {formik.errors.customerName}
+                      </p>
+                    )}
                 </div>
 
                 <div>
@@ -636,6 +677,68 @@ const UpdateSubscriberForm = ({ id, handleClose }) => {
                   <h2 className="text-lg font-medium text-gray-900 border-b-2">
                     Credentials
                   </h2>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="credentials.circuitId"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Circuit ID
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      id="credentials.circuitId"
+                      name="credentials.circuitId"
+                      value={formik.values.credentials.circuitId}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      className={`block w-full rounded-md py-2 px-3.5 shadow-sm border ${
+                        formik.touched.credentials?.circuitId &&
+                        formik.errors.credentials?.circuitId
+                          ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                          : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                      } focus:outline-none focus:ring-2 focus:ring-opacity-50 sm:text-sm`}
+                    />
+                  </div>
+                  {formik.touched.credentials?.circuitId &&
+                    formik.errors.credentials?.circuitId && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {formik.errors.credentials.circuitId}
+                      </p>
+                    )}
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="credentials.accountId"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Account ID
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      id="credentials.accountId"
+                      name="credentials.accountId"
+                      value={formik.values.credentials.accountId}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      className={`block w-full rounded-md py-2 px-3.5 shadow-sm border ${
+                        formik.touched.credentials?.accountId &&
+                        formik.errors.credentials?.accountId
+                          ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                          : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                      } focus:outline-none focus:ring-2 focus:ring-opacity-50 sm:text-sm`}
+                    />
+                  </div>
+                  {formik.touched.credentials?.accountId &&
+                    formik.errors.credentials?.accountId && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {formik.errors.credentials.accountId}
+                      </p>
+                    )}
                 </div>
 
                 <div>

@@ -688,6 +688,7 @@ const subscriberController = {
       }
 
       const trackedFields = [
+        "customerName",
         "siteName",
         "siteCode",
         "siteAddress",
@@ -701,6 +702,8 @@ const subscriberController = {
         "ispInfo.mrc",
         "credentials.username",
         "credentials.password",
+        "credentials.circuitId",
+        "credentials.accountId",
       ];
 
       // Helper function to get nested properties

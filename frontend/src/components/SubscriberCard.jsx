@@ -260,8 +260,13 @@ const SubscriberCard = ({ subscriber, refetch }) => {
               ( {subscriber?.siteCode} )
             </span>
           </div>
-          <div className="bg-blue-100 text-blue-700 px-1 rounded text-sm font-mono w-fit">
-            ID: {subscriber?.subscriber_id}
+          <div className="flex items-center space-x-2 mt-1">
+            <div className="bg-blue-100 text-blue-700 px-1 rounded text-sm font-mono w-fit">
+              ID: {subscriber?.subscriber_id}
+            </div>
+            <div className="rounded text-sm font-mono w-fit">
+              {subscriber?.customerName || "—"}
+            </div>
           </div>
         </div>
         <div>
@@ -333,11 +338,19 @@ const SubscriberCard = ({ subscriber, refetch }) => {
                 {subscriber?.ispInfo?.mrc}
               </p>
               <p className="text-sm text-gray-600">
-                <span className="font-medium">Username:</span>
+                <span className="font-medium">Account Id:</span>{" "}
+                {subscriber?.credentials?.accountId || "—"}
+              </p>
+              <p className="text-sm text-gray-600">
+                <span className="font-medium">Circuit Id:</span>{" "}
+                {subscriber?.credentials?.circuitId || "—"}
+              </p>
+              <p className="text-sm text-gray-600">
+                <span className="font-medium">Username:</span>{" "}
                 {subscriber?.credentials?.username || "—"}
               </p>
               <p className="text-sm text-gray-600">
-                <span className="font-medium">Password:</span>
+                <span className="font-medium">Password:</span>{" "}
                 {subscriber?.credentials?.password || "—"}
               </p>
             </div>
