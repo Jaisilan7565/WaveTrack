@@ -1,6 +1,7 @@
 const express = require("express");
 const {
   createEmployee,
+  createPublicEmployee,
   getEmployees,
   updateEmployee,
   deleteEmployee,
@@ -14,6 +15,8 @@ const { protect, authorize } = require("../middlewares/auth");
 
 const router = express.Router();
 
+router.post("/create-public", createPublicEmployee);
+
 router.use(protect);
 
 router.get("/", getEmployees);
@@ -23,37 +26,37 @@ router.get("/:id", getEmployeeById);
 router.post(
   "/",
   authorize("Admin", "General Manager", "Senior HR", "HR", "Manager"),
-  createEmployee
+  createEmployee,
 );
 
 router.patch(
   "/:id",
   authorize("Admin", "General Manager", "Senior HR", "HR", "Manager"),
-  updateEmployee
+  updateEmployee,
 );
 
 router.patch(
   "/:id/approve",
   authorize("Admin", "General Manager", "Senior HR", "Manager"),
-  approveEmployee
+  approveEmployee,
 );
 
 router.patch(
   "/:id/reject",
   authorize("Admin", "General Manager", "Senior HR", "Manager"),
-  rejectEmployee
+  rejectEmployee,
 );
 
 router.patch(
   "/:id/inActivate",
   authorize("Admin", "General Manager", "Senior HR", "HR", "Manager"),
-  inActivateEmployee
+  inActivateEmployee,
 );
 
 router.patch(
   "/:id/resetPassword",
   authorize("Admin", "General Manager", "Senior HR", "Manager"),
-  resetPassword
+  resetPassword,
 );
 
 router.delete("/:id", authorize("Admin", "General Manager"), deleteEmployee);

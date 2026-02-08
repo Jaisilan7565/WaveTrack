@@ -56,28 +56,73 @@ const employeeController = {
       status: "OnProcess",
     });
 
-    // // Prepare audit log data
-    // const newData = {
-    //   id: employee._id,
-    //   employee_id: employee.employee_id,
-    //   name,
-    //   email,
-    //   contact,
-    //   roles,
-    //   remark,
-    //   joining_date: employee.joining_date,
-    // };
+    res.status(201).json({
+      success: true,
+      data: {
+        employee_id: employee.employee_id,
+        name: employee?.name,
+        email: employee?.email,
+        roles: employee?.roles,
+        joining_date: employee?.joining_date,
+        status: employee?.status,
+      },
+    });
+  }),
 
-    // await AuditLog.create({
-    //   action: "create",
-    //   entity: "Employee",
-    //   entityId: employee._id,
-    //   performedBy: req.user.id,
-    //   changes: {
-    //     previous: null, // No previous data for creation
-    //     current: newData,
-    //   },
-    // });
+  // Create a new employee (Public - No Auth)
+  createPublicEmployee: asyncHandler(async (req, res, next) => {
+    const { name, email, contact, roles, remark } = req.body;
+    const password = process.env.DEFAULT_PASSWORD || "Udhith@1234"; // Default password if not provided
+
+    // Validate required fields
+    if (!name || !email || !contact || !password || !roles?.length) {
+      return next(new ErrorResponse("Missing required fields", 400));
+    }
+
+    // Generate unique employee_id (format: EMP-XXXXX)
+    const generateEmployeeId = async () => {
+      const prefix = "EMP-";
+      const randomSuffix = Math.floor(10000 + Math.random() * 90000).toString();
+      const employee_id = prefix + randomSuffix;
+
+      // Check if ID already exists
+      const exists = await Employee.findOne({ employee_id });
+      return exists ? await generateEmployeeId() : employee_id;
+    };
+
+    // Check if email already exists
+    const existingEmail = await Employee.findOne({ email });
+    if (existingEmail) {
+      return next(new ErrorResponse("Email already exists", 400));
+    }
+
+    // Check if contact already exists
+    const existingContact = await Employee.findOne({ contact });
+    if (existingContact) {
+      return next(new ErrorResponse("Contact number already exists", 400));
+    }
+
+    // Hash the password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Create new employee instance to get _id
+    const employee = new Employee({
+      employee_id: await generateEmployeeId(),
+      name,
+      email,
+      contact,
+      password: hashedPassword,
+      roles,
+      remark,
+      joining_date: new Date(),
+      status: "OnProcess",
+    });
+
+    // Set created_by to self since there is no logged in user
+    employee.created_by = employee._id;
+
+    await employee.save();
 
     res.status(201).json({
       success: true,
@@ -149,7 +194,7 @@ const employeeController = {
           decision_by: req.user.id,
           updatedAt: Date.now(),
         },
-        { new: true, runValidators: true }
+        { new: true, runValidators: true },
       );
 
       res.json({
@@ -182,7 +227,7 @@ const employeeController = {
           decision_by: req.user.id,
           updatedAt: Date.now(),
         },
-        { new: true, runValidators: true }
+        { new: true, runValidators: true },
       );
 
       res.json({
@@ -231,7 +276,7 @@ const employeeController = {
           request_status: "pending",
           status: "Modified",
         },
-        { new: true, runValidators: true }
+        { new: true, runValidators: true },
       );
 
       res.json({
@@ -260,7 +305,7 @@ const employeeController = {
           decision_by: req.user.id,
           updatedAt: Date.now(),
         },
-        { new: true, runValidators: true }
+        { new: true, runValidators: true },
       );
 
       res.json({
@@ -295,7 +340,7 @@ const employeeController = {
           decision_by: req.user.id,
           updatedAt: Date.now(),
         },
-        { new: true, runValidators: true }
+        { new: true, runValidators: true },
       );
 
       res.json({
@@ -325,7 +370,7 @@ const employeeController = {
           isDeleted: true,
           updatedAt: Date.now(),
         },
-        { new: true, runValidators: true }
+        { new: true, runValidators: true },
       );
 
       res.json({
