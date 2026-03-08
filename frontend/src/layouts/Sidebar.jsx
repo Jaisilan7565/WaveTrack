@@ -1,5 +1,5 @@
 import { ChevronDown, ChevronRight } from "lucide-react";
-import logo from "../assets/logo2.png";
+import logo from "../assets/abhishek_tracker_logo.png";
 import { getUserInfo } from "../utils/jwt";
 import { FiUser, FiBriefcase } from "react-icons/fi";
 

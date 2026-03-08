@@ -63,19 +63,19 @@ const AddSubscribersExcel = ({ handleClose }) => {
       if (missingFields.length > 0) {
         errors.push(
           `Row ${index + 2}: Missing required fields - ${missingFields.join(
-            ", "
-          )}`
+            ", ",
+          )}`,
         );
       } else if (
         !row.localContact.contact ||
         row.localContact.contact.length !== 10
       ) {
         errors.push(
-          `Row ${index + 2}: Valid LC Contact is required (10 digits)`
+          `Row ${index + 2}: Valid LC Contact is required (10 digits)`,
         );
       } else if (!row.ispInfo.contact || row.ispInfo.contact.length !== 10) {
         errors.push(
-          `Row ${index + 2}: Valid ISP Contact is required (10 digits)`
+          `Row ${index + 2}: Valid ISP Contact is required (10 digits)`,
         );
       } else if (!isValidNumber(row.ispInfo.numberOfMonths)) {
         errors.push(`Row ${index + 2}: Months must be a valid number`);
@@ -85,7 +85,7 @@ const AddSubscribersExcel = ({ handleClose }) => {
         errors.push(`Row ${index + 2}: MRC must be a valid number`);
       } else if (!isValidDate(row.activationDate)) {
         errors.push(
-          `Row ${index + 2}: Invalid activation date. Must not a future date.`
+          `Row ${index + 2}: Invalid activation date. Must not a future date.`,
         );
       }
     });
@@ -191,6 +191,7 @@ const AddSubscribersExcel = ({ handleClose }) => {
                 password: row["Password"]?.toString().trim() || "",
                 circuitId: row["Circuit ID"]?.toString().trim() || "",
                 accountId: row["Account ID"]?.toString().trim() || "",
+                staticIP: row["Static IP"]?.toString().trim() || "",
               },
             };
           });
@@ -237,7 +238,7 @@ const AddSubscribersExcel = ({ handleClose }) => {
       const subscribersWithRenewal = excelData.map((subscriber) => {
         const renewalDate = calculateRenewalDate(
           subscriber.activationDate,
-          subscriber.ispInfo.numberOfMonths
+          subscriber.ispInfo.numberOfMonths,
         );
 
         return {
@@ -263,7 +264,7 @@ const AddSubscribersExcel = ({ handleClose }) => {
           progress: Math.floor((i / subscribersWithRenewal.length) * 100),
           message: `Processing ${i + 1}-${Math.min(
             i + batchSize,
-            subscribersWithRenewal.length
+            subscribersWithRenewal.length,
           )} of ${subscribersWithRenewal.length}...`,
         }));
 
@@ -304,7 +305,7 @@ const AddSubscribersExcel = ({ handleClose }) => {
           (r) =>
             `Row ${r.index + 1}: ${r.data.siteName} (${r.data.siteCode}) - ${
               r.error
-            }`
+            }`,
         );
 
       setSubmissionStatus({
@@ -342,7 +343,7 @@ const AddSubscribersExcel = ({ handleClose }) => {
 
         // Keep only failed for retry
         setExcelData(
-          results.filter((r) => r.status === "error").map((r) => r.data)
+          results.filter((r) => r.status === "error").map((r) => r.data),
         );
       }
     } catch (error) {

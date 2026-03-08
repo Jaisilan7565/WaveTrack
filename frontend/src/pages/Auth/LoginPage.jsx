@@ -80,7 +80,7 @@ const LoginPage = () => {
           {/* Decorative header */}
           <div className="bg-indigo-600 py-6 px-8">
             <h1 className="text-2xl font-bold text-white text-center">
-              Welcome to WaveTrack
+              Welcome to Abhishek Tracker
             </h1>
           </div>
 

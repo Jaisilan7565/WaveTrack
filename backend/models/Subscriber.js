@@ -99,6 +99,10 @@ const subscriberSchema = new mongoose.Schema(
         type: String,
         trim: true,
       },
+      staticIP: {
+        type: String,
+        trim: true,
+      },
     },
     remark: {
       type: String,
@@ -146,7 +150,7 @@ const subscriberSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 module.exports = mongoose.model("Subscriber", subscriberSchema);

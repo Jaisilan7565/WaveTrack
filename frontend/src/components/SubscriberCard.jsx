@@ -18,12 +18,12 @@ const SubscriberCard = ({ subscriber, refetch }) => {
   const userRoles = getUserRoles();
   const DecisionMaker = hasPermission(
     ["Admin", "General Manager", "Manager", "Senior HR"],
-    userRoles
+    userRoles,
   );
 
   const hasDeletePermission = hasPermission(
     ["Admin", "General Manager"],
-    userRoles
+    userRoles,
   );
 
   const navigate = useNavigate();
@@ -58,6 +58,7 @@ const SubscriberCard = ({ subscriber, refetch }) => {
     // Credentials
     "credentials.username": "Username",
     "credentials.password": "Password",
+    "credentials.staticIP": "Static IP",
   };
 
   function getDisplayName(fieldPath) {
@@ -74,7 +75,7 @@ const SubscriberCard = ({ subscriber, refetch }) => {
           part
             .replace(/([A-Z])/g, " $1") // Add space before capitals
             .replace(/^./, (str) => str.toUpperCase()) // Capitalize first letter
-            .replace(/Of|And|The/gi, (match) => match.toLowerCase()) // Handle special words
+            .replace(/Of|And|The/gi, (match) => match.toLowerCase()), // Handle special words
       )
       .join(" "); // Join with spaces
   }
@@ -140,7 +141,7 @@ const SubscriberCard = ({ subscriber, refetch }) => {
       const response = await approveSubscriberAPI(
         subscriberId,
         status,
-        subscriber
+        subscriber,
       );
 
       // Refresh the employee list
@@ -173,7 +174,7 @@ const SubscriberCard = ({ subscriber, refetch }) => {
       const response = await rejectSubscriberAPI(
         subscriberId,
         status,
-        subscriber
+        subscriber,
       );
 
       // Refresh the employee list
@@ -353,6 +354,10 @@ const SubscriberCard = ({ subscriber, refetch }) => {
                 <span className="font-medium">Password:</span>{" "}
                 {subscriber?.credentials?.password || "—"}
               </p>
+              <p className="text-sm text-gray-600">
+                <span className="font-medium">Static IP:</span>{" "}
+                {subscriber?.credentials?.staticIP || "—"}
+              </p>
             </div>
           </div>
 
@@ -373,18 +378,18 @@ const SubscriberCard = ({ subscriber, refetch }) => {
                     subscriber?.status === "Active"
                       ? "bg-green-100 text-green-800" // Green for active
                       : subscriber?.status === "InActive"
-                      ? "bg-red-100 text-red-800" // Red for inactive
-                      : subscriber?.status === "Added"
-                      ? "bg-blue-100 text-blue-800" // Blue for in-process
-                      : subscriber?.status === "Rejected"
-                      ? "bg-rose-100 text-rose-800" // Rose/deep pink for rejected
-                      : subscriber?.status === "Deleted"
-                      ? "bg-gray-200 text-gray-800" // Gray for deleted
-                      : subscriber?.status === "Modified"
-                      ? "bg-amber-100 text-amber-800" // Amber/orange for modified
-                      : subscriber?.status === "Suspended"
-                      ? "bg-purple-200 text-purple-800" // Purple for suspended
-                      : "bg-gray-100 text-gray-800" // Default fallback
+                        ? "bg-red-100 text-red-800" // Red for inactive
+                        : subscriber?.status === "Added"
+                          ? "bg-blue-100 text-blue-800" // Blue for in-process
+                          : subscriber?.status === "Rejected"
+                            ? "bg-rose-100 text-rose-800" // Rose/deep pink for rejected
+                            : subscriber?.status === "Deleted"
+                              ? "bg-gray-200 text-gray-800" // Gray for deleted
+                              : subscriber?.status === "Modified"
+                                ? "bg-amber-100 text-amber-800" // Amber/orange for modified
+                                : subscriber?.status === "Suspended"
+                                  ? "bg-purple-200 text-purple-800" // Purple for suspended
+                                  : "bg-gray-100 text-gray-800" // Default fallback
                   }`}
                 >
                   {subscriber?.status}
@@ -393,7 +398,7 @@ const SubscriberCard = ({ subscriber, refetch }) => {
               <p className="text-sm text-gray-600">
                 <span className="font-medium">Activation:</span>{" "}
                 {formatDate(
-                  subscriber?.ispInfo?.currentActivationDate?.split("T")[0]
+                  subscriber?.ispInfo?.currentActivationDate?.split("T")[0],
                 )}
               </p>
               <p className="text-sm text-gray-600">
@@ -483,7 +488,7 @@ const SubscriberCard = ({ subscriber, refetch }) => {
                   subscriber?.modifiedData &&
                   !deepEqual(
                     subscriber.modifiedData.previous,
-                    subscriber.modifiedData.current
+                    subscriber.modifiedData.current,
                   ) && (
                     <div className="border-t border-yellow-200 pt-3">
                       <div className="flex items-start mb-2">
@@ -505,7 +510,7 @@ const SubscriberCard = ({ subscriber, refetch }) => {
                           </div>
                           <div className="space-y-1">
                             {Object.entries(
-                              subscriber.modifiedData.previous
+                              subscriber.modifiedData.previous,
                             ).map(([key, value]) => {
                               // Handle nested objects
                               if (
@@ -539,7 +544,7 @@ const SubscriberCard = ({ subscriber, refetch }) => {
                                                 </span>
                                               </div>
                                             </div>
-                                          )
+                                          ),
                                         )}
                                       </div>
                                     </div>
@@ -593,7 +598,7 @@ const SubscriberCard = ({ subscriber, refetch }) => {
                           </div>
                           <div className="space-y-1">
                             {Object.entries(
-                              subscriber.modifiedData.current
+                              subscriber.modifiedData.current,
                             ).map(([key, value]) => {
                               const previousValue =
                                 subscriber.modifiedData.previous[key];
@@ -647,7 +652,7 @@ const SubscriberCard = ({ subscriber, refetch }) => {
                                                 </div>
                                               </div>
                                             );
-                                          }
+                                          },
                                         )}
                                       </div>
                                     </div>
@@ -724,7 +729,7 @@ const SubscriberCard = ({ subscriber, refetch }) => {
                         <span className="mx-2">•</span>
                         <span>
                           {new Date(
-                            subscriber.modifiedData.modified_at
+                            subscriber.modifiedData.modified_at,
                           ).toLocaleString()}
                         </span>
 

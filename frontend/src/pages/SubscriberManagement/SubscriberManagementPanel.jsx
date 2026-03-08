@@ -42,12 +42,12 @@ const SubscriberManagementPanel = () => {
   const userRoles = getUserRoles();
   const DecisionMaker = hasPermission(
     ["Admin", "General Manager", "Manager", "Senior HR"],
-    userRoles
+    userRoles,
   );
 
   const hasDeletePermission = hasPermission(
     ["Admin", "General Manager"],
-    userRoles
+    userRoles,
   );
 
   const [loadingApprove, setLoadingApprove] = useState(null);
@@ -76,6 +76,7 @@ const SubscriberManagementPanel = () => {
     // Credentials
     "credentials.username": "Username",
     "credentials.password": "Password",
+    "credentials.staticIP": "Static IP",
   };
 
   function getDisplayName(fieldPath) {
@@ -92,7 +93,7 @@ const SubscriberManagementPanel = () => {
           part
             .replace(/([A-Z])/g, " $1") // Add space before capitals
             .replace(/^./, (str) => str.toUpperCase()) // Capitalize first letter
-            .replace(/Of|And|The/gi, (match) => match.toLowerCase()) // Handle special words
+            .replace(/Of|And|The/gi, (match) => match.toLowerCase()), // Handle special words
       )
       .join(" "); // Join with spaces
   }
@@ -201,7 +202,7 @@ const SubscriberManagementPanel = () => {
           sub.siteCode.toLowerCase().includes(term) ||
           sub.siteName.toLowerCase().includes(term) ||
           sub.siteAddress.toLowerCase().includes(term) ||
-          sub.ispInfo?.broadbandPlan.toLowerCase().includes(term)
+          sub.ispInfo?.broadbandPlan.toLowerCase().includes(term),
       );
     }
 
@@ -306,7 +307,7 @@ const SubscriberManagementPanel = () => {
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = processedSubscribers.slice(
     indexOfFirstItem,
-    indexOfLastItem
+    indexOfLastItem,
   );
   const totalPages = Math.ceil(processedSubscribers.length / itemsPerPage);
 
@@ -386,7 +387,7 @@ const SubscriberManagementPanel = () => {
           id: item._id,
           status: item.status,
           subscriber: item,
-        }))
+        })),
       );
     } else {
       setSelectedRows([]);
@@ -399,7 +400,7 @@ const SubscriberManagementPanel = () => {
       selectedRows.every(
         (row) =>
           row.subscriber?.request_status === "pending" &&
-          row.status !== "Modified"
+          row.status !== "Modified",
       );
     setAllSelectedPending(allPending);
   }, [selectedRows]);
@@ -410,7 +411,7 @@ const SubscriberManagementPanel = () => {
       const response = await approveSubscriberAPI(
         subscriberId,
         status,
-        subscriber
+        subscriber,
       );
 
       // Refresh the employee list
@@ -442,7 +443,7 @@ const SubscriberManagementPanel = () => {
       const response = await rejectSubscriberAPI(
         subscriberId,
         status,
-        subscriber
+        subscriber,
       );
 
       // Refresh the employee list
@@ -510,7 +511,7 @@ const SubscriberManagementPanel = () => {
           progress: Math.floor((i / updates.length) * 100),
           message: `Processing ${i + 1}-${Math.min(
             i + batchSize,
-            updates.length
+            updates.length,
           )} of ${updates.length}...`,
         }));
 
@@ -524,7 +525,7 @@ const SubscriberManagementPanel = () => {
               id: update.id,
               status: "success",
               data: update,
-            }))
+            })),
           );
         } catch (error) {
           // Track failed updates
@@ -535,7 +536,7 @@ const SubscriberManagementPanel = () => {
               status: "error",
               error: error.message || "Batch update failed",
               data: update,
-            }))
+            })),
           );
         }
       }
@@ -610,7 +611,7 @@ const SubscriberManagementPanel = () => {
           progress: Math.floor((i / updates.length) * 100),
           message: `Processing ${i + 1}-${Math.min(
             i + batchSize,
-            updates.length
+            updates.length,
           )} of ${updates.length}...`,
         }));
 
@@ -624,7 +625,7 @@ const SubscriberManagementPanel = () => {
               id: update.id,
               status: "success",
               data: update,
-            }))
+            })),
           );
         } catch (error) {
           // Track failed updates
@@ -635,7 +636,7 @@ const SubscriberManagementPanel = () => {
               status: "error",
               error: error.message || "Batch update failed",
               data: update,
-            }))
+            })),
           );
         }
       }
@@ -698,7 +699,7 @@ const SubscriberManagementPanel = () => {
           progress: Math.floor((i / updates.length) * 100),
           message: `Processing ${i + 1}-${Math.min(
             i + batchSize,
-            updates.length
+            updates.length,
           )} of ${updates.length}...`,
         }));
 
@@ -712,7 +713,7 @@ const SubscriberManagementPanel = () => {
               id: update.id,
               status: "success",
               data: update,
-            }))
+            })),
           );
         } catch (error) {
           // Track failed updates
@@ -723,7 +724,7 @@ const SubscriberManagementPanel = () => {
               status: "error",
               error: error.message || "Batch update failed",
               data: update,
-            }))
+            })),
           );
         }
       }
@@ -796,6 +797,7 @@ const SubscriberManagementPanel = () => {
         "ISP Name": subscriber.ispInfo?.name || "",
         "ISP Contact": subscriber.ispInfo?.contact || "",
         Plan: subscriber.ispInfo?.broadbandPlan || "",
+        "Static IP": subscriber.credentials?.staticIP || "",
         "MRC (₹)": subscriber.ispInfo?.mrc || "",
         "OTC (₹)": subscriber.ispInfo?.otc || "",
         Status: subscriber.status,
@@ -1055,8 +1057,8 @@ const SubscriberManagementPanel = () => {
               {selectedRows.length > 0
                 ? `Export Selected (${selectedRows.length})`
                 : isExporting
-                ? "Exporting..."
-                : "Export"}
+                  ? "Exporting..."
+                  : "Export"}
             </button>
             {isExporting && (
               <div className="fixed inset-0 bg-black/50 flex flex-col items-center justify-center z-50">
@@ -1207,6 +1209,13 @@ const SubscriberManagementPanel = () => {
                 <th
                   scope="col"
                   className="px-4 py-3 text-left text-xs sm:text-sm font-semibold text-white uppercase tracking-wider cursor-pointer"
+                  onClick={() => requestSort("credentials.staticIP")}
+                >
+                  Static IP {getSortIcon("credentials.staticIP")}
+                </th>
+                <th
+                  scope="col"
+                  className="px-4 py-3 text-left text-xs sm:text-sm font-semibold text-white uppercase tracking-wider cursor-pointer"
                   onClick={() => requestSort("ispInfo.numberOfMonths")}
                 >
                   Months {getSortIcon("ispInfo.numberOfMonths")}
@@ -1243,7 +1252,7 @@ const SubscriberManagementPanel = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {currentItems.length === 0 ? (
                 <tr>
-                  <td colSpan="11" className="text-center py-6 text-gray-500">
+                  <td colSpan="12" className="text-center py-6 text-gray-500">
                     <NoData
                       title="No Subscribers Found"
                       description="Try adjusting your search or filters"
@@ -1275,7 +1284,7 @@ const SubscriberManagementPanel = () => {
                               e,
                               subscriber._id,
                               subscriber.status,
-                              subscriber
+                              subscriber,
                             );
                           }}
                           className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
@@ -1301,6 +1310,9 @@ const SubscriberManagementPanel = () => {
                         {subscriber.ispInfo.broadbandPlan}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {subscriber.credentials?.staticIP || "N/A"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {subscriber.ispInfo.numberOfMonths}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -1317,18 +1329,18 @@ const SubscriberManagementPanel = () => {
                      subscriber?.status === "Active"
                        ? "bg-green-100 text-green-800" // Green for active
                        : subscriber?.status === "InActive"
-                       ? "bg-red-100 text-red-800" // Red for inactive
-                       : subscriber?.status === "Added"
-                       ? "bg-blue-100 text-blue-800" // Blue for in-process
-                       : subscriber?.status === "Rejected"
-                       ? "bg-rose-100 text-rose-800" // Rose/deep pink for rejected
-                       : subscriber?.status === "Deleted"
-                       ? "bg-gray-200 text-gray-800" // Gray for deleted
-                       : subscriber?.status === "Modified"
-                       ? "bg-amber-100 text-amber-800" // Amber/orange for modified
-                       : subscriber?.status === "Suspended"
-                       ? "bg-purple-200 text-purple-800" // Purple for suspended
-                       : "bg-gray-100 text-gray-800" // Default fallback
+                         ? "bg-red-100 text-red-800" // Red for inactive
+                         : subscriber?.status === "Added"
+                           ? "bg-blue-100 text-blue-800" // Blue for in-process
+                           : subscriber?.status === "Rejected"
+                             ? "bg-rose-100 text-rose-800" // Rose/deep pink for rejected
+                             : subscriber?.status === "Deleted"
+                               ? "bg-gray-200 text-gray-800" // Gray for deleted
+                               : subscriber?.status === "Modified"
+                                 ? "bg-amber-100 text-amber-800" // Amber/orange for modified
+                                 : subscriber?.status === "Suspended"
+                                   ? "bg-purple-200 text-purple-800" // Purple for suspended
+                                   : "bg-gray-100 text-gray-800" // Default fallback
                    }`}
                         >
                           {subscriber.status}
@@ -1345,7 +1357,7 @@ const SubscriberManagementPanel = () => {
                                   handleApprove(
                                     subscriber._id,
                                     subscriber.status,
-                                    subscriber
+                                    subscriber,
                                   )
                                 }
                                 disabled={loadingApprove === subscriber._id}
@@ -1363,7 +1375,7 @@ const SubscriberManagementPanel = () => {
                                   handleReject(
                                     subscriber._id,
                                     subscriber.status,
-                                    subscriber
+                                    subscriber,
                                   )
                                 }
                                 disabled={loadingReject === subscriber._id}
@@ -1382,7 +1394,7 @@ const SubscriberManagementPanel = () => {
                     {(subscriber.status === "Modified" ||
                       subscriber.remark) && (
                       <tr>
-                        <td colSpan="11" className="px-4 py-3 bg-yellow-50">
+                        <td colSpan="12" className="px-4 py-3 bg-yellow-50">
                           <div className="space-y-3">
                             {/* Remarks Section */}
                             {subscriber.remark && (
@@ -1400,7 +1412,7 @@ const SubscriberManagementPanel = () => {
                               subscriber?.modifiedData &&
                               !deepEqual(
                                 subscriber.modifiedData.previous,
-                                subscriber.modifiedData.current
+                                subscriber.modifiedData.current,
                               ) && (
                                 <div className="border-t border-yellow-200 pt-3">
                                   <div className="flex items-start mb-2">
@@ -1423,7 +1435,7 @@ const SubscriberManagementPanel = () => {
                                       </div>
                                       <div className="space-y-3.5">
                                         {Object.entries(
-                                          subscriber.modifiedData.previous
+                                          subscriber.modifiedData.previous,
                                         ).map(([key, value]) => {
                                           // Handle nested objects
                                           if (
@@ -1443,7 +1455,7 @@ const SubscriberManagementPanel = () => {
                                                   <div className="flex-1">
                                                     <div className="space-y-2 pl-2 border-l-2 border-gray-400">
                                                       {Object.entries(
-                                                        value
+                                                        value,
                                                       ).map(
                                                         ([
                                                           nestedKey,
@@ -1455,7 +1467,7 @@ const SubscriberManagementPanel = () => {
                                                           >
                                                             <span className="inline-block min-w-[100px] capitalize text-gray-400 text-sm">
                                                               {getDisplayName(
-                                                                nestedKey
+                                                                nestedKey,
                                                               )}
                                                               :
                                                             </span>
@@ -1467,7 +1479,7 @@ const SubscriberManagementPanel = () => {
                                                               )}
                                                             </span>
                                                           </div>
-                                                        )
+                                                        ),
                                                       )}
                                                     </div>
                                                   </div>
@@ -1525,7 +1537,7 @@ const SubscriberManagementPanel = () => {
                                       </div>
                                       <div className="space-y-3.5">
                                         {Object.entries(
-                                          subscriber.modifiedData.current
+                                          subscriber.modifiedData.current,
                                         ).map(([key, value]) => {
                                           const previousValue =
                                             subscriber.modifiedData.previous[
@@ -1550,7 +1562,7 @@ const SubscriberManagementPanel = () => {
                                                   <div className="flex-1">
                                                     <div className="space-y-2 pl-2 border-l-2 border-blue-400">
                                                       {Object.entries(
-                                                        value
+                                                        value,
                                                       ).map(
                                                         ([
                                                           nestedKey,
@@ -1562,10 +1574,10 @@ const SubscriberManagementPanel = () => {
                                                             ];
                                                           const nestedHasChanged =
                                                             JSON.stringify(
-                                                              nestedValue
+                                                              nestedValue,
                                                             ) !==
                                                             JSON.stringify(
-                                                              prevNestedValue
+                                                              prevNestedValue,
                                                             );
 
                                                           return (
@@ -1575,7 +1587,7 @@ const SubscriberManagementPanel = () => {
                                                             >
                                                               <span className="inline-block min-w-[100px] capitalize text-blue-400 text-sm">
                                                                 {getDisplayName(
-                                                                  nestedKey
+                                                                  nestedKey,
                                                                 )}
                                                                 :
                                                               </span>
@@ -1600,7 +1612,7 @@ const SubscriberManagementPanel = () => {
                                                               </span>
                                                             </div>
                                                           );
-                                                        }
+                                                        },
                                                       )}
                                                     </div>
                                                   </div>
@@ -1629,7 +1641,7 @@ const SubscriberManagementPanel = () => {
                                                       {value.map((item, i) => {
                                                         const prevItem =
                                                           Array.isArray(
-                                                            previousValue
+                                                            previousValue,
                                                           )
                                                             ? previousValue[i]
                                                             : null;
@@ -1707,7 +1719,7 @@ const SubscriberManagementPanel = () => {
                                     <span className="mx-2">•</span>
                                     <span>
                                       {new Date(
-                                        subscriber.modifiedData.modified_at
+                                        subscriber.modifiedData.modified_at,
                                       ).toLocaleString()}
                                     </span>
 
@@ -1766,7 +1778,7 @@ const SubscriberManagementPanel = () => {
                           e,
                           subscriber._id,
                           subscriber.status,
-                          subscriber
+                          subscriber,
                         );
                       }}
                       className="h-4 w-4 text-blue-600 mr-2"
@@ -1788,18 +1800,18 @@ const SubscriberManagementPanel = () => {
             subscriber?.status === "Active"
               ? "bg-green-100 text-green-800" // Green for active
               : subscriber?.status === "InActive"
-              ? "bg-red-100 text-red-800" // Red for inactive
-              : subscriber?.status === "Added"
-              ? "bg-blue-100 text-blue-800" // Blue for in-process
-              : subscriber?.status === "Rejected"
-              ? "bg-rose-100 text-rose-800" // Rose/deep pink for rejected
-              : subscriber?.status === "Deleted"
-              ? "bg-gray-200 text-gray-800" // Gray for deleted
-              : subscriber?.status === "Modified"
-              ? "bg-amber-100 text-amber-800" // Amber/orange for modified
-              : subscriber?.status === "Suspended"
-              ? "bg-purple-200 text-purple-800" // Purple for suspended
-              : "bg-gray-100 text-gray-800" // Default fallback
+                ? "bg-red-100 text-red-800" // Red for inactive
+                : subscriber?.status === "Added"
+                  ? "bg-blue-100 text-blue-800" // Blue for in-process
+                  : subscriber?.status === "Rejected"
+                    ? "bg-rose-100 text-rose-800" // Rose/deep pink for rejected
+                    : subscriber?.status === "Deleted"
+                      ? "bg-gray-200 text-gray-800" // Gray for deleted
+                      : subscriber?.status === "Modified"
+                        ? "bg-amber-100 text-amber-800" // Amber/orange for modified
+                        : subscriber?.status === "Suspended"
+                          ? "bg-purple-200 text-purple-800" // Purple for suspended
+                          : "bg-gray-100 text-gray-800" // Default fallback
           }`}
                   >
                     {subscriber.status}
@@ -1857,7 +1869,7 @@ const SubscriberManagementPanel = () => {
                           handleApprove(
                             subscriber._id,
                             subscriber.status,
-                            subscriber
+                            subscriber,
                           )
                         }
                         disabled={loadingApprove === subscriber._id}
@@ -1875,7 +1887,7 @@ const SubscriberManagementPanel = () => {
                           handleReject(
                             subscriber._id,
                             subscriber.status,
-                            subscriber
+                            subscriber,
                           )
                         }
                         disabled={loadingReject === subscriber._id}
@@ -1927,7 +1939,7 @@ const SubscriberManagementPanel = () => {
                                 </div>
                                 <div className="space-y-1">
                                   {Object.entries(
-                                    subscriber.modifiedData.previous
+                                    subscriber.modifiedData.previous,
                                   ).map(([key, value]) => {
                                     // Handle nested objects
                                     if (
@@ -1954,7 +1966,7 @@ const SubscriberManagementPanel = () => {
                                                     <div className="flex items-baseline">
                                                       <span className="inline-block min-w-[40px] text-gray-400 text-[10px] capitalize">
                                                         {getDisplayName(
-                                                          nestedKey
+                                                          nestedKey,
                                                         )}
                                                         :
                                                       </span>
@@ -1967,7 +1979,7 @@ const SubscriberManagementPanel = () => {
                                                       </span>
                                                     </div>
                                                   </div>
-                                                )
+                                                ),
                                               )}
                                             </div>
                                           </div>
@@ -2024,7 +2036,7 @@ const SubscriberManagementPanel = () => {
                                 </div>
                                 <div className="space-y-1">
                                   {Object.entries(
-                                    subscriber.modifiedData.current
+                                    subscriber.modifiedData.current,
                                   ).map(([key, value]) => {
                                     const previousValue =
                                       subscriber.modifiedData.previous[key];
@@ -2054,10 +2066,10 @@ const SubscriberManagementPanel = () => {
                                                     previousValue?.[nestedKey];
                                                   const nestedHasChanged =
                                                     JSON.stringify(
-                                                      nestedValue
+                                                      nestedValue,
                                                     ) !==
                                                     JSON.stringify(
-                                                      prevNestedValue
+                                                      prevNestedValue,
                                                     );
 
                                                   return (
@@ -2068,7 +2080,7 @@ const SubscriberManagementPanel = () => {
                                                       <div className="flex items-baseline">
                                                         <span className="inline-block min-w-[40px] text-blue-500 text-[10px] capitalize">
                                                           {getDisplayName(
-                                                            nestedKey
+                                                            nestedKey,
                                                           )}
                                                           :
                                                         </span>
@@ -2088,7 +2100,7 @@ const SubscriberManagementPanel = () => {
                                                       </div>
                                                     </div>
                                                   );
-                                                }
+                                                },
                                               )}
                                             </div>
                                           </div>
@@ -2169,7 +2181,7 @@ const SubscriberManagementPanel = () => {
                               <span className="mx-2">•</span>
                               <span>
                                 {new Date(
-                                  subscriber.modifiedData.modified_at
+                                  subscriber.modifiedData.modified_at,
                                 ).toLocaleString()}
                               </span>
 
@@ -2281,7 +2293,7 @@ const SubscriberManagementPanel = () => {
                       endPage = totalPages;
                     } else {
                       const maxPagesBeforeCurrent = Math.floor(
-                        maxVisiblePages / 2
+                        maxVisiblePages / 2,
                       );
                       const maxPagesAfterCurrent =
                         Math.ceil(maxVisiblePages / 2) - 1;
@@ -2313,7 +2325,7 @@ const SubscriberManagementPanel = () => {
                           }`}
                         >
                           {i}
-                        </button>
+                        </button>,
                       );
                     }
                     return pages;

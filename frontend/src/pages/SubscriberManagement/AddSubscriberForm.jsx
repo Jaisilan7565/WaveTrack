@@ -70,7 +70,7 @@ const AddSubscriberForm = ({ handleClose }) => {
         .min(0, "Cannot be negative"),
       currentActivationDate: Yup.date().max(
         new Date(),
-        "Activation date cannot be in the future"
+        "Activation date cannot be in the future",
       ),
     }),
     activationDate: Yup.date()
@@ -81,6 +81,10 @@ const AddSubscriberForm = ({ handleClose }) => {
       password: Yup.string(),
       circuitId: Yup.string(),
       accountId: Yup.string(),
+      staticIP: Yup.string().matches(
+        /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/,
+        "Invalid IP address format",
+      ),
     }),
   });
 
@@ -110,6 +114,7 @@ const AddSubscriberForm = ({ handleClose }) => {
         password: "",
         circuitId: "",
         accountId: "",
+        staticIP: "",
       },
     },
 
@@ -169,7 +174,7 @@ const AddSubscriberForm = ({ handleClose }) => {
     // Updated renewal date calculation
     const renewalDate = calculateRenewalDate(
       format(newDate, "yyyy-MM-dd"),
-      formik.values.ispInfo?.numberOfMonths
+      formik.values.ispInfo?.numberOfMonths,
     );
 
     formik.setFieldValue("activationDate", newDate);
@@ -179,7 +184,7 @@ const AddSubscriberForm = ({ handleClose }) => {
   useEffect(() => {
     const renewalDate = calculateRenewalDate(
       formik.values.activationDate,
-      formik.values.ispInfo?.numberOfMonths
+      formik.values.ispInfo?.numberOfMonths,
     );
     formik.setFieldValue("ispInfo.renewalDate", renewalDate);
   }, [formik.values.activationDate, formik.values.ispInfo?.numberOfMonths]);
@@ -660,7 +665,7 @@ const AddSubscriberForm = ({ handleClose }) => {
                   {formik?.values?.ispInfo?.renewalDate
                     ? format(
                         parseISO(formik?.values?.ispInfo?.renewalDate),
-                        "MMMM d, yyyy"
+                        "MMMM d, yyyy",
                       )
                     : "N/A"}
                 </div>
@@ -793,6 +798,38 @@ const AddSubscriberForm = ({ handleClose }) => {
                   formik.errors.credentials?.password && (
                     <p className="mt-1 text-sm text-red-600">
                       {formik.errors.credentials.password}
+                    </p>
+                  )}
+              </div>
+
+              <div>
+                <label
+                  htmlFor="credentials.staticIP"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Static IP
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    id="credentials.staticIP"
+                    name="credentials.staticIP"
+                    value={formik.values.credentials.staticIP}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    placeholder="192.168.1.1"
+                    className={`block w-full rounded-md py-2 px-3.5 shadow-sm border ${
+                      formik.touched.credentials?.staticIP &&
+                      formik.errors.credentials?.staticIP
+                        ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                        : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                    } focus:outline-none focus:ring-2 focus:ring-opacity-50 sm:text-sm`}
+                  />
+                </div>
+                {formik.touched.credentials?.staticIP &&
+                  formik.errors.credentials?.staticIP && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {formik.errors.credentials.staticIP}
                     </p>
                   )}
               </div>

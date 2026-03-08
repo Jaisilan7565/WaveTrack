@@ -36,8 +36,8 @@ const subscriberController = {
       return next(
         new ErrorResponse(
           `Missing required fields: ${missingFields.join(", ")}`,
-          400
-        )
+          400,
+        ),
       );
     }
 
@@ -124,8 +124,8 @@ const subscriberController = {
       return next(
         new ErrorResponse(
           error.message || "Failed to create subscriber",
-          error.statusCode || 500
-        )
+          error.statusCode || 500,
+        ),
       );
     }
   }),
@@ -138,15 +138,15 @@ const subscriberController = {
       return next(
         new ErrorResponse(
           "Invalid bulk data format - expected array of subscribers",
-          400
-        )
+          400,
+        ),
       );
     }
 
     // Limit batch size to prevent overload
     if (subscribers.length > 100) {
       return next(
-        new ErrorResponse("Maximum batch size exceeded (100 subscribers)", 400)
+        new ErrorResponse("Maximum batch size exceeded (100 subscribers)", 400),
       );
     }
 
@@ -170,8 +170,8 @@ const subscriberController = {
         new ErrorResponse(
           `${structureErrors.length} records failed structure validation`,
           400,
-          { validationErrors: structureErrors }
-        )
+          { validationErrors: structureErrors },
+        ),
       );
     }
 
@@ -182,8 +182,8 @@ const subscriberController = {
         new ErrorResponse(
           "Duplicate site codes or addresses within this batch",
           400,
-          { duplicates: batchDuplicates }
-        )
+          { duplicates: batchDuplicates },
+        ),
       );
     }
 
@@ -202,10 +202,10 @@ const subscriberController = {
 
       // Map existing records for quick lookup
       const existingSiteCodes = new Set(
-        existingSubscribers.map((s) => s.siteCode)
+        existingSubscribers.map((s) => s.siteCode),
       );
       const existingSiteAddresses = new Set(
-        existingSubscribers.map((s) => s.siteAddress)
+        existingSubscribers.map((s) => s.siteAddress),
       );
 
       // Process all subscribers
@@ -244,7 +244,7 @@ const subscriberController = {
           // Calculate renewal date
           const renewalDate = new Date(activationDate);
           renewalDate.setMonth(
-            renewalDate.getMonth() + (subscriber.ispInfo?.numberOfMonths || 1)
+            renewalDate.getMonth() + (subscriber.ispInfo?.numberOfMonths || 1),
           );
 
           // Generate unique subscriber ID
@@ -271,7 +271,7 @@ const subscriberController = {
             index,
             data: newSubscriber,
           };
-        })
+        }),
       );
 
       await session.commitTransaction();
@@ -299,7 +299,7 @@ const subscriberController = {
       return next(
         new ErrorResponse("Bulk creation failed due to server error", 500, {
           serverError: error.message,
-        })
+        }),
       );
     }
   }),
@@ -390,7 +390,7 @@ const subscriberController = {
       const updatedSubscriber = await Subscriber.findByIdAndUpdate(
         req.params.id,
         update,
-        { new: true, runValidators: true }
+        { new: true, runValidators: true },
       );
 
       res.json({
@@ -423,7 +423,7 @@ const subscriberController = {
           decision_by: req.user.id,
           updatedAt: Date.now(),
         },
-        { new: true, runValidators: true }
+        { new: true, runValidators: true },
       );
 
       res.json({
@@ -453,7 +453,7 @@ const subscriberController = {
 
     // Validate all IDs
     const invalidIds = subscribersToApprove.filter(
-      (u) => !mongoose.Types.ObjectId.isValid(u.id)
+      (u) => !mongoose.Types.ObjectId.isValid(u.id),
     );
     if (invalidIds.length > 0) {
       return res.status(400).json({
@@ -520,7 +520,7 @@ const subscriberController = {
 
     // Validate all IDs
     const invalidIds = subscribersToReject.filter(
-      (u) => !mongoose.Types.ObjectId.isValid(u.id)
+      (u) => !mongoose.Types.ObjectId.isValid(u.id),
     );
     if (invalidIds.length > 0) {
       return res.status(400).json({
@@ -587,7 +587,7 @@ const subscriberController = {
 
     // Validate all IDs
     const invalidIds = subscribersToDelete.filter(
-      (id) => !mongoose.Types.ObjectId.isValid(id)
+      (id) => !mongoose.Types.ObjectId.isValid(id),
     );
     if (invalidIds.length > 0) {
       return res.status(400).json({
@@ -704,6 +704,7 @@ const subscriberController = {
         "credentials.password",
         "credentials.circuitId",
         "credentials.accountId",
+        "credentials.staticIP",
       ];
 
       // Helper function to get nested properties
@@ -808,7 +809,7 @@ const subscriberController = {
           request_status: request_status,
           status: status,
         },
-        { new: true, runValidators: true }
+        { new: true, runValidators: true },
       );
 
       res.json({
@@ -837,7 +838,7 @@ const subscriberController = {
           decision_by: req.user.id,
           updatedAt: Date.now(),
         },
-        { new: true, runValidators: true }
+        { new: true, runValidators: true },
       );
 
       res.json({
@@ -867,7 +868,7 @@ const subscriberController = {
           isDeleted: true,
           updatedAt: Date.now(),
         },
-        { new: true, runValidators: true }
+        { new: true, runValidators: true },
       );
 
       res.json({

@@ -114,6 +114,10 @@ const UpdateSubscriberForm = ({ id, handleClose }) => {
       password: Yup.string(),
       circuitId: Yup.string(),
       accountId: Yup.string(),
+      staticIP: Yup.string().matches(
+        /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/,
+        "Invalid IP address format",
+      ),
     }),
     remark: Yup.string()
       .max(200, "Must be 200 characters or less")
@@ -143,6 +147,7 @@ const UpdateSubscriberForm = ({ id, handleClose }) => {
         password: "",
         circuitId: "",
         accountId: "",
+        staticIP: "",
       },
       remarks: "",
     },
@@ -219,6 +224,7 @@ const UpdateSubscriberForm = ({ id, handleClose }) => {
           password: subscriberData?.credentials?.password || "",
           circuitId: subscriberData?.credentials?.circuitId || "",
           accountId: subscriberData?.credentials?.accountId || "",
+          staticIP: subscriberData?.credentials?.staticIP || "",
         },
         remark: subscriberData?.remark || "",
       });
@@ -799,6 +805,38 @@ const UpdateSubscriberForm = ({ id, handleClose }) => {
                     formik.errors.credentials?.password && (
                       <p className="mt-1 text-sm text-red-600">
                         {formik.errors.credentials?.password}
+                      </p>
+                    )}
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="credentials.staticIP"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Static IP
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      id="credentials.staticIP"
+                      name="credentials.staticIP"
+                      value={formik.values.credentials?.staticIP}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      placeholder="192.168.1.1"
+                      className={`block w-full rounded-md py-2 px-3.5 shadow-sm border ${
+                        formik.touched.credentials?.staticIP &&
+                        formik.errors.credentials?.staticIP
+                          ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                          : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                      } focus:outline-none focus:ring-2 focus:ring-opacity-50 sm:text-sm`}
+                    />
+                  </div>
+                  {formik.touched.credentials?.staticIP &&
+                    formik.errors.credentials?.staticIP && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {formik.errors.credentials?.staticIP}
                       </p>
                     )}
                 </div>
