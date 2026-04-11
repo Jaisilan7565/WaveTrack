@@ -33,8 +33,8 @@ const ticketController = {
       return next(
         new ErrorResponse(
           `Missing required fields: ${missingFields.join(", ")}`,
-          400
-        )
+          400,
+        ),
       );
     }
 
@@ -42,7 +42,7 @@ const ticketController = {
     const generateTicketId = async () => {
       const prefix = "TKT-";
       const randomSuffix = Math.floor(
-        1000000000 + Math.random() * 9000000000
+        1000000000 + Math.random() * 9000000000,
       ).toString();
       const ticketId = prefix + randomSuffix;
 
@@ -78,8 +78,8 @@ const ticketController = {
       return next(
         new ErrorResponse(
           error.message || "Failed to create ticket",
-          error.statusCode || 500
-        )
+          error.statusCode || 500,
+        ),
       );
     }
   }),
@@ -88,7 +88,7 @@ const ticketController = {
   getTickets: asyncHandler(async (req, res, next) => {
     try {
       const { status } = req.query;
-      let query = { isDeleted: false };
+      let query = {};
 
       if (status) query.status = status;
 
@@ -205,7 +205,7 @@ const ticketController = {
       const updatedTicket = await Ticket.findByIdAndUpdate(
         req.params.id,
         update,
-        { new: true, runValidators: true }
+        { new: true, runValidators: true },
       );
 
       res.json({
@@ -238,7 +238,7 @@ const ticketController = {
           decision_by: req.user.id,
           updatedAt: Date.now(),
         },
-        { new: true, runValidators: true }
+        { new: true, runValidators: true },
       );
 
       res.json({
@@ -268,7 +268,7 @@ const ticketController = {
           status: "In Progress",
           updatedAt: Date.now(),
         },
-        { new: true, runValidators: true }
+        { new: true, runValidators: true },
       );
 
       res.json({
@@ -297,7 +297,7 @@ const ticketController = {
           decision_by: req.user.id,
           updatedAt: Date.now(),
         },
-        { new: true, runValidators: true }
+        { new: true, runValidators: true },
       );
 
       res.json({

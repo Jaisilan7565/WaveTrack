@@ -57,14 +57,7 @@ const employeeSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: [
-        "OnProcess",
-        "Active",
-        "InActive",
-        "Rejected",
-        "Deleted",
-        "Modified",
-      ],
+      enum: ["OnProcess", "Active", "InActive", "Rejected", "Modified"],
       default: "OnProcess",
     },
     request_status: {
@@ -80,22 +73,14 @@ const employeeSchema = new mongoose.Schema(
     modifiedData: {
       type: mongoose.Schema.Types.Mixed,
     },
-    deleted_by: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Employee",
-    },
     decision_by: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Employee",
     },
-    isDeleted: {
-      type: Boolean,
-      default: false,
-    },
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 module.exports = mongoose.model("Employee", employeeSchema);

@@ -36,8 +36,8 @@ const paymentController = {
       return next(
         new ErrorResponse(
           `Missing required fields: ${missingFields.join(", ")}`,
-          400
-        )
+          400,
+        ),
       );
     }
 
@@ -45,7 +45,7 @@ const paymentController = {
     const generateTransactionId = async () => {
       const prefix = "TR-";
       const randomSuffix = Math.floor(
-        1000000000 + Math.random() * 9000000000
+        1000000000 + Math.random() * 9000000000,
       ).toString();
       const transactionId = prefix + randomSuffix;
 
@@ -80,7 +80,7 @@ const paymentController = {
 
       if (!parsedActivationDate) {
         return next(
-          new ErrorResponse("Invalid ISP activation date format", 400)
+          new ErrorResponse("Invalid ISP activation date format", 400),
         );
       }
 
@@ -108,7 +108,7 @@ const paymentController = {
       };
 
       if (transactionType === "Expense") {
-        let query = { isDeleted: false, subscriberId: req.body.subscriberId };
+        let query = { subscriberId: req.body.subscriberId };
         const payments = await Payment.find(query);
 
         if (payments.length >= 1) {
@@ -140,8 +140,8 @@ const paymentController = {
       return next(
         new ErrorResponse(
           error.message || "Failed to create payment",
-          error.statusCode || 500
-        )
+          error.statusCode || 500,
+        ),
       );
     }
   }),
@@ -149,7 +149,7 @@ const paymentController = {
   getPayments: asyncHandler(async (req, res, next) => {
     try {
       const { status, transactionType } = req.query;
-      let query = { isDeleted: false };
+      let query = {};
 
       if (status) query.status = status;
       if (transactionType) query.transactionType = transactionType;
@@ -308,7 +308,7 @@ const paymentController = {
           request_status: "pending",
           status: "Modified",
         },
-        { new: true, runValidators: true }
+        { new: true, runValidators: true },
       );
 
       res.json({
@@ -329,7 +329,7 @@ const paymentController = {
           .json({ success: false, message: "Invalid ID format" });
       }
 
-      let query = { isDeleted: false, subscriberId: req.params.subId };
+      let query = { subscriberId: req.params.subId };
 
       const payments = await Payment.find(query)
         .sort({ createdAt: -1 })
@@ -389,7 +389,7 @@ const paymentController = {
           decision_by: req.user.id,
           updatedAt: Date.now(),
         },
-        { new: true, runValidators: true }
+        { new: true, runValidators: true },
       );
 
       res.json({
@@ -422,7 +422,7 @@ const paymentController = {
           decision_by: req.user.id,
           updatedAt: Date.now(),
         },
-        { new: true, runValidators: true }
+        { new: true, runValidators: true },
       );
 
       res.json({
@@ -451,7 +451,7 @@ const paymentController = {
           decision_by: req.user.id,
           updatedAt: Date.now(),
         },
-        { new: true, runValidators: true }
+        { new: true, runValidators: true },
       );
 
       res.json({

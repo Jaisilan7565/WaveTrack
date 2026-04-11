@@ -116,7 +116,6 @@ const subscriberSchema = new mongoose.Schema(
         "Active",
         "InActive",
         "Rejected",
-        "Deleted",
         "Modified",
         "Suspended",
       ],
@@ -135,17 +134,9 @@ const subscriberSchema = new mongoose.Schema(
     modifiedData: {
       type: mongoose.Schema.Types.Mixed,
     },
-    deleted_by: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Employee",
-    },
     decision_by: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Employee",
-    },
-    isDeleted: {
-      type: Boolean,
-      default: false,
     },
   },
   {

@@ -141,7 +141,7 @@ const employeeController = {
   getEmployees: asyncHandler(async (req, res, next) => {
     try {
       const { status, role } = req.query;
-      let query = { isDeleted: false };
+      let query = {};
 
       if (status) query.status = status;
       if (role) query.roles = { $in: [role] };
@@ -362,16 +362,7 @@ const employeeController = {
       }
 
       // await Employee.findByIdAndDelete(req.params.id);
-      await Employee.findByIdAndUpdate(
-        req.params.id,
-        {
-          status: "Deleted",
-          deleted_by: req.user.id,
-          isDeleted: true,
-          updatedAt: Date.now(),
-        },
-        { new: true, runValidators: true },
-      );
+      await Employee.findByIdAndDelete(req.params.id);
 
       res.json({
         success: true,

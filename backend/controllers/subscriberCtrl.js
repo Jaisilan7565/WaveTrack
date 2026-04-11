@@ -307,7 +307,7 @@ const subscriberController = {
   getSubscribers: asyncHandler(async (req, res, next) => {
     try {
       const { status } = req.query;
-      let query = { isDeleted: false };
+      let query = {};
 
       if (status) query.status = status;
 
@@ -598,20 +598,11 @@ const subscriberController = {
     }
 
     try {
-      // Prepare bulk operations for soft delete
+      // Prepare bulk operations for hard delete
       const bulkOps = subscribersToDelete.map((id) => ({
-        updateOne: {
+        deleteOne: {
           filter: {
             _id: new mongoose.Types.ObjectId(id),
-            isDeleted: { $ne: true }, // Only update if not already deleted
-          },
-          update: {
-            $set: {
-              status: "Deleted",
-              isDeleted: true,
-              decision_by: req.user.id,
-              updatedAt: Date.now(),
-            },
           },
         },
       }));
@@ -860,16 +851,7 @@ const subscriberController = {
         return res.status(404).json({ message: "Subscriber not found" });
       }
 
-      await Subscriber.findByIdAndUpdate(
-        req.params.id,
-        {
-          status: "Deleted",
-          deleted_by: req.user.id,
-          isDeleted: true,
-          updatedAt: Date.now(),
-        },
-        { new: true, runValidators: true },
-      );
+      await Subscriber.findByIdAndDelete(req.params.id);
 
       res.json({
         success: true,

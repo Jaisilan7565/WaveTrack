@@ -14,7 +14,7 @@ const authCtrl = {
     // Validate email & password
     if (!email || !password) {
       return next(
-        new ErrorResponse("Please provide an email and password", 400)
+        new ErrorResponse("Please provide an email and password", 400),
       );
     }
 
@@ -28,12 +28,11 @@ const authCtrl = {
 
       // Check if user is Active and Approved
       if (
-        employee.isDeleted ||
         employee.status !== "Active" ||
         employee.request_status !== "approved"
       ) {
         return next(
-          new ErrorResponse("Account is not Active or Approved", 401)
+          new ErrorResponse("Account is not Active or Approved", 401),
         );
       }
 
@@ -57,7 +56,7 @@ const authCtrl = {
         process.env.JWT_SECRET,
         {
           expiresIn: process.env.JWT_EXPIRE,
-        }
+        },
       );
 
       res.status(200).json({
@@ -82,7 +81,7 @@ const authCtrl = {
   changePassword: asyncHandler(async (req, res, next) => {
     try {
       const employee = await Employee.findById(req.params.id).select(
-        "+password"
+        "+password",
       );
 
       if (!employee) {
@@ -94,7 +93,7 @@ const authCtrl = {
       // Validate current password
       if (!currentPassword || !newPassword) {
         return next(
-          new ErrorResponse("Please provide current and new password", 400)
+          new ErrorResponse("Please provide current and new password", 400),
         );
       }
       // Check if current password matches
@@ -115,7 +114,7 @@ const authCtrl = {
           decision_by: req.user.id,
           updatedAt: Date.now(),
         },
-        { new: true, runValidators: true }
+        { new: true, runValidators: true },
       );
 
       res.status(200).json({

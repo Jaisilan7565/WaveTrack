@@ -73,14 +73,10 @@ const ticketSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Employee",
     },
-    isDeleted: {
-      type: Boolean,
-      default: false,
-    },
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 module.exports = mongoose.model("Ticket", ticketSchema);
