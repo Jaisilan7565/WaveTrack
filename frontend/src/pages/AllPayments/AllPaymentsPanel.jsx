@@ -925,6 +925,11 @@ const AllPaymentsPanel = () => {
                           <span className="text-xs text-gray-500">
                             {payment?.transactionMode}
                           </span>
+                          {payment?.utr && (
+                            <span className="text-xs text-blue-600 font-semibold">
+                              UTR: {payment.utr}
+                            </span>
+                          )}
                         </div>
                       </td>
 
@@ -987,18 +992,17 @@ const AllPaymentsPanel = () => {
                       {/* Actions */}
                       <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">
                         <div className="flex items-center gap-1">
-                          {payment?.request_status !== "pending" &&
-                            payment?.transactionType === "Income" && (
-                              <button
-                                className="p-1.5 text-blue-600 hover:bg-blue-500 hover:text-white rounded-md transition-colors"
-                                title="Edit"
-                                onClick={() =>
-                                  handleOpenUpdatePaymentForm(payment?._id)
-                                }
-                              >
-                                <FiEdit className="h-5 w-5" />
-                              </button>
-                            )}
+                          {payment?.request_status !== "pending" && (
+                            <button
+                              className="p-1.5 text-blue-600 hover:bg-blue-500 hover:text-white rounded-md transition-colors"
+                              title="Edit"
+                              onClick={() =>
+                                handleOpenUpdatePaymentForm(payment?._id)
+                              }
+                            >
+                              <FiEdit className="h-5 w-5" />
+                            </button>
+                          )}
                           {payment?.request_status !== "pending" &&
                             payment?.transactionType === "Expense" &&
                             payment?.status !== "Refunded" &&
@@ -1505,6 +1509,11 @@ const AllPaymentsPanel = () => {
                       <p className="text-sm font-medium text-gray-900">
                         ₹{payment?.amount} ({payment?.transactionMode})
                       </p>
+                      {payment?.utr && (
+                        <p className="text-xs text-blue-600 font-semibold">
+                          UTR: {payment.utr}
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -1573,8 +1582,7 @@ const AllPaymentsPanel = () => {
                   </button>
 
                   <div className="flex space-x-2">
-                    {payment?.request_status !== "pending" &&
-                      payment?.transactionType === "Income" && (
+                    {payment?.request_status !== "pending" && (
                         <button
                           className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-md transition-colors"
                           title="Edit"

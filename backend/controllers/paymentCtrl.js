@@ -15,6 +15,7 @@ const paymentController = {
       activationDate,
       expiryDate,
       amount,
+      utr,
     } = req.body;
 
     // Validate required fields
@@ -102,6 +103,7 @@ const paymentController = {
         activationDate,
         expiryDate,
         amount,
+        utr,
         status: newStatus,
         request_status: "pending",
         created_by: req.user.id,
@@ -246,6 +248,7 @@ const paymentController = {
         "amount",
         "activationDate",
         "expiryDate",
+        "utr",
       ];
 
       // Helper function to get nested properties

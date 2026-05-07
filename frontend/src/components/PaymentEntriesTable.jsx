@@ -792,6 +792,11 @@ const PaymentEntriesTable = ({ payments, refetch, subscriber, subRefetch }) => {
                             ₹ {payment?.amount}
                           </span>
                           <span>{payment?.transactionMode}</span>
+                          {payment?.utr && (
+                            <span className="text-xs text-blue-600 font-semibold">
+                              UTR: {payment.utr}
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
@@ -845,18 +850,17 @@ const PaymentEntriesTable = ({ payments, refetch, subscriber, subRefetch }) => {
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
                         <div className="flex items-center space-x-1">
-                          {payment?.request_status !== "pending" &&
-                            payment?.transactionType === "Income" && (
-                              <button
-                                className="p-1.5 text-blue-600 hover:bg-blue-500 hover:text-white rounded-md transition-colors"
-                                title="Edit"
-                                onClick={() =>
-                                  handleOpenUpdatePaymentForm(payment?._id)
-                                }
-                              >
-                                <FiEdit className="h-5 w-5" />
-                              </button>
-                            )}
+                          {payment?.request_status !== "pending" && (
+                            <button
+                              className="p-1.5 text-blue-600 hover:bg-blue-500 hover:text-white rounded-md transition-colors"
+                              title="Edit"
+                              onClick={() =>
+                                handleOpenUpdatePaymentForm(payment?._id)
+                              }
+                            >
+                              <FiEdit className="h-5 w-5" />
+                            </button>
+                          )}
 
                           {payment?.request_status !== "pending" &&
                             payment?.transactionType === "Expense" &&

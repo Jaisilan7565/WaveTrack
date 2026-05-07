@@ -58,6 +58,7 @@ const UpdatePaymentForm = ({ id, handleClose }) => {
       .min(1, "Amount must be at least 1"),
     activationDate: Yup.date().required("Activation date is required"),
     expiryDate: Yup.date().required("Expiry date is required"),
+    utr: Yup.string().notRequired(),
     remark: Yup.string()
       .max(200, "Must be 200 characters or less")
       .required("Required"),
@@ -69,6 +70,7 @@ const UpdatePaymentForm = ({ id, handleClose }) => {
       amount: "",
       activationDate: "",
       expiryDate: "",
+      utr: "",
       remark: "",
     },
 
@@ -133,6 +135,8 @@ const UpdatePaymentForm = ({ id, handleClose }) => {
         expiryDate: paymentData?.expiryDate
           ? format(new Date(paymentData.expiryDate), "yyyy-MM-dd")
           : "",
+        utr: paymentData?.utr || "",
+        remark: paymentData?.remark || "",
       });
     }
     refetchPayment();
@@ -296,6 +300,36 @@ const UpdatePaymentForm = ({ id, handleClose }) => {
                     </p>
                   )}
                 </div>
+
+                <div>
+                  <label
+                    htmlFor="utr"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    UTR Number
+                  </label>
+                  <div className="relative flex items-center gap-2">
+                    <input
+                      type="text"
+                      id="utr"
+                      name="utr"
+                      value={formik.values.utr}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      className={`block w-full rounded-md py-2 px-3.5 shadow-sm border ${
+                        formik.touched.utr && formik.errors.utr
+                          ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                          : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                      } focus:outline-none focus:ring-2 focus:ring-opacity-50 sm:text-sm`}
+                    />
+                  </div>
+                  {formik.touched.utr && formik.errors.utr && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {formik.errors.utr}
+                    </p>
+                  )}
+                </div>
+
                 {/* Remark Textarea */}
                 <div className="sm:col-span-2">
                   <label

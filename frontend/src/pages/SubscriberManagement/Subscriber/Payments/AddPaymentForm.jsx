@@ -45,6 +45,7 @@ const AddPaymentForm = ({ handleClose, subscriber, paymentsLength }) => {
     activationDate: Yup.date().required("Activation date is required"),
     // .max(new Date(), "Activation date cannot be in the future"),
     expiryDate: Yup.date().required("Expiry date is required"),
+    utr: Yup.string().notRequired(),
   });
 
   const formik = useFormik({
@@ -55,6 +56,7 @@ const AddPaymentForm = ({ handleClose, subscriber, paymentsLength }) => {
       amount: "",
       activationDate: "",
       expiryDate: "",
+      utr: "",
     },
 
     validationSchema, // Make sure to update your validation schema accordingly
@@ -137,11 +139,13 @@ const AddPaymentForm = ({ handleClose, subscriber, paymentsLength }) => {
       formik.setFieldValue("expiryDate", expiryDate);
       formik.setFieldValue("amount", subscriber?.ispInfo?.mrc);
       formik.setFieldValue("transactionMode", "");
+      formik.setFieldValue("utr", "");
     } else if (newType === "Income") {
       formik.setFieldValue("activationDate", "");
       formik.setFieldValue("expiryDate", "");
       formik.setFieldValue("amount", "");
       formik.setFieldValue("transactionMode", "");
+      formik.setFieldValue("utr", "");
     }
   };
 
@@ -287,19 +291,12 @@ const AddPaymentForm = ({ handleClose, subscriber, paymentsLength }) => {
                             handleActivationDateChange(e);
                           }}
                           onBlur={formik.handleBlur}
-                          disabled={
-                            formik.values.transactionType === "Expense" &&
-                            paymentsLength <= 1
-                          }
                           className={`block w-full rounded-md py-2 px-3.5 shadow-sm border ${
                             formik.touched.activationDate &&
                             formik.errors.activationDate
                               ? "border-red-300 focus:ring-red-500 focus:border-red-500"
                               : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-                          } ${
-                            formik.values.transactionType === "Expense" &&
-                            "bg-gray-100"
-                          }  focus:outline-none focus:ring-2 focus:ring-opacity-50 sm:text-sm`}
+                          } focus:outline-none focus:ring-2 focus:ring-opacity-50 sm:text-sm`}
                         />
                       </div>
                       {formik.touched.activationDate &&
@@ -325,16 +322,12 @@ const AddPaymentForm = ({ handleClose, subscriber, paymentsLength }) => {
                           value={formik.values.expiryDate}
                           onChange={formik.handleChange}
                           onBlur={formik.handleBlur}
-                          disabled={formik.values.transactionType === "Expense"}
                           className={`block w-full rounded-md py-2 px-3.5 shadow-sm border ${
                             formik.touched.expiryDate &&
                             formik.errors.expiryDate
                               ? "border-red-300 focus:ring-red-500 focus:border-red-500"
                               : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-                          } ${
-                            formik.values.transactionType === "Expense" &&
-                            "bg-gray-100"
-                          }  focus:outline-none focus:ring-2 focus:ring-opacity-50 sm:text-sm`}
+                          } focus:outline-none focus:ring-2 focus:ring-opacity-50 sm:text-sm`}
                         />
                       </div>
                       {formik.touched.expiryDate &&
@@ -383,6 +376,35 @@ const AddPaymentForm = ({ handleClose, subscriber, paymentsLength }) => {
                         </p>
                       )}
                     </div>
+
+                    {formik.values.transactionType && (
+                      <div>
+                        <label
+                          htmlFor="utr"
+                          className="block text-sm font-medium text-gray-700 mb-1"
+                        >
+                          UTR Number
+                        </label>
+                        <input
+                          type="text"
+                          id="utr"
+                          name="utr"
+                          value={formik.values.utr}
+                          onChange={formik.handleChange}
+                          onBlur={formik.handleBlur}
+                          className={`block w-full rounded-md py-2 px-3.5 shadow-sm border ${
+                            formik.touched.utr && formik.errors.utr
+                              ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                              : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                          } focus:outline-none focus:ring-2 focus:ring-opacity-50 sm:text-sm`}
+                        />
+                        {formik.touched.utr && formik.errors.utr && (
+                          <p className="mt-1 text-sm text-red-600">
+                            {formik.errors.utr}
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </>
                 )}
               </div>

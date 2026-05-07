@@ -45,6 +45,10 @@ const paymentSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    utr: {
+      type: String,
+      trim: true,
+    },
     remark: {
       type: String,
       maxlength: 200,

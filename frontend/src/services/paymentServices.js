@@ -80,6 +80,7 @@ export const approvePaymentAPI = async (id, status, payment) => {
         amount: payment?.modifiedData?.current?.amount,
         activationDate: payment?.modifiedData?.current?.activationDate,
         expiryDate: payment?.modifiedData?.current?.expiryDate,
+        utr: payment?.modifiedData?.current?.utr,
         request_status: "approved",
         status: "Received",
       };
